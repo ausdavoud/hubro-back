@@ -1,0 +1,192 @@
+Enum UserRole {
+  Player
+  Instructor
+  null
+}
+
+Table User {
+  id integer [pk]
+  username varchar
+  password varchar
+  email varchar
+
+  role UserRole
+}
+
+Table Instructor {
+  id integer [pk]
+  user integer [ref: - User.id] 
+}
+
+Table SimulationClass{
+  id integer [pk]
+  instructor integer [ref: > Instructor.id]
+}
+
+Table Team {
+  id integer [pk]
+  sim_class integer [ref: > SimulationClass.id]
+}
+Table Player {
+  id integer [pk]
+  user integer [ref: - User.id]
+  team integer [ref: > Team.id]
+}
+
+
+Enum contract_status {
+  fulfilled
+  waiting
+  expired 
+}
+
+
+Table contracts {
+  closure_quarter integer
+  payment_quarter integer
+  quantity integer
+  unit_price decimal
+  total_price decimal
+  deliverable_product integer [ref: > products.id]
+  status contract_status
+}
+
+
+Table products {
+  id integer [pk]
+  research_project_id integer [ref: - RandD.id]
+  original_unit_mat_cost deicmal
+  calculated_unit_mat_cost decimal
+  alias varchar
+  icon varchar
+}
+
+Enum factory_status {
+  owned
+  rented
+}
+
+Table factories {
+  id integer [pk]
+  ownershop factory_status
+  quarterly_output integer
+  outsourcing_fee_per_unit decimal
+  labor_cost_per_unit decimal
+  maintenance_cost decimal
+  fixed_cost decimal
+  resale_value_percent decimal
+  build_cost decimal
+  workers integer
+  hours decimal
+  wage decimal(6,3)
+  emission_t_unit decimal
+  depreciation_time integer
+  build_time integer
+  base integer
+}
+
+Table production {
+  id integer [pk]
+  product_id integer [ref: - products.id]
+  factory_id integer [ref: - factories.id]
+  quarter integer
+  activity_level decimal
+  activity_factor decimal
+  produced_quantity decimal
+  labor_cost decimal
+}
+
+
+Enum RandDTypes {
+  product
+  upgrade
+}
+
+Table RandD {
+  id integer [pk]
+  type RandDTypes
+  unit_mat_cost_effect decimal
+  title varchar
+  product integer
+  price decimal
+  depreciation_time integer
+  is_available bool
+  original_unit_mat_cost decimal // same as production
+}
+
+Enum transaction_types{
+  paid
+  recieved
+}
+
+Table storage {
+  // we need a formula to calculate finished_goods_inventory
+  id integer [pk]
+  product_id integer [ref: > products.id]
+  count integer
+  transaction_type transaction_types
+  quarter integer
+  finished_goods_inventory integer
+}
+
+
+Table cash_change {
+  id integer [pk]
+  beginning_cash decimal [pk]
+  ending_cash decimal [pk]
+}
+
+
+Table overdrafts {
+  id integer [pk]
+  beginning_over_draft decimal 
+  ending_over_draft decimal
+  quarter integer
+}
+
+
+Table loans {
+  id int [pk]
+  amount decimal
+  issued_quarter integer
+  interest decimal
+  payback_peroid integer
+  total_payback decimal
+  payback_per_quarter decimal
+
+}
+
+Table repayments {
+  repayment_id integer
+  loan_id integer [ref: > loans.id]
+  interest_amount decimal
+  repayment_amount decimal 
+  left decimal
+  quarter integer
+
+  indexes {
+    (repayment_id, loan_id) [pk]
+  }
+}
+
+
+Table state_variables {
+  esg_index integer
+  fixed_interest integer
+  current_quarter integer
+  simulation_duration integer
+  max_loan_repayment integer
+}
+
+Table ripple_tasks {
+  id integer [pk]
+  quarter integer
+  type varchar
+}
+
+
+Table recurring_actions {
+  id integer [pk]
+  quarter integer 
+  type integer
+}
