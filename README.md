@@ -23,14 +23,21 @@ touch .env
 ```sh
 cd hubro_back
 ```
+6. If using NeonDB, set `CONN_MAX_AGE` to 0 in settings.py. 
+NeonDB, due to its serverless nature, shuts down old connections. By setting 
+CONN_MAX_AGE to 0 we tell django to close database connection after each request
+to prevent using old connections closed by NeonDB.
+```py
+CONN_MAX_AGE = 0
+```
 
-6. Make migrations and migrate
+1. Make migrations and migrate
 ```sh
 python manage.py makemigrations && \
 python manage.py migrate
 ```
 
-7. Run the server
+1. Run the server
 ```sh
 python manage.py runserver
 ````

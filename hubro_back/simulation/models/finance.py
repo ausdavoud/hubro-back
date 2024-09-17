@@ -1,44 +1,63 @@
 from django.db import models
 
-from hubro_back.simulation.models.users import Player
+from .people import Player
 
 
 class Overdraft(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    beginning_overdraft = models.DecimalField(max_digits=15, decimal_places=2)
-    ending_overdraft = models.DecimalField(max_digits=15, decimal_places=2)
+    beginning_overdraft = models.DecimalField(max_digits=15)
+    ending_overdraft = models.DecimalField(max_digits=15)
     quarter = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Player {self.player_id} Quarter {self.quarter}"
 
 
 class CashChange(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    beginning_cash = models.DecimalField(max_digits=15, decimal_places=2)
-    ending_cash = models.DecimalField(max_digits=15, decimal_places=2)
-    
+    beginning_cash = models.DecimalField(max_digits=15)
+    ending_cash = models.DecimalField(max_digits=15)
+    quarter = models.IntegerField()
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Player {self.player_id.user.username} Quarter {self.quarter}"
+
 
 class Loan(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    amount = models.DecimalField(max_digits=15)
     issued_quarter = models.IntegerField()
     interest = models.DecimalField(max_digits=5, decimal_places=2)
     payback_period = models.IntegerField()
-    total_payback = models.DecimalField(max_digits=15, decimal_places=2)
-    payback_per_quarter = models.DecimalField(max_digits=15, decimal_places=2)
+    total_payback = models.DecimalField(max_digits=15)
+    payback_per_quarter = models.DecimalField(max_digits=15)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"${self.amount} by {self.player_id}"
+
 
 class Repayment(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
     loan_id = models.ForeignKey(Loan, on_delete=models.CASCADE)
-    interest_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    left = models.DecimalField(max_digits=15, decimal_places=2)
+    interest_amount = models.DecimalField(max_digits=15)
+    repayment_amount = models.DecimalField(max_digits=15)
+    left = models.DecimalField(max_digits=15)
     quarter = models.IntegerField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"${self.loan_id.payback_per_quarter} by {self.player_id.user.username}"
 
 
 class StateVariable(models.Model):
@@ -55,11 +74,20 @@ class StateVariable(models.Model):
 class RecurringAction(models.Model):
     quarter = models.IntegerField()
     type = models.CharField(max_length=100)
-    
-    pass
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.type
+
 
 class RippleTask(models.Model):
     quarter = models.IntegerField()
     type = models.CharField(max_length=100)
 
-    pass
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.type

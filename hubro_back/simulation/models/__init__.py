@@ -1,3 +1,3 @@
-from .users import User
+from .people import CustomUser
 
-__all__ = ['User']
+__all__ = ['CustomUser']

@@ -4,35 +4,51 @@ Enum UserRole {
   null
 }
 
-Table User {
+Table CustomUser {
   id integer [pk]
   username varchar
   password varchar
   email varchar
 
   role UserRole
+
+  created_at date
+  updated_at date
 }
 
 Table Instructor {
   id integer [pk]
-  user integer [ref: - User.id] 
+  user integer [ref: - CustomUser.id] 
+
+  created_at date
+  updated_at date
 }
 
 Table SimulationClass{
   id integer [pk]
   instructor integer [ref: > Instructor.id]
+
+  created_at date
+  updated_at date
 }
 
 Table Team {
   id integer [pk]
+  name varchar(20)
   sim_class integer [ref: > SimulationClass.id]
-}
-Table Player {
-  id integer [pk]
-  user integer [ref: - User.id]
-  team integer [ref: > Team.id]
+
+  created_at date
+  updated_at date
 }
 
+Table Player {
+  id integer [pk]
+  user integer [ref: - CustomUser.id]
+  team integer [ref: > Team.id]
+
+  created_at date
+  updated_at date
+}
 
 Enum contract_status {
   fulfilled
@@ -41,24 +57,30 @@ Enum contract_status {
 }
 
 
-Table contracts {
+Table Contract {
+  id integer [pk]
+  player_id integer [ref: > Player.id]
   closure_quarter integer
   payment_quarter integer
   quantity integer
-  unit_price decimal
-  total_price decimal
-  deliverable_product integer [ref: > products.id]
+  unit_price decimal(15)
+  total_price decimal(15)
+  deliverable_product integer [ref: > Product.id]
   status contract_status
 }
 
 
-Table products {
+Table Product {
   id integer [pk]
-  research_project_id integer [ref: - RandD.id]
-  original_unit_mat_cost deicmal
-  calculated_unit_mat_cost decimal
-  alias varchar
-  icon varchar
+  player_id integer [ref: > Player.id]
+  research_project_id integer [ref: - RnD.id]
+  original_unit_mat_cost decimal(15)
+  calculated_unit_mat_cost decimal(15)
+  alias varchar(50)
+  icon varchar(300)
+
+  created_at date
+  updated_at date
 }
 
 Enum factory_status {
@@ -66,45 +88,53 @@ Enum factory_status {
   rented
 }
 
-Table factories {
+Table Factory {
   id integer [pk]
+  player_id integer [ref: > Player.id]
   ownershop factory_status
   quarterly_output integer
-  outsourcing_fee_per_unit decimal
-  labor_cost_per_unit decimal
-  maintenance_cost decimal
-  fixed_cost decimal
-  resale_value_percent decimal
-  build_cost decimal
+  outsourcing_fee_per_unit decimal(15)
+  labor_cost_per_unit decimal(15)
+  maintenance_cost decimal(15)
+  fixed_cost decimal(15)
+  resale_value_percent decimal(15, 2)
+  build_cost decimal(15)
   workers integer
-  hours decimal
-  wage decimal(6,3)
-  emission_t_unit decimal
+  hours decimal(5, 2)
+  wage decimal(5, 2)
+  emission_t_unit decimal(5, 2)
   depreciation_time integer
   build_time integer
   base integer
+
+  created_at date
+  updated_at date
 }
 
 Table production {
   id integer [pk]
-  product_id integer [ref: - products.id]
-  factory_id integer [ref: - factories.id]
+  player_id integer [ref: > Player.id]
+  product_id integer [ref: - Product.id]
+  factory_id integer [ref: - Factory.id]
   quarter integer
-  activity_level decimal
-  activity_factor decimal
-  produced_quantity decimal
-  labor_cost decimal
+  activity_level decimal(5, 2)
+  activity_factor decimal(5, 2)
+  produced_quantity integer
+  labor_cost decimal(15)
+
+  created_at date
+  updated_at date
 }
 
 
-Enum RandDTypes {
+Enum RnDTypes {
   product
   upgrade
 }
 
-Table RandD {
+Table RnD {
   id integer [pk]
-  type RandDTypes
+  type RnDTypes
   unit_mat_cost_effect decimal
   title varchar
   product integer
@@ -112,6 +142,9 @@ Table RandD {
   depreciation_time integer
   is_available bool
   original_unit_mat_cost decimal // same as production
+
+  created_at date
+  updated_at date
 }
 
 Enum transaction_types{
@@ -119,53 +152,72 @@ Enum transaction_types{
   recieved
 }
 
-Table storage {
-  // we need a formula to calculate finished_goods_inventory
+Table Storage {
   id integer [pk]
-  product_id integer [ref: > products.id]
+  player_id integer [ref: > Player.id]
+  product_id integer [ref: > Product.id]
   count integer
   transaction_type transaction_types
   quarter integer
   finished_goods_inventory integer
+
+  created_at date
+  updated_at date
 }
 
 
-Table cash_change {
+Table CashChange {
   id integer [pk]
-  beginning_cash decimal [pk]
-  ending_cash decimal [pk]
-}
-
-
-Table overdrafts {
-  id integer [pk]
-  beginning_over_draft decimal 
-  ending_over_draft decimal
+  player_id integer [ref: > Player.id]
+  beginning_cash decimal(15)
+  ending_cash decimal(15)
   quarter integer
+
+  created_at date
+  updated_at date
 }
 
 
-Table loans {
+Table Overdraft {
+  id integer [pk]
+  player_id integer [ref: > Player.id]
+  beginning_over_draft decimal(15)
+  ending_over_draft decimal(15)
+  quarter integer
+
+  created_at date
+  updated_at date
+}
+
+
+Table Loan {
   id int [pk]
-  amount decimal
+  player_id integer [ref: > Player.id]
+  amount decimal(15)
   issued_quarter integer
-  interest decimal
+  interest decimal(5, 2)
   payback_peroid integer
-  total_payback decimal
-  payback_per_quarter decimal
+  total_payback decimal(15)
+  payback_per_quarter decimal(15)
 
+  created_at date
+  updated_at date
 }
 
-Table repayments {
-  repayment_id integer
-  loan_id integer [ref: > loans.id]
-  interest_amount decimal
-  repayment_amount decimal 
-  left decimal
+Table repayment {
+  id integer
+  player_id integer [ref: > Player.id]
+  loan_id integer [ref: > Loan.id]
+  interest_amount decimal(15)
+  repayment_amount decimal(15) 
+  left decimal(15)
   quarter integer
+
+  created_at date
+  updated_at date
 
   indexes {
-    (repayment_id, loan_id) [pk]
+    (id, loan_id) [pk]
   }
 }
 
@@ -176,17 +228,26 @@ Table state_variables {
   current_quarter integer
   simulation_duration integer
   max_loan_repayment integer
+
+  created_at date
+  updated_at date
 }
 
-Table ripple_tasks {
+Table ripple_task {
   id integer [pk]
   quarter integer
   type varchar
+
+  created_at date
+  updated_at date
 }
 
 
-Table recurring_actions {
+Table recurring_action {
   id integer [pk]
   quarter integer 
   type integer
+
+  created_at date
+  updated_at date
 }
