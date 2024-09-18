@@ -31,13 +31,21 @@ to prevent using old connections closed by NeonDB.
 CONN_MAX_AGE = 0
 ```
 
-1. Make migrations and migrate
+7. Make migrations and migrate
 ```sh
 python manage.py makemigrations && \
 python manage.py migrate
 ```
 
-1. Run the server
+8. Change cors headers urls in settings.py to the path url is running on
+``` 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    # Your paths here...
+]
+```
+9.  Run the server
 ```sh
 python manage.py runserver
 ````

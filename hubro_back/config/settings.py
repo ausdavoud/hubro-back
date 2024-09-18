@@ -44,9 +44,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # apps
     "simulation.apps.SimulationConfig",
+    # cors
+    "corsheaders",
+    # rest
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
+    # cors
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    ## django
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -81,16 +89,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": getenv("PGDATABASE"),
+    #     "USER": getenv("PGUSER"),
+    #     "PASSWORD": getenv("PGPASSWORD"),
+    #     "HOST": getenv("PGHOST"),
+    #     "PORT": getenv("PORT", 5432),
+    #     "OPTIONS": {
+    #         "sslmode": "require",
+    #     },
+    # }
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": getenv("PGDATABASE"),
-        "USER": getenv("PGUSER"),
-        "PASSWORD": getenv("PGPASSWORD"),
-        "HOST": getenv("PGHOST"),
-        "PORT": getenv("PORT", 5432),
-        "OPTIONS": {
-            "sslmode": "require",
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -142,3 +154,21 @@ AUTH_USER_MODEL = "simulation.CustomUser"
 
 # Neon DB
 CONN_MAX_AGE = 0
+
+# Cors
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+
+CORS_ALLOWED_CREDENTIALS = True
+
+# Rest Framework
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+}
