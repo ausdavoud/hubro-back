@@ -1,13 +1,12 @@
-
 from django.contrib import admin
-from django.urls import path
-
-from hubro_back.simulation.views import UserLogin, UserLogout, UserRegister, UserView
+from django.urls import path, include
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django_channels_jwt.views import AsgiValidateTokenView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("register/", UserRegister.as_view(), name="register"),
-    path("login/", UserLogin.as_view(), name="login"),
-    path("logout/", UserLogout.as_view(), name="logout"),
-    path('user/', UserView.as_view(), name='user'),
+    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("chat/", include("simulation.urls")),
+    path("auth_for_ws_connection/", AsgiValidateTokenView.as_view()),
 ]

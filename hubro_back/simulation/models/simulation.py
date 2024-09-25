@@ -1,6 +1,6 @@
 from django.db import models
 
-from hubro_back.simulation.models.people import Player
+from .people import Player
 
 
 class Factory(models.Model):
@@ -11,14 +11,14 @@ class Factory(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
     ownership = models.CharField(max_length=2, choices=OwnershipType.choices)
     quarterly_output = models.IntegerField()
-    outsourcing_fee_per_unit = models.DecimalField(max_digits=15)
-    labor_cost_per_unit = models.DecimalField(max_digits=15)
-    maintenance_cost = models.DecimalField(max_digits=15)
-    fixed_cost = models.DecimalField(max_digits=15)
+    outsourcing_fee_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
+    labor_cost_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
+    maintenance_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    fixed_cost = models.DecimalField(max_digits=15, decimal_places=0)
     resale_value_percent = models.DecimalField(max_digits=5, decimal_places=2)
-    build_cost = models.DecimalField(max_digits=15)
+    build_cost = models.DecimalField(max_digits=15, decimal_places=0)
     workers = models.IntegerField()
-    hours = models.DecimalField(max_digits=15)
+    hours = models.DecimalField(max_digits=15, decimal_places=0)
     wage = models.DecimalField(max_digits=5, decimal_places=2)
     emission_t_unit = models.DecimalField(max_digits=5, decimal_places=2)
     depreciation_time = models.IntegerField()
@@ -41,11 +41,11 @@ class RnD(models.Model):
     type = models.CharField(max_length=2, choices=RnDTypes.choices)
     unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2)
     title = models.CharField(max_length=50)
-    product = models.IntegerField(blank=True, null=True)
-    price = models.DecimalField(max_digits=15)
+    updated_product = models.IntegerField(blank=True, null=True)
+    price = models.DecimalField(max_digits=15, decimal_places=0)
     depreciation_time = models.IntegerField()
     is_available = models.BooleanField()
-    origin_unit_mat_cost = models.DecimalField(max_digits=15)
+    origin_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -57,8 +57,8 @@ class RnD(models.Model):
 class Product(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
     research_project_id = models.ForeignKey(RnD, on_delete=models.CASCADE)
-    original_unit_mat_cost = models.DecimalField(max_digits=15)
-    calculated_unit_mat_cost = models.DecimalField(max_digits=15)
+    original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    calculated_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
     alias = models.CharField(max_length=50)
     icon = models.CharField(max_length=300)
 
@@ -77,13 +77,14 @@ class Production(models.Model):
     activity_level = models.DecimalField(max_digits=5, decimal_places=2)
     activity_factor = models.DecimalField(max_digits=5, decimal_places=2)
     produced_quantity = models.IntegerField()
-    labor_cost = models.DecimalField(max_digits=15)
+    labor_cost = models.DecimalField(max_digits=15, decimal_places=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.product_id.alias} by {self.player_id.user.username} "
+
 
 class Contract(models.Model):
     class ContractStatus(models.TextChoices):
@@ -95,8 +96,8 @@ class Contract(models.Model):
     closure_quarter = models.IntegerField()
     payment_quarter = models.IntegerField()
     quantity = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=15)
-    total_price = models.DecimalField(max_digits=15)
+    unit_price = models.DecimalField(max_digits=15, decimal_places=0)
+    total_price = models.DecimalField(max_digits=15, decimal_places=0)
     deliverable_product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
     status = models.CharField(max_length=2, choices=ContractStatus.choices)
 
@@ -121,7 +122,6 @@ class Storage(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
 
     def __str__(self):
         return f"{self.count} {self.product_id.alias} by {self.player_id.user.username}"

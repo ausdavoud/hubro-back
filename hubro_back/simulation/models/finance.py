@@ -5,8 +5,8 @@ from .people import Player
 
 class Overdraft(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    beginning_overdraft = models.DecimalField(max_digits=15)
-    ending_overdraft = models.DecimalField(max_digits=15)
+    beginning_overdraft = models.DecimalField(max_digits=15, decimal_places=0)
+    ending_overdraft = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,8 +18,8 @@ class Overdraft(models.Model):
 
 class CashChange(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    beginning_cash = models.DecimalField(max_digits=15)
-    ending_cash = models.DecimalField(max_digits=15)
+    beginning_cash = models.DecimalField(max_digits=15, decimal_places=0)
+    ending_cash = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -31,12 +31,12 @@ class CashChange(models.Model):
 
 class Loan(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=15)
+    amount = models.DecimalField(max_digits=15, decimal_places=0)
     issued_quarter = models.IntegerField()
     interest = models.DecimalField(max_digits=5, decimal_places=2)
     payback_period = models.IntegerField()
-    total_payback = models.DecimalField(max_digits=15)
-    payback_per_quarter = models.DecimalField(max_digits=15)
+    total_payback = models.DecimalField(max_digits=15, decimal_places=0)
+    payback_per_quarter = models.DecimalField(max_digits=15, decimal_places=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -48,9 +48,9 @@ class Loan(models.Model):
 class Repayment(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
     loan_id = models.ForeignKey(Loan, on_delete=models.CASCADE)
-    interest_amount = models.DecimalField(max_digits=15)
-    repayment_amount = models.DecimalField(max_digits=15)
-    left = models.DecimalField(max_digits=15)
+    interest_amount = models.DecimalField(max_digits=15, decimal_places=0)
+    repayment_amount = models.DecimalField(max_digits=15, decimal_places=0)
+    left = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)

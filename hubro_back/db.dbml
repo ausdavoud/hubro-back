@@ -111,7 +111,7 @@ Table Factory {
   updated_at date
 }
 
-Table production {
+Table Production {
   id integer [pk]
   player_id integer [ref: > Player.id]
   product_id integer [ref: - Product.id]
@@ -137,7 +137,7 @@ Table RnD {
   type RnDTypes
   unit_mat_cost_effect decimal
   title varchar
-  product integer
+  updated_product integer
   price decimal
   depreciation_time integer
   is_available bool
@@ -204,7 +204,7 @@ Table Loan {
   updated_at date
 }
 
-Table repayment {
+Table Repayment {
   id integer
   player_id integer [ref: > Player.id]
   loan_id integer [ref: > Loan.id]
@@ -222,7 +222,7 @@ Table repayment {
 }
 
 
-Table state_variables {
+Table StateVariables {
   esg_index integer
   fixed_interest integer
   current_quarter integer
@@ -233,7 +233,7 @@ Table state_variables {
   updated_at date
 }
 
-Table ripple_task {
+Table RippleTask {
   id integer [pk]
   quarter integer
   type varchar
@@ -243,7 +243,7 @@ Table ripple_task {
 }
 
 
-Table recurring_action {
+Table RecurringAction {
   id integer [pk]
   quarter integer 
   type integer

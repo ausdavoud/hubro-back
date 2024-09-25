@@ -9,7 +9,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError("The Email must be set")
         if not password:
             raise ValueError("Password is required")
-        
+
         email = self.normalize_email(email)
         user = self.model(email=email, **kwargs)
         user.set_password(password)
@@ -26,7 +26,7 @@ class CustomUserManager(BaseUserManager):
         if kwargs.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
         return self.create_user(email, password, **kwargs)
-    
+
 
 class CustomUser(AbstractUser):
     class UserRole(models.TextChoices):
@@ -58,13 +58,15 @@ class CustomUser(AbstractUser):
 
 
 class Instructor(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="instructor"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user.username
+        return self.user.email
 
 
 class SimulationClass(models.Model):
@@ -78,7 +80,7 @@ class SimulationClass(models.Model):
         verbose_name_plural = "SimulationClasses"
 
     def __str__(self):
-        return f"{self.name} supervised by {self.Instructor}"
+        return f"{self.name} supervised by {self.instructor}"
 
 
 class Team(models.Model):
@@ -93,11 +95,15 @@ class Team(models.Model):
 
 
 class Player(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="player"
+    )
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, blank=True, null=True, related_name="players"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user.username
+        return self.user.email
