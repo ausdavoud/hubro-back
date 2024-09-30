@@ -1,4 +1,6 @@
 Backend for Hubro (Django 5 / Postgresql 16)
+
+Backend
 ===
 This project uses `uv` as its package manager. Refer to [this link](https://docs.astral.sh/uv/getting-started/installation/#installation-methods) to install uv.
 
@@ -49,3 +51,28 @@ CORS_ALLOWED_ORIGINS = [
 ```sh
 python manage.py runserver
 ````
+
+Frontend Notes
+===
+This projects uses JWT authentication.
+## Login (Getting `access token` and `refresh token`)
+**url**: `http://localhost:8000/token/`
+**body**:
+```js
+{
+    email: "d@g.com",
+    password: "12345678"
+}
+```
+
+## Refresh token
+**url**: `http://localhost:8000/token/refresh`
+**body**: 
+```js
+{
+    refresh: "your refresh token"
+}
+```
+
+
+## uuid for ws_connection
