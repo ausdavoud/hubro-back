@@ -4,12 +4,12 @@ from .people import Player
 
 
 class Factory(models.Model):
-    class OwnershipType(models.TextChoices):
+    class OwnershipTypes(models.TextChoices):
         OWNED = "OW", "Owned"
         RENTED = "RN", "Rented"
 
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    ownership = models.CharField(max_length=2, choices=OwnershipType.choices)
+    ownership = models.CharField(max_length=2, choices=OwnershipTypes.choices)
     quarterly_output = models.IntegerField()
     outsourcing_fee_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
     labor_cost_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
@@ -29,49 +29,58 @@ class Factory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.ownership} by {self.player_id.user.username}"
+        return f"{self.ownership} by {self.player_id.user_id.username}"
 
 
-class RnD(models.Model):
+class RnDStatic(models.Model):
     class RnDTypes(models.TextChoices):
         PRODUCT = "PR", "Product"
         UPGRADE = "UP", "UPGRADE"
 
-    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
     type = models.CharField(max_length=2, choices=RnDTypes.choices)
-    unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2)
     title = models.CharField(max_length=50)
-    updated_product = models.IntegerField(blank=True, null=True)
     price = models.DecimalField(max_digits=15, decimal_places=0)
     depreciation_time = models.IntegerField()
-    is_available = models.BooleanField()
     origin_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    development_duration = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.title} by {self.player_id.user.username}"
+        return self.title
 
 
-class Product(models.Model):
-    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    research_project_id = models.ForeignKey(RnD, on_delete=models.CASCADE)
-    original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
-    calculated_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
-    alias = models.CharField(max_length=50)
-    icon = models.CharField(max_length=300)
+class RnDProduct(models.Model):
+    static_id = models.ForeignKey(RnDStatic, on_delete=models.CASCADE)
+    started_at = models.IntegerField()
+    time_spent_developing = models.IntegerField()
+    alias = models.CharField(max_length=100)
+    icon_link = models.CharField(max_length=300)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.alias} by {self.player_id.user.username}"
+    def is_unlocked(self):
+        return self.time_spent_developing == self.static_id.development_duration
+
+
+class RnDUpgrade(models.Model):
+    static_id = models.ForeignKey(RnDStatic, on_delete=models.CASCADE)
+    started_at = models.IntegerField()
+    time_spent_developing = models.IntegerField()
+    updated_product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def is_unlocked(self):
+        return self.time_spent_developing == self.static_id.development_duration
 
 
 class Production(models.Model):
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
     factory_id = models.ForeignKey(Factory, on_delete=models.CASCADE)
     quarter = models.IntegerField()
     activity_level = models.DecimalField(max_digits=5, decimal_places=2)
@@ -83,13 +92,13 @@ class Production(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.product_id.alias} by {self.player_id.user.username} "
+        return f"{self.product_id.alias} by {self.player_id.user_id.username} "
 
 
 class Contract(models.Model):
-    class ContractStatus(models.TextChoices):
+    class ContractStatuses(models.TextChoices):
         FULFILLED = "FF", "Fulfilled"
-        WAITING = "WT", "Waiting"
+        WAITING = "WG", "Waiting"
         EXPIRED = "EX", "Expired"
 
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -98,25 +107,25 @@ class Contract(models.Model):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=15, decimal_places=0)
     total_price = models.DecimalField(max_digits=15, decimal_places=0)
-    deliverable_product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
-    status = models.CharField(max_length=2, choices=ContractStatus.choices)
+    deliverable_product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+    status = models.CharField(max_length=2, choices=ContractStatuses.choices)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.total_price} at {self.closure_quarter} by {self.player_id.user.username}"
+        return f"{self.total_price} at {self.closure_quarter} by {self.player_id.user_id.username}"
 
 
 class Storage(models.Model):
-    class TransactionType(models.TextChoices):
+    class TransactionTypes(models.TextChoices):
         PAID = "PD", "Paid"
         RECEIVED = "RC", "Received"
 
     player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
     count = models.IntegerField()
-    transaction_type = models.CharField(max_length=2, choices=TransactionType.choices)
+    transaction_type = models.CharField(max_length=2, choices=TransactionTypes.choices)
     quarter = models.IntegerField()
     finished_good_inventory = models.IntegerField()
 
@@ -124,4 +133,6 @@ class Storage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.count} {self.product_id.alias} by {self.player_id.user.username}"
+        return (
+            f"{self.count} {self.product_id.alias} by {self.player_id.user_id.username}"
+        )

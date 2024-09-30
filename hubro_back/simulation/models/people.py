@@ -29,14 +29,14 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser):
-    class UserRole(models.TextChoices):
+    class UserRoles(models.TextChoices):
         PLAYER = "PL", "Player"
         INSTRUCTOR = "IN", "Instructor"
 
     username = None
     email = models.EmailField(max_length=100, unique=True)
     role = models.CharField(
-        max_length=2, choices=UserRole.choices, blank=True, null=True
+        max_length=2, choices=UserRoles.choices, blank=True, null=True
     )
 
     objects = CustomUserManager()
@@ -49,16 +49,16 @@ class CustomUser(AbstractUser):
 
     def save(self, *args, **kwargs):
         if self.role == "PL":
-            player = Player(user=self)
+            player = Player(user_id=self)
             player.save()
         elif self.role == "IN":
-            instructor = Instructor(user=self)
+            instructor = Instructor(user_id=self)
             instructor.save()
         super(CustomUser, self).save(*args, **kwargs)
 
 
 class Instructor(models.Model):
-    user = models.OneToOneField(
+    user_id = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="instructor"
     )
 
@@ -66,12 +66,12 @@ class Instructor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user.email
+        return self.user_id.email
 
 
 class SimulationClass(models.Model):
     name = models.CharField(max_length=50)
-    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
+    instructor_id = models.ForeignKey(Instructor, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -80,12 +80,12 @@ class SimulationClass(models.Model):
         verbose_name_plural = "SimulationClasses"
 
     def __str__(self):
-        return f"{self.name} supervised by {self.instructor}"
+        return f"{self.name} supervised by {self.instructor_id}"
 
 
 class Team(models.Model):
     name = models.CharField(max_length=50)
-    sim_class = models.ForeignKey(SimulationClass, on_delete=models.CASCADE)
+    simulation_class_id = models.ForeignKey(SimulationClass, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -95,10 +95,10 @@ class Team(models.Model):
 
 
 class Player(models.Model):
-    user = models.OneToOneField(
+    user_id = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="player"
     )
-    team = models.ForeignKey(
+    team_id = models.ForeignKey(
         Team, on_delete=models.CASCADE, blank=True, null=True, related_name="players"
     )
 
@@ -106,4 +106,4 @@ class Player(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user.email
+        return self.user_id.email

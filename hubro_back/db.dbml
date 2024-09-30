@@ -1,96 +1,84 @@
-Enum UserRole {
+Enum user_roles {
   Player
   Instructor
   null
 }
 
-Table CustomUser {
+Table custome_users {
   id integer [pk]
   username varchar
   password varchar
   email varchar
 
-  role UserRole
+  role user_roles
 
   created_at date
   updated_at date
 }
 
-Table Instructor {
+Table instructors {
   id integer [pk]
-  user integer [ref: - CustomUser.id] 
+  user_id integer [ref: - custome_users.id] 
 
   created_at date
   updated_at date
 }
 
-Table SimulationClass{
+Table simulation_classes {
   id integer [pk]
-  instructor integer [ref: > Instructor.id]
+  name varchar(50)
+  instructor_id integer [ref: > instructors.id]
 
   created_at date
   updated_at date
 }
 
-Table Team {
+Table teams {
   id integer [pk]
   name varchar(20)
-  sim_class integer [ref: > SimulationClass.id]
+  simulation_class_id integer [ref: > simulation_classes.id]
 
   created_at date
   updated_at date
 }
 
-Table Player {
+Table players {
   id integer [pk]
-  user integer [ref: - CustomUser.id]
-  team integer [ref: > Team.id]
+  user_id integer [ref: - custome_users.id]
+  team_id integer [ref: > teams.id]
 
   created_at date
   updated_at date
 }
 
-Enum contract_status {
+Enum contract_statuses {
   fulfilled
   waiting
   expired 
 }
 
 
-Table Contract {
+Table contracts {
   id integer [pk]
-  player_id integer [ref: > Player.id]
+//   player_id integer [ref: > players.id]
   closure_quarter integer
   payment_quarter integer
   quantity integer
   unit_price decimal(15)
   total_price decimal(15)
-  deliverable_product integer [ref: > Product.id]
+  deliverable_product_id integer [ref: > rnd_prodcuts.id]
   status contract_status
 }
 
 
-Table Product {
-  id integer [pk]
-  player_id integer [ref: > Player.id]
-  research_project_id integer [ref: - RnD.id]
-  original_unit_mat_cost decimal(15)
-  calculated_unit_mat_cost decimal(15)
-  alias varchar(50)
-  icon varchar(300)
-
-  created_at date
-  updated_at date
-}
-
-Enum factory_status {
+Enum factory_statuses {
   owned
   rented
 }
 
-Table Factory {
+Table factories {
   id integer [pk]
-  player_id integer [ref: > Player.id]
+//   player_id integer [ref: > players.id]
   ownershop factory_status
   quarterly_output integer
   outsourcing_fee_per_unit decimal(15)
@@ -111,11 +99,11 @@ Table Factory {
   updated_at date
 }
 
-Table Production {
+Table productions {
   id integer [pk]
-  player_id integer [ref: > Player.id]
-  product_id integer [ref: - Product.id]
-  factory_id integer [ref: - Factory.id]
+//   player_id integer [ref: > players.id]
+  product_id integer [ref: - rnd_prodcuts.id]
+  factory_id integer [ref: - factories.id]
   quarter integer
   activity_level decimal(5, 2)
   activity_factor decimal(5, 2)
@@ -127,35 +115,59 @@ Table Production {
 }
 
 
-Enum RnDTypes {
+Enum rnd_types {
   product
   upgrade
 }
 
-Table RnD {
+Table rnd_statics {
   id integer [pk]
-  type RnDTypes
-  unit_mat_cost_effect decimal
+  type rnd_types
   title varchar
-  updated_product integer
   price decimal
   depreciation_time integer
-  is_available bool
   original_unit_mat_cost decimal // same as production
+  development_duration integer
 
   created_at date
   updated_at date
 }
 
-Enum transaction_types{
+
+Table rnd_prodcuts {
+  id integer [pk]
+//   player_id integer [ref: > players.id]
+  static_id integer [ref: > rnd_statics.id]
+  started_at integer
+  time_spent_developing integer
+  alias varchar(50)
+  icon_link varchar(300)
+
+  created_at date
+  updated_at date
+}
+
+Table rnd_upgrades {
+  id integer [pk]
+//   player_id integer [ref: > players.id]
+  static_id integer
+  started_at integer
+  time_spent_developing integer
+  updated_product_id integer [ref: > rnd_prodcuts.id]
+
+  created_at date
+  updated_at date
+}
+
+Enum transaction_types {
   paid
   recieved
 }
 
-Table Storage {
+Table storage {
   id integer [pk]
-  player_id integer [ref: > Player.id]
-  product_id integer [ref: > Product.id]
+//   player_id integer [ref: > players.id]
+  product_id integer [ref: > rnd_prodcuts.id]
   count integer
   transaction_type transaction_types
   quarter integer
@@ -166,9 +178,9 @@ Table Storage {
 }
 
 
-Table CashChange {
+Table cash_changes {
   id integer [pk]
-  player_id integer [ref: > Player.id]
+//   player_id integer [ref: > players.id]
   beginning_cash decimal(15)
   ending_cash decimal(15)
   quarter integer
@@ -178,9 +190,9 @@ Table CashChange {
 }
 
 
-Table Overdraft {
+Table overdrafts {
   id integer [pk]
-  player_id integer [ref: > Player.id]
+//   player_id integer [ref: > players.id]
   beginning_over_draft decimal(15)
   ending_over_draft decimal(15)
   quarter integer
@@ -190,9 +202,9 @@ Table Overdraft {
 }
 
 
-Table Loan {
+Table loans {
   id int [pk]
-  player_id integer [ref: > Player.id]
+//   player_id integer [ref: > players.id]
   amount decimal(15)
   issued_quarter integer
   interest decimal(5, 2)
@@ -204,10 +216,10 @@ Table Loan {
   updated_at date
 }
 
-Table Repayment {
+Table repayments {
   id integer
-  player_id integer [ref: > Player.id]
-  loan_id integer [ref: > Loan.id]
+//   player_id integer [ref: > players.id]
+  loan_id integer [ref: > loans.id]
   interest_amount decimal(15)
   repayment_amount decimal(15) 
   left decimal(15)
@@ -222,7 +234,7 @@ Table Repayment {
 }
 
 
-Table StateVariables {
+Table state_variables {
   esg_index integer
   fixed_interest integer
   current_quarter integer
@@ -233,7 +245,7 @@ Table StateVariables {
   updated_at date
 }
 
-Table RippleTask {
+Table ripple_tasks {
   id integer [pk]
   quarter integer
   type varchar
@@ -243,11 +255,47 @@ Table RippleTask {
 }
 
 
-Table RecurringAction {
+Table recurring_actions {
   id integer [pk]
   quarter integer 
   type integer
 
   created_at date
   updated_at date
+}
+
+
+Table transactions {
+  id integer [pk]
+  document_id integer
+  quarter integer
+  debit_amount decimal
+  credit_amount decimal
+  financial_account_id integer [ref: > financial_accounts.id]
+}
+
+Enum financial_account_types {
+  depreciation_of_factories
+  factories
+  amortization
+  researched_technology
+  direct_labor
+  direct_raw_materials
+  finished_goods_inventory
+  storage
+  cash
+  current_portion_of_loans_payable
+  interest_expenses
+  maintenance
+  promotion
+  sales
+  overdraft
+  long_term_notes_payable
+  raw_material_inventory
+}
+
+Table financial_accounts {
+  id integer [pk]
+  name financial_account_types
+  type varchar
 }
