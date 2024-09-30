@@ -3,6 +3,7 @@ from django.db import models
 from .people import Player
 import uuid
 
+
 class FinancialAccount(models.Model):
     class AccountNames(models.TextChoices):
         DEPRECIATION_OF_FACTORIES = "6030", "Depreciation of factories"
@@ -14,7 +15,10 @@ class FinancialAccount(models.Model):
         FINISHED_GOODS_INVENTORY = "1720", "Finished goods inventory"
         STORAGE = "storage", "Storage"
         CASH = "1910", "Cash"
-        CURRENT_PORTION_OF_LOANS_PAYABLE = "current_portion_of_loans_payable", "Current portion of loans payable"
+        CURRENT_PORTION_OF_LOANS_PAYABLE = (
+            "current_portion_of_loans_payable",
+            "Current portion of loans payable",
+        )
         INTEREST_EXPENSES = "interest_expenses", "Interest expenses"
         MAINTENANCE = "5420", "Maintenance"
         PROMOTION = "5360", "Promotion"
@@ -25,10 +29,11 @@ class FinancialAccount(models.Model):
 
     class AccountTypes(models.TextChoices):
         DEBIT = "DE", "Debit"
-        CREDIT = "CR", "Credit" 
+        CREDIT = "CR", "Credit"
 
     name = models.CharField(max_length=50, choices=AccountNames.choices)
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
+
 
 class Transaction(models.Model):
     class TransactionTypes(models.TextChoices):

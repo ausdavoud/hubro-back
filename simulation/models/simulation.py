@@ -37,12 +37,23 @@ class RnDStatic(models.Model):
         PRODUCT = "PR", "Product"
         UPGRADE = "UP", "UPGRADE"
 
+    class ProductKeys(models.TextChoices):
+        BASIC = "basic", "Basic jetpack"
+        SPORTY = "sporty", "Sporty jetpack"
+        SAFE = "safe", "Safe jetpack"
+        GREEN = "green", "Green jetpack"
+        PRODUCTION = 'production', 'Production'
+
     type = models.CharField(max_length=2, choices=RnDTypes.choices)
     title = models.CharField(max_length=50)
-    price = models.DecimalField(max_digits=15, decimal_places=0)
-    depreciation_time = models.IntegerField()
-    origin_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    product_key = models.CharField(max_length=20, choices=ProductKeys.choices, blank=True, null=True)
+    development_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    depreciation_time = models.IntegerField(null=True, blank=True)
+    origin_unit_mat_cost = models.DecimalField(
+        max_digits=15, decimal_places=0, null=True, blank=True
+    )
     development_duration = models.IntegerField()
+    description = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -66,10 +77,14 @@ class RnDProduct(models.Model):
 
 
 class RnDUpgrade(models.Model):
-    static_id = models.ForeignKey(RnDStatic, on_delete=models.CASCADE)
+    static_id = models.ForeignKey(
+        RnDStatic, on_delete=models.CASCADE, related_name="static"
+    )
     started_at = models.IntegerField()
     time_spent_developing = models.IntegerField()
     updated_product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+    unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2)
+    production_emission_effect = models.DecimalField(max_digits=5, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
