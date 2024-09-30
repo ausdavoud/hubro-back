@@ -1,10 +1,11 @@
-type productKeyType = "basic" | "sporty" | "green" | "safe";
+type productKeyType = "basic" | "sporty" | "green" | "safe" | "production";
 
 type RnDProjectType = {
   title: string;
   developmentCost: number;
   developmentDuration: number;
   isUnlocked: boolean;
+  key: productKeyType;
 };
 
 type UpgradeType = RnDProjectType & {
@@ -14,7 +15,6 @@ type UpgradeType = RnDProjectType & {
 
 type ProductType = RnDProjectType & {
   originalMatCost: number;
-  key: productKeyType;
   timeSpent: number;
 };
 
