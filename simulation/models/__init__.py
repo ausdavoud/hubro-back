@@ -1,3 +1,3 @@
-from .people import CustomUser
+from . import finance, people, simulation
 
-__all__ = ["CustomUser"]
+__all__ = ["people", "finance", "simulation"]
