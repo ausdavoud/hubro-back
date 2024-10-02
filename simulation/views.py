@@ -1,12 +1,14 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
+from django.core.exceptions import ValidationError
+from django.shortcuts import render
 from rest_framework import permissions, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.exceptions import ValidationError
-from rest_framework.request import Request
-from django.shortcuts import render
-from .serializers import UserSerializer, UserRegisterSerializer
-from django.contrib.auth import authenticate
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from .serializers import UserRegisterSerializer
 
 UserModel = get_user_model()
 
@@ -49,3 +51,30 @@ def index(request):
 
 def room(request, room_name: str):
     return render(request, "chat/room.html", {"room_name": room_name})
+
+
+class RnDAPIView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+
+    def get(self, request: Request):
+        pass
+        # static objects
+
+        # product objects
+
+        # upgrade objects
+
+    def post(self, request: Request):
+        pass
+        # is it product or upgrade
+
+        # product creation
+
+        # upgrade creation: has updated_product_id or not?
+
+        # create ripple task to increment development time by 1

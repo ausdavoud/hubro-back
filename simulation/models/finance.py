@@ -3,6 +3,7 @@ from django.db import models
 from .people import Player
 import uuid
 
+
 class FinancialAccount(models.Model):
     class AccountNames(models.TextChoices):
         DEPRECIATION_OF_FACTORIES = "6030", "Depreciation of factories"
@@ -14,7 +15,10 @@ class FinancialAccount(models.Model):
         FINISHED_GOODS_INVENTORY = "1720", "Finished goods inventory"
         STORAGE = "storage", "Storage"
         CASH = "1910", "Cash"
-        CURRENT_PORTION_OF_LOANS_PAYABLE = "current_portion_of_loans_payable", "Current portion of loans payable"
+        CURRENT_PORTION_OF_LOANS_PAYABLE = (
+            "current_portion_of_loans_payable",
+            "Current portion of loans payable",
+        )
         INTEREST_EXPENSES = "interest_expenses", "Interest expenses"
         MAINTENANCE = "5420", "Maintenance"
         PROMOTION = "5360", "Promotion"
@@ -25,10 +29,14 @@ class FinancialAccount(models.Model):
 
     class AccountTypes(models.TextChoices):
         DEBIT = "DE", "Debit"
-        CREDIT = "CR", "Credit" 
+        CREDIT = "CR", "Credit"
 
     name = models.CharField(max_length=50, choices=AccountNames.choices)
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
+
+    def __str__(self):
+        return f"({self.type}) ({self.name}) {self.get_name_display()}"
+
 
 class Transaction(models.Model):
     class TransactionTypes(models.TextChoices):
@@ -40,6 +48,9 @@ class Transaction(models.Model):
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)
     credit_amount = models.DecimalField(max_digits=15, decimal_places=0)
     financial_account_id = models.ForeignKey(FinancialAccount, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Credit: {self.credit_amount}, Debit: {self.debit_amount} - {self.financial_account_id.name}"
 
 
 class Overdraft(models.Model):
@@ -103,7 +114,7 @@ class Repayment(models.Model):
 
 class StateVariable(models.Model):
     esg_index = models.IntegerField()
-    fixed_interest = models.DecimalField()
+    fixed_interest = models.DecimalField(max_digits=5, decimal_places=2)
     current_quarter = models.IntegerField()
     simulation_duration = models.IntegerField()
     max_loan_repayment = models.IntegerField()
