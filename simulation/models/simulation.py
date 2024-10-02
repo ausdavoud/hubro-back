@@ -49,7 +49,7 @@ class RnDStatic(models.Model):
     product_key = models.CharField(max_length=20, choices=ProductKeys.choices, blank=True, null=True)
     development_cost = models.DecimalField(max_digits=15, decimal_places=0)
     depreciation_time = models.IntegerField(null=True, blank=True)
-    origin_unit_mat_cost = models.DecimalField(
+    original_unit_mat_cost = models.DecimalField(
         max_digits=15, decimal_places=0, null=True, blank=True
     )
     development_duration = models.IntegerField()
@@ -59,7 +59,7 @@ class RnDStatic(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.id} - {self.title}"
 
 
 class RnDProduct(models.Model):
