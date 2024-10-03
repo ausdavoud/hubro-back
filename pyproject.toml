@@ -23,3 +23,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["hubro_back"]
+
+[tool.ruff]
+line-length = 120

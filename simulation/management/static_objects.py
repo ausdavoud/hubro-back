@@ -1,4 +1,5 @@
 from ..models.finance import FinancialAccount
+from ..models.people import CustomUser
 from ..models.simulation import RnDStatic
 
 RnD_statics = [
@@ -188,70 +189,119 @@ RnD_statics = [
 financial_accounts = [
     {
         "name": FinancialAccount.AccountNames.DEPRECIATION_OF_FACTORIES,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.FACTORIES,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.AMORTIZATION,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.RESEARCHED_TECHNOLOGY,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.DIRECT_LABOR,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.DIRECT_RAW_MATERIALS,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.FINISHED_GOODS_INVENTORY,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.STORAGE,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.CASH,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.CURRENT_PORTION_OF_LOANS_PAYABLE,
-        "type": FinancialAccount.AccountTypes.CREDIT
+        "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
         "name": FinancialAccount.AccountNames.INTEREST_EXPENSES,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.MAINTENANCE,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.PROMOTION,
-        "type": FinancialAccount.AccountTypes.DEBIT
+        "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
         "name": FinancialAccount.AccountNames.SALES,
-        "type": FinancialAccount.AccountTypes.CREDIT
+        "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
         "name": FinancialAccount.AccountNames.OVERDRAFT,
-        "type": FinancialAccount.AccountTypes.CREDIT
+        "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
         "name": FinancialAccount.AccountNames.LONG_TERM_NOTES_PAYABLE,
-        "type": FinancialAccount.AccountTypes.CREDIT
+        "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
         "name": FinancialAccount.AccountNames.RAW_MATERIAL_INVENTORY,
-        "type": FinancialAccount.AccountTypes.DEBIT
-    }
-] 
+        "type": FinancialAccount.AccountTypes.DEBIT,
+    },
+]
+
+superusers = [
+    {
+        "email": "d@g.com",
+        "password": "dddddddd",  # 8d
+        "role": CustomUser.UserRoles.INSTRUCTOR,
+    },
+    {
+        "email": "h@g.com",
+        "password": "hhhhhhhh",  # 8h
+        "role": CustomUser.UserRoles.PLAYER,
+    },
+]
+
+users = [
+    {
+        "email": "p@g.com",
+        "password": "pppppppp",  # 8p
+        "role": CustomUser.UserRoles.INSTRUCTOR,
+    },
+    {
+        "email": "m@g.com",
+        "password": "mmmmmmmm",  # 8m
+        "role": CustomUser.UserRoles.PLAYER,
+    },
+    {
+        "email": "a@g.com",
+        "password": "aaaaaaaa",  # 8a
+        "role": CustomUser.UserRoles.PLAYER,
+    },
+]
+
+simulation_classes = [
+    {"name": "Alphabet Simulation", "instructor_email": "d@g.com"},
+    {"name": "Paya Simulation", "instructor_email": "p@g.com"},
+    {"name": "Shopify Simulation", "instructor_email": "d@g.com"},
+]
+
+teams = [
+    {"name": "Google", "simulation_class_name": "Alphabet Simulation"},
+    {"name": "Decoease", "simulation_class_name": "Paya Simulation"},
+    {"name": "Giftit", "simulation_class_name": "Shopify Simulation"},
+]
+
+players = [
+    {"player_email": "h@g.com", "team_name": "Google"},
+    {"player_email": "m@g.com", "team_name": "Decoease"},
+    {"player_email": "a@g.com", "team_name": "Giftit"},
+]

@@ -2,12 +2,11 @@ import json
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-
 from django.contrib.auth.models import AnonymousUser
 
-from .serializers import FactorySerializer
 from .models.people import Team
 from .models.simulation import Factory
+from .serializers import FactorySerializer
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -69,17 +68,13 @@ class ChatConsumer(WebsocketConsumer):
             return
 
         if room_exists and is_user_room_member:
-            async_to_sync(self.channel_layer.group_add)(
-                self.room_name, self.channel_name
-            )
+            async_to_sync(self.channel_layer.group_add)(self.room_name, self.channel_name)
             response = {"message": f'Welcome to the chat {self.scope["user"]}'}
             self.send(text_data=json.dumps({"response": response}))
 
     def disconnect(self, code):
         # return super().disconnect(code)
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_name, self.channel_name
-        )
+        async_to_sync(self.channel_layer.group_discard)(self.room_name, self.channel_name)
 
     def receive(self, text_data=None):
         text_data_json = json.loads(text_data)
@@ -93,9 +88,7 @@ class ChatConsumer(WebsocketConsumer):
                 response = update_factory(self, data)
             case _:
                 response = {"message": action}
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_name, {"type": "chat.message", "response": response}
-        )
+        async_to_sync(self.channel_layer.group_send)(self.room_name, {"type": "chat.message", "response": response})
 
     def chat_message(self, event):
         response = event["response"]

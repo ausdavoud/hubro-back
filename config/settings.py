@@ -98,8 +98,7 @@ DATABASES = {
         "USER": getenv("PGUSER"),
         "PASSWORD": getenv("PGPASSWORD"),
         "HOST": getenv("PGHOST"),
-        "PORT": getenv("PORT", 5432),
-        
+        "PORT": getenv("PGPORT", 5432),
         # uncomment for online postgres
         # "OPTIONS": {
         #     "sslmode": "require",
@@ -171,9 +170,7 @@ CORS_ALLOWED_CREDENTIALS = True
 # Rest Framework
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
 }
 
 
