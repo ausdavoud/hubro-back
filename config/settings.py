@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     # rest
     "rest_framework",
     "rest_framework_simplejwt",
+    # swagger (drf)
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -171,13 +173,14 @@ CORS_ALLOWED_CREDENTIALS = True
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 
 # simplejwt
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
@@ -187,3 +190,11 @@ SIMPLE_JWT = {
 # Channels
 ASGI_APPLICATION = "config.asgi.application"
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+# Swagger
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Hubro Backend API",
+    "DESCRIPTION": "The documentation for Hubro Backend APIs",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}

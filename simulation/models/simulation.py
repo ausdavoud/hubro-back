@@ -50,6 +50,8 @@ class RnDStatic(models.Model):
     development_cost = models.DecimalField(max_digits=15, decimal_places=0)
     depreciation_time = models.IntegerField(null=True, blank=True)
     original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
+    unit_mat_cost_effect = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
+    production_emission_effect = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
     development_duration = models.IntegerField()
     description = models.TextField()
 
@@ -61,6 +63,7 @@ class RnDStatic(models.Model):
 
 
 class RnDProduct(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     static = models.ForeignKey(RnDStatic, on_delete=models.CASCADE)
     started_at = models.IntegerField()
     time_spent_developing = models.IntegerField()
@@ -73,8 +76,12 @@ class RnDProduct(models.Model):
     def is_unlocked(self):
         return self.time_spent_developing == self.static.development_duration
 
+    def __str__(self):
+        return f"{self.static.title} by {self.player.user.email}"
+
 
 class RnDUpgrade(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     static = models.ForeignKey(RnDStatic, on_delete=models.CASCADE, related_name="static")
     started_at = models.IntegerField()
     time_spent_developing = models.IntegerField()
@@ -87,6 +94,9 @@ class RnDUpgrade(models.Model):
 
     def is_unlocked(self):
         return self.time_spent_developing == self.static.development_duration
+
+    def __str__(self):
+        return f"{self.static.title} by {self.player.user.email}"
 
 
 class Production(models.Model):

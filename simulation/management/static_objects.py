@@ -305,3 +305,36 @@ players = [
     {"player_email": "m@g.com", "team_name": "Decoease"},
     {"player_email": "a@g.com", "team_name": "Giftit"},
 ]
+
+RnD_products = [
+    {
+        "player_email": "h@g.com",
+        "static": {
+            "column_num": 1,
+            "product_key": RnDStatic.ProductKeys.BASIC,
+        },
+        "kwargs": {
+            "started_at": 1,
+            "time_spent_developing": 0,
+            "alias": "SuperSonic Jetpack",
+            "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
+        },
+    }
+]
+
+RnD_upgrades = [
+    {
+        "player_email": "h@g.com",
+        "static": {
+            "column_num": 2,
+            "product_key": RnDStatic.ProductKeys.BASIC,
+        },
+        "updated_product_alias": "SuperSonic Jetpack",
+        "kwargs": {
+            "started_at": 2,
+            "time_spent_developing": 1,
+            "unit_mat_cost_effect": 10,
+            "production_emission_effect": 0,
+        },
+    }
+]
