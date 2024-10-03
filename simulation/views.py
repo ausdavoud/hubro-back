@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from rest_framework import permissions, status
@@ -8,16 +8,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from .models.people import CustomUser
 from .serializers import UserRegisterSerializer
-
-UserModel = get_user_model()
 
 
 def custom_validation(data):
     print(data)
     email = data["email"].strip()
     password = data["password"].strip()
-    if not email or UserModel.objects.filter(email=email).exists():
+    if not email or CustomUser.objects.filter(email=email).exists():
         raise ValidationError("choose another email")
     if not password or len(password) < 8:
         raise ValidationError("choose another password, min 8 characters")
@@ -36,9 +35,7 @@ class UserRegister(APIView):
         if serializer.is_valid(raise_exception=True):
             user = serializer.create(clean_data)
             if user:
-                user = authenticate(
-                    email=clean_data["email"], password=clean_data["password"]
-                )
+                user = authenticate(email=clean_data["email"], password=clean_data["password"])
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -75,6 +72,6 @@ class RnDAPIView(APIView):
 
         # product creation
 
-        # upgrade creation: has updated_product_id or not?
+        # upgrade creation: has updated_product or not?
 
         # create ripple task to increment development time by 1

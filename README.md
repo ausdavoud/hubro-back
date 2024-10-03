@@ -36,13 +36,7 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    CONN_MAX_AGE = 0
    ```
 
-7. Make migrations and migrate:
-
-   ```sh
-   python manage.py makemigrations && python manage.py migrate
-   ```
-
-8. Change CORS headers URLs in `settings.py` to the path URL is running on:
+7. Change CORS headers URLs in `settings.py` to the path URL is running on:
 
    ```python
    CORS_ALLOWED_ORIGINS = [
@@ -52,7 +46,40 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    ]
    ```
 
-9. Run the server:
+8. Run the following commands to setup the database:
+
+   ```sh
+   docker compose build
+   docker compose up -d
+   ```
+
+   > Note: You can also access PgAmin at `127.0.0.1:5050` with:
+
+   ```text
+   username: root@root.com
+   password: root
+   ```
+
+   and connect to database:
+
+   ```text
+   host: 192.168.0.2
+   port: 5432
+   database: hubro_db
+   username: hubro_user
+   password: hubro_password
+   ```
+
+9. Make migrations and migrate:
+
+   ```sh
+   python manage.py makemigrations \
+   && python manage.py migrate \
+   && python manage.py rnd \
+   && python manage.py financial_accounts
+   ```
+
+10. Run the server:
 
    ```sh
    python manage.py runserver
@@ -60,7 +87,7 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
 
 ## Frontend Notes
 
-This project uses JWT authentication.
+> This project uses JWT authentication.
 
 ### Login (Getting `access token` and `refresh token`)
 
@@ -71,7 +98,7 @@ Body:
 ```json
 {
     "email": "d@g.com",
-    "password": "12345678"
+    "password": "dddddddd" // 8d
 }
 ```
 
@@ -91,22 +118,30 @@ Body
 
 To be added...
 
-## Docker
+## Reset DB
 
-1. Build:
+> CATION: USE THIS AT YOUR OWN RISK!
 
-   ```sh
-   docker compose build
-   ```
+This project uses Docker Compose to run a sample PostgreSQL database.
+You might occasionally need to reset the database. To do so, run `./reset_db.sh` script.
 
-2. Up!
+If running for the first time, you need to make it executable like so:
 
-   ```sh
-   docker compose up
-   ```
+```sh
+chmod +x reset_db.sh
+```
 
-   2.1. (Optional, Linux) After hitting the `up` command, a `./db` directory will be created. If the directory content is invisible or protected by root, run this command to change ownership:
+Then run the script
 
-   ```sh
-   sudo chown -R $USER:$USER ./db
-   ```
+```sh
+./reset_db.sh
+```
+
+This will:
+
+   1. Stop the running container.
+   2. Drop the volume associated with the database
+   3. Remove all migrations and create one from scratch.
+   4. create a new database called `hubro_db` and run migrations.
+   Additionally, it fills the database with sample data for R&D Static,
+   Superuser, User, Instructor, Simulation Class, Team and Player tables.

@@ -8,7 +8,7 @@ class Factory(models.Model):
         OWNED = "OW", "Owned"
         RENTED = "RN", "Rented"
 
-    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     ownership = models.CharField(max_length=2, choices=OwnershipTypes.choices)
     quarterly_output = models.IntegerField()
     outsourcing_fee_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
@@ -29,7 +29,7 @@ class Factory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.ownership} by {self.player_id.user_id.username}"
+        return f"{self.ownership} by {self.player.user.username}"
 
 
 class RnDStatic(models.Model):
@@ -42,16 +42,14 @@ class RnDStatic(models.Model):
         SPORTY = "sporty", "Sporty jetpack"
         SAFE = "safe", "Safe jetpack"
         GREEN = "green", "Green jetpack"
-        PRODUCTION = 'production', 'Production'
+        PRODUCTION = "production", "Production"
 
     type = models.CharField(max_length=2, choices=RnDTypes.choices)
     title = models.CharField(max_length=50)
     product_key = models.CharField(max_length=20, choices=ProductKeys.choices, blank=True, null=True)
     development_cost = models.DecimalField(max_digits=15, decimal_places=0)
     depreciation_time = models.IntegerField(null=True, blank=True)
-    original_unit_mat_cost = models.DecimalField(
-        max_digits=15, decimal_places=0, null=True, blank=True
-    )
+    original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
     development_duration = models.IntegerField()
     description = models.TextField()
 
@@ -63,7 +61,7 @@ class RnDStatic(models.Model):
 
 
 class RnDProduct(models.Model):
-    static_id = models.ForeignKey(RnDStatic, on_delete=models.CASCADE)
+    static = models.ForeignKey(RnDStatic, on_delete=models.CASCADE)
     started_at = models.IntegerField()
     time_spent_developing = models.IntegerField()
     alias = models.CharField(max_length=100)
@@ -73,16 +71,14 @@ class RnDProduct(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def is_unlocked(self):
-        return self.time_spent_developing == self.static_id.development_duration
+        return self.time_spent_developing == self.static.development_duration
 
 
 class RnDUpgrade(models.Model):
-    static_id = models.ForeignKey(
-        RnDStatic, on_delete=models.CASCADE, related_name="static"
-    )
+    static = models.ForeignKey(RnDStatic, on_delete=models.CASCADE, related_name="static")
     started_at = models.IntegerField()
     time_spent_developing = models.IntegerField()
-    updated_product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+    updated_product = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
     unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2)
     production_emission_effect = models.DecimalField(max_digits=5, decimal_places=2)
 
@@ -90,13 +86,13 @@ class RnDUpgrade(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def is_unlocked(self):
-        return self.time_spent_developing == self.static_id.development_duration
+        return self.time_spent_developing == self.static.development_duration
 
 
 class Production(models.Model):
-    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
-    factory_id = models.ForeignKey(Factory, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    product = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+    factory = models.ForeignKey(Factory, on_delete=models.CASCADE)
     quarter = models.IntegerField()
     activity_level = models.DecimalField(max_digits=5, decimal_places=2)
     activity_factor = models.DecimalField(max_digits=5, decimal_places=2)
@@ -107,7 +103,7 @@ class Production(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.product_id.alias} by {self.player_id.user_id.username} "
+        return f"{self.product.alias} by {self.player.user.username} "
 
 
 class Contract(models.Model):
@@ -116,20 +112,20 @@ class Contract(models.Model):
         WAITING = "WG", "Waiting"
         EXPIRED = "EX", "Expired"
 
-    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     closure_quarter = models.IntegerField()
     payment_quarter = models.IntegerField()
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=15, decimal_places=0)
     total_price = models.DecimalField(max_digits=15, decimal_places=0)
-    deliverable_product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+    deliverable_product = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
     status = models.CharField(max_length=2, choices=ContractStatuses.choices)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.total_price} at {self.closure_quarter} by {self.player_id.user_id.username}"
+        return f"{self.total_price} at {self.closure_quarter} by {self.player.user.username}"
 
 
 class Storage(models.Model):
@@ -137,8 +133,8 @@ class Storage(models.Model):
         PAID = "PD", "Paid"
         RECEIVED = "RC", "Received"
 
-    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    product = models.ForeignKey(RnDProduct, on_delete=models.CASCADE)
     count = models.IntegerField()
     transaction_type = models.CharField(max_length=2, choices=TransactionTypes.choices)
     quarter = models.IntegerField()
@@ -148,6 +144,4 @@ class Storage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return (
-            f"{self.count} {self.product_id.alias} by {self.player_id.user_id.username}"
-        )
+        return f"{self.count} {self.product.alias} by {self.player.user.username}"

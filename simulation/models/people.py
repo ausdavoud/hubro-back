@@ -1,6 +1,6 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.utils import IntegrityError
 
 
 class CustomUserManager(BaseUserManager):
@@ -14,6 +14,18 @@ class CustomUserManager(BaseUserManager):
         user = self.model(email=email, **kwargs)
         user.set_password(password)
         user.save()
+
+        if user.role == CustomUser.UserRoles.PLAYER:
+            try:
+                player = Player.objects.create(user=user)
+            except IntegrityError:
+                print(f"A `Player` instance is already assigned to {user.email}")
+        elif user.role == CustomUser.UserRoles.INSTRUCTOR:
+            try:
+                instructor = Instructor.objects.create(user=user)
+            except IntegrityError:
+                print(f"An `Instructor` instance is already assigned to {user.email}")
+
         return user
 
     def create_superuser(self, email, password, **kwargs):
@@ -35,9 +47,7 @@ class CustomUser(AbstractUser):
 
     username = None
     email = models.EmailField(max_length=100, unique=True)
-    role = models.CharField(
-        max_length=2, choices=UserRoles.choices, blank=True, null=True
-    )
+    role = models.CharField(max_length=2, choices=UserRoles.choices, blank=True, null=True)
 
     objects = CustomUserManager()
 
@@ -47,31 +57,20 @@ class CustomUser(AbstractUser):
     class Meta:
         app_label = "simulation"
 
-    def save(self, *args, **kwargs):
-        if self.role == "PL":
-            player = Player(user_id=self)
-            player.save()
-        elif self.role == "IN":
-            instructor = Instructor(user_id=self)
-            instructor.save()
-        super(CustomUser, self).save(*args, **kwargs)
-
 
 class Instructor(models.Model):
-    user_id = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="instructor"
-    )
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="instructor")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user_id.email
+        return self.user.email
 
 
 class SimulationClass(models.Model):
     name = models.CharField(max_length=50)
-    instructor_id = models.ForeignKey(Instructor, on_delete=models.CASCADE)
+    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -80,12 +79,12 @@ class SimulationClass(models.Model):
         verbose_name_plural = "SimulationClasses"
 
     def __str__(self):
-        return f"{self.name} supervised by {self.instructor_id}"
+        return f"{self.name} supervised by {self.instructor}"
 
 
 class Team(models.Model):
     name = models.CharField(max_length=50)
-    simulation_class_id = models.ForeignKey(SimulationClass, on_delete=models.CASCADE)
+    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -95,15 +94,11 @@ class Team(models.Model):
 
 
 class Player(models.Model):
-    user_id = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="player"
-    )
-    team_id = models.ForeignKey(
-        Team, on_delete=models.CASCADE, blank=True, null=True, related_name="players"
-    )
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="player")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True, related_name="players")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user_id.email
+        return self.user.email
