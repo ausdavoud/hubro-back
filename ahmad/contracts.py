@@ -1,5 +1,6 @@
 from typing import TypedDict
 from enum import Enum
+import math
 import random
 
 
@@ -74,37 +75,58 @@ def distribute_unevenly(
     total_amount: int,
     num_parts: int,
 ) -> list[int]:
+    MIN_CONTRACT_AMOUNT = 1000
+    SEGMENT_SIZE = 100
+
     if num_parts <= 0:
         raise ValueError("Number of parts must be greater than 0")
-    if total_amount <= num_parts * 1000:
-        raise ValueError(f"Total amount must be greater than {num_parts * 1000}")
+    if total_amount <= num_parts * MIN_CONTRACT_AMOUNT:
+        raise ValueError(
+            f"Total amount must be greater than {num_parts * MIN_CONTRACT_AMOUNT}"
+        )
 
-    parts = [1000] * num_parts
+    parts = [MIN_CONTRACT_AMOUNT] * num_parts
     remaining = total_amount - sum(parts)
-    number_of_parts_with_100 = remaining // 100
+    number_of_parts_with_segment = remaining // SEGMENT_SIZE
 
-    while number_of_parts_with_100 > 0:
+    while number_of_parts_with_segment > 0:
         i = random.randint(0, len(parts) - 1)
-        parts[i] += 100
-        number_of_parts_with_100 -= 1
+        parts[i] += SEGMENT_SIZE
+        number_of_parts_with_segment -= 1
     return parts
 
 
 def generate_payment_delays(quarter: int, contract_count: int):
     delayed_contract_count = 0
-    max_delay_days = 0 if quarter < 4 else 3 if quarter < 7 else 4
+    QUARTER_4 = 4
+    QUARTER_7 = 7
+    MAX_DELAY_QUARTERS_Q1_Q3 = 0
+    MAX_DELAY_QUARTERS_Q4_Q6 = 3
+    MAX_DELAY_QUARTERS_Q7_PLUS = 4
+    MAX_DELAYED_CONTRACTS_Q1_Q6 = 2
+    MAX_DELAYED_CONTRACTS_Q7_PLUS = 2
+
+    max_delay_quarters = (
+        MAX_DELAY_QUARTERS_Q1_Q3
+        if quarter < QUARTER_4
+        else (
+            MAX_DELAY_QUARTERS_Q4_Q6
+            if quarter < QUARTER_7
+            else MAX_DELAY_QUARTERS_Q7_PLUS
+        )
+    )
     payment_delays = [0] * contract_count
 
-    if quarter < 4:
+    if quarter < QUARTER_4:
         return payment_delays
 
-    if quarter < 7:
-        delayed_contract_count = random.randint(1, 2)
-    elif quarter >= 7:
-        delayed_contract_count = random.randint(1, 4)
+    if quarter < QUARTER_7:
+        delayed_contract_count = random.randint(1, MAX_DELAYED_CONTRACTS_Q1_Q6)
+    elif quarter >= QUARTER_7:
+        delayed_contract_count = random.randint(1, MAX_DELAYED_CONTRACTS_Q7_PLUS)
 
     for i in range(delayed_contract_count):
-        payment_delays[i] = random.randint(1, max_delay_days)
+        payment_delays[i] = random.randint(1, max_delay_quarters)
 
     return payment_delays
 
@@ -123,10 +145,22 @@ def create_esg_range_list(max_esg: int, num_contracts: int) -> list[int]:
     return [random.randint(min_esg, max_esg) for _ in range(num_contracts)]
 
 
+# how to use :
+
+# generate_contracts data
 contracts: list[ContractType] = generate_contract_data(
-    4, 5900, 5, 228, 266, 5, ProductType.BASIC
+    4,
+    5900,
+    5,
+    228,
+    266,
+    5,
+    ProductType.BASIC,  # this is a row of the market forecast report
 )
 
+
+# find the priority of each contract:
+# the higher Value represents the higher priority.
 priorities = []
 for contract in contracts:
     priority = calculate_priority(
