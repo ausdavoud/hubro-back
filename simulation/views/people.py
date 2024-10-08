@@ -2,15 +2,12 @@ from django.shortcuts import render
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import permissions, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models.people import CustomUser, Player
-from .models.simulation import RnDProduct, RnDStatic, RnDUpgrade
-from .serializers import RnDProductSerializer, RnDStaticSerializer, RnDUpgradeSerializer, UserRegisterSerializer
+from ..models.people import CustomUser
+from ..serializers.people import UserRegisterSerializer
 
 
 class EmailExistsException(Exception):
@@ -22,7 +19,6 @@ class ShortPasswordException(Exception):
 
 
 def custom_validation(data):
-    print(data)
     email = data["email"].strip()
     password = data["password"].strip()
     if not email or CustomUser.objects.filter(email=email).exists():
@@ -84,51 +80,3 @@ def index(request):
 
 def room(request, room_name: str):
     return render(request, "chat/room.html", {"room_name": room_name})
-
-
-class RnDAPIView(APIView):
-    permission_classes = [
-        IsAuthenticated,
-    ]
-    authentication_classes = [
-        JWTAuthentication,
-    ]
-
-    def get(self, request: Request):
-        user = request.user
-        player = Player.objects.filter(user=user).first()
-        all_rnd_data = []
-
-        # static objects
-        static_rnd_objects = RnDStatic.objects.all()
-        for static_obj in static_rnd_objects:
-            rnd_product_obj = RnDProduct.objects.filter(static=static_obj, player=player).first()
-            rnd_upgrade_obj = RnDUpgrade.objects.filter(static=static_obj, player=player).first()
-
-            if not rnd_product_obj and not rnd_upgrade_obj:
-                print("Nothing found")
-                rnd_static_data = RnDStaticSerializer(static_obj).data
-                all_rnd_data.append(rnd_static_data)
-                continue
-            print("found")
-            if static_obj.type == RnDStatic.RnDTypes.PRODUCT:
-                rnd_product_data = RnDProductSerializer(rnd_product_obj).data
-                all_rnd_data.append(rnd_product_data)
-                continue
-
-            elif static_obj.type == RnDStatic.RnDTypes.UPGRADE:
-                rnd_upgrade_data = RnDUpgradeSerializer(rnd_upgrade_obj).data
-                all_rnd_data.append(rnd_upgrade_data)
-                continue
-
-        return Response(all_rnd_data, status=status.HTTP_200_OK)
-
-    def post(self, request: Request):
-        pass
-        # is it product or upgrade
-
-        # product creation
-
-        # upgrade creation: has updated_product or not?
-
-        # create ripple task to increment development time by 1

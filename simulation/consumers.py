@@ -5,8 +5,7 @@ from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 
 from .models.people import Team
-from .models.simulation import Factory
-from .serializers import FactorySerializer
+from .models.production import Factory
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -101,9 +100,7 @@ def add_factory(self: ChatConsumer, data):
     factory = Factory(name=name, price=price)
     factory.save()
 
-    serialized_factory = FactorySerializer(instance=factory)
-    print("HEREEEE", serialized_factory.data)
-
+    serialized_factory = {}  # FactorySerializer(instance=factory)
     return {
         "response_type": "data",
         "factory": serialized_factory.data,
@@ -120,7 +117,7 @@ def update_factory(self: ChatConsumer, data):
     factory.price = price
     factory.save()
 
-    serialized_factory = FactorySerializer(instance=factory)
+    serialized_factory = {}  # FactorySerializer(instance=factory)
 
     return {
         "response_type": "data",

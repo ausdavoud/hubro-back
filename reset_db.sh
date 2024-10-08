@@ -14,7 +14,7 @@ sleep 5
 
 # Run prepopulation command 
 python manage.py migrate
-python manage.py rnd
+python manage.py rd
 python manage.py financial_accounts
 python manage.py seed
 
