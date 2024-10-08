@@ -109,36 +109,3 @@ class Repayment(models.Model):
 
     def __str__(self):
         return f"${self.loan.payback_per_quarter} by {self.player.user.username}"
-
-
-class StateVariable(models.Model):
-    esg_index = models.IntegerField()
-    fixed_interest = models.DecimalField(max_digits=5, decimal_places=2)
-    current_quarter = models.IntegerField()
-    simulation_duration = models.IntegerField()
-    max_loan_repayment = models.IntegerField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-
-class RecurringAction(models.Model):
-    quarter = models.IntegerField()
-    type = models.CharField(max_length=100)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.type
-
-
-class RippleTask(models.Model):
-    quarter = models.IntegerField()
-    type = models.CharField(max_length=100)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.type

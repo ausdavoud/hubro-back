@@ -75,7 +75,7 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    ```sh
    python manage.py makemigrations \
    && python manage.py migrate \
-   && python manage.py rnd \
+   && python manage.py rd \
    && python manage.py financial_accounts
    ```
 

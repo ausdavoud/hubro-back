@@ -1,10 +1,10 @@
 from django.urls import path
 
-from . import views
+from .views import rd, people
 
 urlpatterns = [
-    path("", views.index, name="index"),
-    path("register/", views.UserRegister.as_view(), name="register"),
-    path("rnd/", views.RnDAPIView.as_view(), name="rnd"),
+    path("", people.index, name="index"),
+    path("register/", people.UserRegister.as_view(), name="register"),
+    path("rd/", rd.RDAPIView.as_view(), name="rd"),
     # path("<str:room_name>/", views.room, name="room"),
 ]

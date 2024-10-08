@@ -100,5 +100,13 @@ class Player(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        had_pk = bool(self.pk)
+        super(Player, self).save(*args, **kwargs)
+        if not had_pk:
+            from .common import StateVariable
+
+            state_variables = StateVariable.objects.create(player=self)
+
     def __str__(self):
         return self.user.email
