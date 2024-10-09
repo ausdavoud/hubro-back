@@ -3,7 +3,7 @@ from typing import Any
 from django.core.management.base import BaseCommand
 
 from ...models.finance import FinancialAccount
-from ..static_objects import financial_accounts
+from ..data_fixtures import financial_accounts
 
 
 class Command(BaseCommand):

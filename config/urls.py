@@ -1,3 +1,5 @@
+from debug_toolbar.toolbar import debug_toolbar_urls
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
@@ -14,3 +16,6 @@ urlpatterns = [
     # path("auth_for_ws_connection/", AsgiValidateTokenView.as_view()),
     path("api/", include("simulation.urls"), name="simulation"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += debug_toolbar_urls()

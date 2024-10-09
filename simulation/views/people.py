@@ -45,7 +45,7 @@ class UserRegister(APIView):
                     OpenApiExample(
                         name="Bad Request",
                         value={
-                            "type": "error",
+                            "status": "error",
                             "data": "email is not valid or already exists",
                         },
                     )
@@ -58,10 +58,10 @@ class UserRegister(APIView):
             clean_data = custom_validation(request.data)
         except EmailExistsException:
             return Response(
-                {"type": "error", "data": "email is not valid or already exists"}, status=status.HTTP_400_BAD_REQUEST
+                {"status": "error", "data": "email is not valid or already exists"}, status=status.HTTP_400_BAD_REQUEST
             )
         except ShortPasswordException:
-            return Response({"type": "error", "data": "password is too short"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": "error", "data": "password is too short"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = UserRegisterSerializer(data=clean_data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.create(clean_data)

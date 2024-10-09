@@ -1,7 +1,16 @@
+from enum import Enum
 from django.db import models
 
-from .people import Player
+from ..apps import SimulationConfig
 from .common import StateVariable
+from .people import Player
+
+
+class RDStates:
+    LOCKED = "locked"
+    AVAILABLE = "available"
+    RESEARCHING = "researching"
+    COMPLETED = "completed"
 
 
 class RDStatic(models.Model):
@@ -18,7 +27,7 @@ class RDStatic(models.Model):
 
     category = models.CharField(max_length=30, choices=Categories.choices)
     type = models.CharField(max_length=2, choices=RDTypes.choices)
-    order = models.PositiveIntegerField()
+    order = models.PositiveSmallIntegerField()
 
     title = models.CharField(max_length=50)
     description = models.TextField()
@@ -40,7 +49,7 @@ class RDStatic(models.Model):
         ordering = ["category", "order"]
         unique_together = ["category", "order"]
         verbose_name = "R&D Static"
-        db_table = "rd_static"
+        db_table = f"{SimulationConfig.name}_rd_static"
 
     @property
     def previous_item(self):
@@ -59,15 +68,13 @@ class RDStatic(models.Model):
         current_quarter = StateVariable.get_player_quarter(player)
         # time-based availability
         if self.available_from_quarter:
-            return "available" if self.available_from_quarter <= current_quarter else "locked"
+            return RDStates.AVAILABLE if self.available_from_quarter <= current_quarter else RDStates.LOCKED
 
         # dependency-based availability
         previous_static_item = self.previous_item
         if previous_static_item:
             has_dynamic_item = previous_static_item.has_dynamic_obj(player=player)
-            return "available" if has_dynamic_item else "locked"
-
-        raise Exception(f"{self.title} has no previous item")
+            return RDStates.AVAILABLE if has_dynamic_item else RDStates.LOCKED
 
     def __str__(self):
         return f"{self.category} - {self.title}"
@@ -77,7 +84,7 @@ class RDProduct(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     static = models.ForeignKey(RDStatic, on_delete=models.CASCADE, related_name="products")
     started_at = models.IntegerField()
-    time_spent_developing = models.IntegerField()
+    time_spent_developing = models.IntegerField(default=0)
     alias = models.CharField(max_length=100)
     icon_link = models.CharField(max_length=300)
 
@@ -86,13 +93,13 @@ class RDProduct(models.Model):
 
     class Meta:
         verbose_name = "R&D Product"
-        db_table = "rd_product"
+        db_table = f"{SimulationConfig.name}_rd_product"
 
     def get_state(self):
         if self.time_spent_developing == self.static.development_duration:
-            return "completed"
+            return RDStates.COMPLETED
         elif self.time_spent_developing < self.static.development_duration:
-            return "researching"
+            return RDStates.RESEARCHING
 
     def __str__(self):
         return f"{self.static.title} by {self.player.user.email}"
@@ -102,7 +109,7 @@ class RDUpgrade(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     static = models.ForeignKey(RDStatic, on_delete=models.CASCADE, related_name="upgrades")
     started_at = models.IntegerField()
-    time_spent_developing = models.IntegerField()
+    time_spent_developing = models.IntegerField(default=0)
     updated_product = models.ForeignKey(RDProduct, on_delete=models.CASCADE, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -110,13 +117,13 @@ class RDUpgrade(models.Model):
 
     class Meta:
         verbose_name = "R&D Upgrade"
-        db_table = "rd_upgrade"
+        db_table = f"{SimulationConfig.name}_rd_upgrade"
 
     def get_state(self):
         if self.time_spent_developing == self.static.development_duration:
-            return "completed"
+            return RDStates.COMPLETED
         elif self.time_spent_developing < self.static.development_duration:
-            return "researching"
+            return RDStates.RESEARCHING
 
     def __str__(self):
         return f"{self.static.title} by {self.player.user.email}"
