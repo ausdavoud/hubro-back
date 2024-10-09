@@ -53,9 +53,13 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     # swagger (drf)
     "drf_spectacular",
+    # debug_toolbar
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
+    # debug_toolbar
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     # cors
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -199,3 +203,8 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+# Debug Toolbar
+INTERNAL_IPS = [
+    "127.0.0.1",
+]

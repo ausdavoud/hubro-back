@@ -3,7 +3,7 @@ from typing import Any
 from django.core.management.base import BaseCommand
 
 from ...models.rd import RDStatic
-from ..static_objects import rd_statics
+from ..data_fixtures import rd_statics
 
 
 class Command(BaseCommand):

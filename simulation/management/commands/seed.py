@@ -3,10 +3,9 @@ from typing import Any
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
-from ...models.rd import RDProduct, RDStatic, RDUpgrade
-
 from ...models.people import CustomUser, Instructor, Player, SimulationClass, Team
-from ..static_objects import players, rd_products, rd_upgrades, simulation_classes, superusers, teams, users
+from ...models.rd import RDProduct, RDStatic, RDUpgrade
+from ..data_fixtures import players, rd_products, rd_upgrades, simulation_classes, superusers, teams, users
 
 
 class Command(BaseCommand):

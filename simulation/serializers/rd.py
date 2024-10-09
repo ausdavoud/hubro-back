@@ -46,16 +46,18 @@ class RDStaticSerializer(serializers.ModelSerializer):
 
 
 class RDProductSerializer(serializers.ModelSerializer):
-    category = serializers.SerializerMethodField()
-    type = serializers.SerializerMethodField()
-    order = serializers.SerializerMethodField()
-    title = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
-    development_cost = serializers.SerializerMethodField()
-    development_duration = serializers.SerializerMethodField()
-    available_from_quarter = serializers.SerializerMethodField()
+    category = serializers.CharField(source="static.category")
+    type = serializers.CharField(source="static.type")
+    order = serializers.IntegerField(source="static.order")
+    title = serializers.CharField(source="static.title")
+    description = serializers.CharField(source="static.description")
+    development_cost = serializers.DecimalField(max_digits=15, decimal_places=0, source="static.development_cost")
+    development_duration = serializers.IntegerField(source="static.development_duration")
+    available_from_quarter = serializers.IntegerField(source="static.available_from_quarter")
     state = serializers.SerializerMethodField()
-    original_unit_mat_cost = serializers.SerializerMethodField()
+    original_unit_mat_cost = serializers.DecimalField(
+        max_digits=15, decimal_places=0, source="static.original_unit_mat_cost"
+    )
 
     class Meta:
         model = RDProduct
@@ -77,52 +79,29 @@ class RDProductSerializer(serializers.ModelSerializer):
             "icon_link",
         ]
 
-    def get_category(self, obj: RDUpgrade):
-        return obj.static.category
-
-    def get_type(self, obj: RDUpgrade):
-        return obj.static.type
-
-    def get_order(self, obj: RDUpgrade):
-        return obj.static.order
-
-    def get_title(self, obj: RDUpgrade):
-        return obj.static.title
-
-    def get_description(self, obj: RDUpgrade):
-        return obj.static.description
-
-    def get_development_cost(self, obj: RDUpgrade):
-        return obj.static.development_cost
-
-    def get_development_duration(self, obj: RDUpgrade):
-        return obj.static.development_duration
-
-    def get_available_from_quarter(self, obj: RDUpgrade):
-        return obj.static.available_from_quarter
-
     def get_state(self, obj: RDUpgrade):
         return obj.get_state()
-
-    def get_original_unit_mat_cost(self, obj: RDUpgrade):
-        return obj.static.original_unit_mat_cost
 
     # It must have `available_from_quarter` and `original_mat_cost_effect`
     # So, there's no need to consider them nullable and rewrite to_representation
 
 
 class RDUpgradeSerializer(serializers.ModelSerializer):
-    category = serializers.SerializerMethodField()
-    type = serializers.SerializerMethodField()
-    order = serializers.SerializerMethodField()
-    title = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
-    development_cost = serializers.SerializerMethodField()
-    development_duration = serializers.SerializerMethodField()
-    available_from_quarter = serializers.SerializerMethodField()
+    category = serializers.CharField(source="static.category")
+    type = serializers.CharField(source="static.type")
+    order = serializers.IntegerField(source="static.order")
+    title = serializers.CharField(source="static.title")
+    description = serializers.CharField(source="static.description")
+    development_cost = serializers.DecimalField(max_digits=15, decimal_places=0, source="static.development_cost")
+    development_duration = serializers.IntegerField(source="static.development_duration")
+    available_from_quarter = serializers.IntegerField(source="static.available_from_quarter")
     state = serializers.SerializerMethodField()
-    unit_mat_cost_effect = serializers.SerializerMethodField()
-    production_emission_effect = serializers.SerializerMethodField()
+    unit_mat_cost_effect = serializers.DecimalField(
+        max_digits=5, decimal_places=2, source="static.unit_mat_cost_effect"
+    )
+    production_emission_effect = serializers.DecimalField(
+        max_digits=15, decimal_places=0, source="static.production_emission_effect"
+    )
 
     class Meta:
         model = RDUpgrade
@@ -143,38 +122,8 @@ class RDUpgradeSerializer(serializers.ModelSerializer):
             "production_emission_effect",
         ]
 
-    def get_category(self, obj: RDUpgrade):
-        return obj.static.category
-
-    def get_type(self, obj: RDUpgrade):
-        return obj.static.type
-
-    def get_order(self, obj: RDUpgrade):
-        return obj.static.order
-
-    def get_title(self, obj: RDUpgrade):
-        return obj.static.title
-
-    def get_description(self, obj: RDUpgrade):
-        return obj.static.description
-
-    def get_development_cost(self, obj: RDUpgrade):
-        return obj.static.development_cost
-
-    def get_development_duration(self, obj: RDUpgrade):
-        return obj.static.development_duration
-
-    def get_available_from_quarter(self, obj: RDUpgrade):
-        return obj.static.available_from_quarter
-
     def get_state(self, obj: RDUpgrade):
         return obj.get_state()
-
-    def get_unit_mat_cost_effect(self, obj: RDUpgrade):
-        return obj.static.unit_mat_cost_effect
-
-    def get_production_emission_effect(self, obj: RDUpgrade):
-        return obj.static.production_emission_effect
 
     fields_to_be_removed = ["available_from_quarter", "unit_mat_cost_effect", "production_emission_effect"]
 
@@ -187,3 +136,13 @@ class RDUpgradeSerializer(serializers.ModelSerializer):
             except KeyError:
                 pass
         return rep
+
+
+class CreateRDUpgradeSerializer(serializers.Serializer):
+    category = serializers.ChoiceField(RDStatic.Categories.choices)
+    order = serializers.IntegerField(default=1)
+
+
+class CreateRDProductSerializer(CreateRDUpgradeSerializer):
+    alias = serializers.CharField(max_length=100)
+    icon_link = serializers.CharField(max_length=300)
