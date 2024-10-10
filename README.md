@@ -1,6 +1,6 @@
 # Backend for Hubro (Django 5 / PostgreSQL 16)
 
-## Backend
+## How to Run Backend
 
 This project uses `uv` as its package manager. Refer to [this link](https://docs.astral.sh/uv/getting-started/installation/#installation-methods) to install uv.
 
@@ -30,7 +30,7 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    cd hubro_back
    ```
 
-6. If using NeonDB, set `CONN_MAX_AGE` to 0 in `settings.py`. NeonDB, due to its serverless nature, shuts down old connections. By setting `CONN_MAX_AGE` to 0, we tell Django to close database connection after each request to prevent using old connections closed by NeonDB.
+6. (Optional) If using NeonDB, set `CONN_MAX_AGE` to 0 in `settings.py`. NeonDB, due to its serverless nature, shuts down old connections. By setting `CONN_MAX_AGE` to 0, we tell Django to close database connection after each request to prevent using old connections closed by NeonDB.
 
    ```python
    CONN_MAX_AGE = 0
@@ -53,14 +53,14 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    docker compose up -d
    ```
 
-   > Note: You can also access PgAmin at `127.0.0.1:5050` with:
+   > Note: You can also access PgAdmin at `127.0.0.1:5050` with:
 
    ```text
    username: root@root.com
    password: root
    ```
 
-   and connect to database:
+   and connect to database with the following credentials:
 
    ```text
    host: 192.168.0.2
@@ -79,40 +79,54 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    && python manage.py financial_accounts
    ```
 
+   You can Also run the following command to create seed data in database:
+
+   ```sh
+   python manage.py seed
+   ```
+
 10. Run the server:
 
    ```sh
    python manage.py runserver
    ```
 
-## Frontend Notes
+## Using swagger
 
-> This project uses JWT authentication.
+1. Go to `http://localhost:8000/swagger/`
+2. Scroll down to `Token` section and send a post request to `/token` with the following body:
 
-### Login (Getting `access token` and `refresh token`)
+   ```json
+   {
+      "email": "h@g.com",
+      "password": "hhhhhhhh" // 8h
+   }
+   ```
 
-URL: `http://localhost:8000/token/`
+   > Note: A full list of superusers, players and instructors can be found in `simulation/management/data_fixtures.py`
 
-Body:
+3. Copy the `access_token`.
+4. Scroll up to `Authorization` button on top of the page.
+Click on it and paste the `access_token` as the value.
 
-```json
-{
-    "email": "d@g.com",
-    "password": "dddddddd" // 8d
-}
-```
+5. You can now send requests to the endpoints.
 
-### Refresh token
+> Note: Your `access_token` will expire after 24 hours.
+To refresh it, send the `refresh_token` obtained on step 2 and send a post request to `/refresh`. This way you'll get a new `access_token`.
+Alternatively, you can redo steps `2`, `3` and `4`.
 
-URL: `http://localhost:8000/token/refresh`
+## Django-Debug-Toolbar
 
-Body
+You can analyze the performance of the backend by using the `Django-Debug-Toolbar`. Unfortunately, it is not fully compatible with the `swagger` since `swagger` uses AJAX.
 
-```json
-{
-    "refresh": "your refresh token"
-}
-```
+As a result, you have to use the Django Rest Framework UI instead. But there is a problem: **You can't set headers in the DRF UI.** And no headers means no authorization.
+
+Solution: [Install](https://chromewebstore.google.com/detail/modheader-modify-http-hea/idgpnmonknjnojddfkpgkljpfnnfcklj) `modheaders` extension. in your browser.
+Set header name to `Authorization` and value to `Bearer <access_token>`.
+
+> Notice the space between `Bearer` and `<access_token>`.
+
+> Pay attention that the `access_token` is not the `refresh_token`.
 
 ### UUID for ws_connection
 
@@ -141,7 +155,7 @@ This will:
 
    1. Stop the running container.
    2. Drop the volume associated with the database
-   3. Remove all migrations and create one from scratch.
-   4. create a new database called `hubro_db` and run migrations.
+   3. Remove all migrations and create a new one from scratch.
+   4. Create a new database called `hubro_db` and run migrations.
    Additionally, it fills the database with sample data for R&D Static,
    Superuser, User, Instructor, Simulation Class, Team and Player tables.

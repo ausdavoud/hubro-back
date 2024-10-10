@@ -1,6 +1,7 @@
 from django.db import models
-from .rd import RDProduct
+
 from .people import Player
+from .rd import DynamicRD
 
 
 class Contract(models.Model):
@@ -15,7 +16,7 @@ class Contract(models.Model):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=15, decimal_places=0)
     total_price = models.DecimalField(max_digits=15, decimal_places=0)
-    deliverable_product = models.ForeignKey(RDProduct, on_delete=models.CASCADE)
+    deliverable_product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     status = models.CharField(max_length=2, choices=ContractStatuses.choices)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -31,7 +32,7 @@ class Storage(models.Model):
         RECEIVED = "RC", "Received"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    product = models.ForeignKey(RDProduct, on_delete=models.CASCADE)
+    product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     count = models.IntegerField()
     transaction_type = models.CharField(max_length=2, choices=TransactionTypes.choices)
     quarter = models.IntegerField()

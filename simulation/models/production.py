@@ -1,6 +1,7 @@
 from django.db import models
+
 from .people import Player
-from .rd import RDProduct
+from .rd import DynamicRD
 
 
 class Factory(models.Model):
@@ -34,7 +35,7 @@ class Factory(models.Model):
 
 class Production(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    product = models.ForeignKey(RDProduct, on_delete=models.CASCADE)
+    product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     factory = models.ForeignKey(Factory, on_delete=models.CASCADE)
     quarter = models.IntegerField()
     activity_level = models.DecimalField(max_digits=5, decimal_places=2)

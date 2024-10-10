@@ -12,9 +12,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/", include("simulation.urls"), name="simulation"),
     # path("chat/", include("simulation.urls")),
     # path("auth_for_ws_connection/", AsgiValidateTokenView.as_view()),
-    path("api/", include("simulation.urls"), name="simulation"),
 ]
 
 if settings.DEBUG:

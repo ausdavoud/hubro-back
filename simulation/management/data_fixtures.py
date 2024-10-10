@@ -1,13 +1,13 @@
 from ..models.finance import FinancialAccount
 from ..models.people import CustomUser
-from ..models.rd import RDStatic
+from ..models.rd import StaticRD
 
-rd_statics = [
+static_rd = [
     {
         "order": 1,
         "title": "Basic jetpack",
-        "category": RDStatic.Categories.BASIC,
-        "type": RDStatic.RDTypes.PRODUCT,
+        "category": StaticRD.Categories.BASIC,
+        "type": StaticRD.RDTypes.PRODUCT,
         "development_cost": 5000000,
         "depreciation_time": 12,
         "original_unit_mat_cost": 10000,
@@ -18,8 +18,8 @@ rd_statics = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": RDStatic.Categories.BASIC,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.BASIC,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -28,8 +28,8 @@ rd_statics = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": RDStatic.Categories.BASIC,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.BASIC,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -38,8 +38,8 @@ rd_statics = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": RDStatic.Categories.BASIC,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.BASIC,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -48,8 +48,8 @@ rd_statics = [
     {
         "order": 1,
         "title": "Sporty jetpack",
-        "category": RDStatic.Categories.SPORTY,
-        "type": RDStatic.RDTypes.PRODUCT,
+        "category": StaticRD.Categories.SPORTY,
+        "type": StaticRD.RDTypes.PRODUCT,
         "development_cost": 15000000,
         "depreciation_time": 12,
         "original_unit_mat_cost": 16000,
@@ -60,8 +60,8 @@ rd_statics = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": RDStatic.Categories.SPORTY,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.SPORTY,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -70,8 +70,8 @@ rd_statics = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": RDStatic.Categories.SPORTY,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.SPORTY,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -80,8 +80,8 @@ rd_statics = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": RDStatic.Categories.SPORTY,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.SPORTY,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -90,8 +90,8 @@ rd_statics = [
     {
         "order": 1,
         "title": "Safe jetpack",
-        "category": RDStatic.Categories.SAFE,
-        "type": RDStatic.RDTypes.PRODUCT,
+        "category": StaticRD.Categories.SAFE,
+        "type": StaticRD.RDTypes.PRODUCT,
         "development_cost": 7000000,
         "depreciation_time": 12,
         "original_unit_mat_cost": 14000,
@@ -102,8 +102,8 @@ rd_statics = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": RDStatic.Categories.SAFE,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.SAFE,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -112,8 +112,8 @@ rd_statics = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": RDStatic.Categories.SAFE,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.SAFE,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -122,8 +122,8 @@ rd_statics = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": RDStatic.Categories.SAFE,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.SAFE,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -132,8 +132,8 @@ rd_statics = [
     {
         "order": 1,
         "title": "Green jetpack",
-        "category": RDStatic.Categories.GREEN,
-        "type": RDStatic.RDTypes.PRODUCT,
+        "category": StaticRD.Categories.GREEN,
+        "type": StaticRD.RDTypes.PRODUCT,
         "development_cost": 10000000,
         "depreciation_time": 12,
         "original_unit_mat_cost": 12000,
@@ -144,8 +144,8 @@ rd_statics = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": RDStatic.Categories.GREEN,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.GREEN,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -154,8 +154,8 @@ rd_statics = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": RDStatic.Categories.GREEN,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.GREEN,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -164,8 +164,8 @@ rd_statics = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": RDStatic.Categories.GREEN,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.GREEN,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -174,8 +174,8 @@ rd_statics = [
     {
         "order": 1,
         "title": "Sustainable components",
-        "category": RDStatic.Categories.PRODUCTION,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.PRODUCTION,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 5000000,
         "development_duration": 1,
         "available_from_quarter": 1,
@@ -184,8 +184,8 @@ rd_statics = [
     {
         "order": 2,
         "title": "Waste material recycling",
-        "category": RDStatic.Categories.PRODUCTION,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.PRODUCTION,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 7000000,
         "development_duration": 1,
         "available_from_quarter": 1,
@@ -194,8 +194,8 @@ rd_statics = [
     {
         "order": 3,
         "title": "Heat energy recovery",
-        "category": RDStatic.Categories.PRODUCTION,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.PRODUCTION,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 8500000,
         "development_duration": 1,
         "available_from_quarter": 1,
@@ -204,8 +204,8 @@ rd_statics = [
     {
         "order": 4,
         "title": "Local energy production",
-        "category": RDStatic.Categories.PRODUCTION,
-        "type": RDStatic.RDTypes.UPGRADE,
+        "category": StaticRD.Categories.PRODUCTION,
+        "type": StaticRD.RDTypes.UPGRADE,
         "development_cost": 10000000,
         "development_duration": 1,
         "available_from_quarter": 1,
@@ -334,33 +334,34 @@ players = [
     {"player_email": "a@g.com", "team_name": "Giftit"},
 ]
 
-rd_products = [
+dynamic_rd = [
     {
         "player_email": "h@g.com",
-        "static": {
-            "order": 1,
-            "category": RDStatic.Categories.BASIC,
-        },
+        "category": StaticRD.Categories.BASIC,
+        "order": 1,
         "kwargs": {
             "started_at": 1,
-            "time_spent_developing": 0,
+            "time_spent_developing": 1,
             "alias": "SuperSonic Jetpack",
             "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
         },
-    }
-]
-
-rd_upgrades = [
+    },
     {
         "player_email": "h@g.com",
-        "static": {
-            "order": 2,
-            "category": RDStatic.Categories.BASIC,
-        },
-        "updated_product_alias": "SuperSonic Jetpack",
+        "category": StaticRD.Categories.BASIC,
+        "order": 2,
         "kwargs": {
             "started_at": 2,
-            "time_spent_developing": 1,
+            "time_spent_developing": 0,
         },
-    }
+    },
+    {
+        "player_email": "h@g.com",
+        "category": StaticRD.Categories.PRODUCTION,
+        "order": 1,
+        "kwargs": {
+            "started_at": 2,
+            "time_spent_developing": 0,
+        },
+    },
 ]

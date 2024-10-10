@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -6,19 +5,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.db.models import Prefetch
 
-from simulation.models.common import StateVariable
-
+from ..helper.rd import get_previous_rd_items
+from ..models.common import RippleTask
 from ..models.people import CustomUser, Player
-from ..models.rd import RDProduct, RDStates, RDStatic, RDUpgrade
-from ..serializers.rd import (
-    CreateRDProductSerializer,
-    CreateRDUpgradeSerializer,
-    RDProductSerializer,
-    RDStaticSerializer,
-    RDUpgradeSerializer,
-)
+from ..models.rd import DynamicRD, RDStates, StaticRD
+from ..serializers.rd import BaseCreateRDSerializer, CreateRDProductSerializer, DynamicRDSerializer
+from .error_codes.rd import RDErrorCodes
 
 
 class RDAPIView(APIView):
@@ -29,117 +22,91 @@ class RDAPIView(APIView):
         JWTAuthentication,
     ]
 
-    def get(self, request: Request):
+    def get(self, request: Request) -> Response:
         user = request.user
-        player = get_object_or_404(Player, user=user)
-        all_rd_data = []
+        try:
+            player = Player.objects.prefetch_related("rd", "state_variables").get(user=user)
+        except Player.DoesNotExist:
+            response = {"error": RDErrorCodes.PLAYER_NOT_FOUND(user)}
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
 
-        products = Prefetch("products", queryset=RDProduct.objects.filter(player=player))
-        upgrades = Prefetch("upgrades", queryset=RDUpgrade.objects.filter(player=player))
-        static_rd_objects = RDStatic.objects.prefetch_related(products).prefetch_related(upgrades)
+        current_quarter = player.state_variables.quarter
+        dynamic_rd_objects: list[DynamicRD] | None = player.rd.all()
 
-        for static_obj in static_rd_objects:
-            rd_product_obj = static_obj.products.first()
-            rd_upgrade_obj = static_obj.upgrades.first()
+        previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
 
-            if not rd_product_obj and not rd_upgrade_obj:
-                context = {"player": player}
-                rd_static_data = RDStaticSerializer(static_obj, context=context).data
-                all_rd_data.append(rd_static_data)
+        serialized_data = DynamicRDSerializer(
+            dynamic_rd_objects,
+            many=True,
+            context={"current_quarter": current_quarter, "previous_rd_items": previous_rd_items},
+        )
 
-            elif static_obj.type == RDStatic.RDTypes.PRODUCT:
-                rd_product_data = RDProductSerializer(rd_product_obj).data
-                all_rd_data.append(rd_product_data)
-
-            elif static_obj.type == RDStatic.RDTypes.UPGRADE:
-                rd_upgrade_data = RDUpgradeSerializer(rd_upgrade_obj).data
-                all_rd_data.append(rd_upgrade_data)
-
-        return Response(all_rd_data, status=status.HTTP_200_OK)
+        response = {"data": serialized_data.data}
+        return Response(
+            response,
+            status=status.HTTP_200_OK,
+        )
 
     @extend_schema(request=CreateRDProductSerializer)
-    def post(self, request: Request):
+    def post(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_object_or_404(Player, user=user)
+
+        try:
+            player = Player.objects.prefetch_related("rd", "state_variables").get(user=user)
+        except Player.DoesNotExist:
+            response = {"error": RDErrorCodes.PLAYER_NOT_FOUND(user)}
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
 
         # Validating category and order
-        rd_serializer = CreateRDUpgradeSerializer(data=request.data)
-        if not rd_serializer.is_valid():
-            response = {"status": "error", "data": rd_serializer.errors}
+        base_rd_serializer = BaseCreateRDSerializer(data=request.data)
+        if not base_rd_serializer.is_valid():
+            response = {"error": RDErrorCodes.SERIALIZER_ERROR(base_rd_serializer.errors)}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        category = rd_serializer.validated_data["category"]
-        order = rd_serializer.validated_data["order"]
+        category = base_rd_serializer.validated_data["category"]
+        order = base_rd_serializer.validated_data["order"]
 
-        # Finding the static object for which the request has been sent
-        static_obj = get_object_or_404(RDStatic, category=category, order=order)
+        try:
+            # Finding the static object for which the request has been sent
+            dynamic_rd_object: DynamicRD = player.rd.get(category=category, order=order)
+        except DynamicRD.DoesNotExist:
+            response = {"error": RDErrorCodes.RD_NOT_FOUND(category, order)}
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
 
         # Validating alias and icon_link only if the request is for a product
-        if static_obj.type == RDStatic.RDTypes.PRODUCT:
-            rd_serializer = CreateRDProductSerializer(data=request.data)
-            if not rd_serializer.is_valid():
-                response = {"status": "error", "data": rd_serializer.errors}
+        if dynamic_rd_object.type == StaticRD.RDTypes.PRODUCT:
+            product_rd_serializer = CreateRDProductSerializer(data=request.data)
+            alias = product_rd_serializer.validated_data.get("alias")
+            icon_link = product_rd_serializer.validated_data.get("icon_link")
+            dynamic_rd_object.alias = alias
+            dynamic_rd_object.icon_link = icon_link
+
+            if not product_rd_serializer.is_valid():
+                response = {"error": RDErrorCodes.SERIALIZER_ERROR(product_rd_serializer.errors)}
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        alias = rd_serializer.validated_data.get("alias", "")
-        icon_link = rd_serializer.validated_data.get("icon_link", "")
-        current_quarter = StateVariable.get_player_quarter(player=player)
-
-        # Check if the static object is available for development
-        if static_obj.get_state(player) != RDStates.AVAILABLE:
-            response = {
-                "status": "error",
-                "data": f"R&D Project '{static_obj.title}' is not available for development",
-            }
+        # Check if the dynamic object is available for development,
+        # since only available R&D items can be developed
+        dynamic_rd_objects: list[DynamicRD] | None = player.rd.all()
+        current_quarter = player.state_variables.quarter
+        previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
+        state = dynamic_rd_object.get_state(current_quarter, previous_rd_items)
+        if state != RDStates.AVAILABLE:
+            response = {"error": RDErrorCodes.RD_STATE_ERROR(state)}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get or Create the RDProduct
-        if static_obj.type == RDStatic.RDTypes.PRODUCT:
-            rd_product_obj: RDProduct | None = static_obj.get_product(player=player)
-            if rd_product_obj:
-                response = {
-                    "status": "error",
-                    "data": f"R&D Product '{static_obj.title}' with alias {rd_product_obj.alias} already exists for {player.user.email}",
-                }
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                rd_product_obj = RDProduct.objects.create(
-                    player=player, static=static_obj, started_at=current_quarter, alias=alias, icon_link=icon_link
-                )
-                rd_product_serializer = RDProductSerializer(rd_product_obj)
-                response = {"status": "success", "data": rd_product_serializer.data}
-                return Response(response, status=status.HTTP_201_CREATED)
+        dynamic_rd_object.started_at = current_quarter
+        dynamic_rd_object.save()
 
-        # Get or Create the RDUpgrade
-        elif static_obj.type == RDStatic.RDTypes.UPGRADE:
-            rd_upgrade_obj = static_obj.get_upgrade(player=player)
-            if rd_upgrade_obj:
-                response = {
-                    "status": "error",
-                    "data": f"R&D Upgrade '{static_obj.title}' already exists for {player.user.email}",
-                }
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                rd_upgrade_obj: RDUpgrade
-                # Production Upgrades don't need the `updated_product` field
-                if static_obj.category == RDStatic.Categories.PRODUCTION:
-                    rd_upgrade_obj = RDUpgrade.objects.create(
-                        player=player, static=static_obj, started_at=current_quarter
-                    )
-                else:
-                    # Find the first item of this category (e.g. Basic Jetpack)
-                    product_of_category = get_object_or_404(
-                        RDProduct, player=player, static__category=category, static__order=1
-                    )
-                    rd_upgrade_obj = RDUpgrade.objects.create(
-                        player=player,
-                        static=static_obj,
-                        started_at=current_quarter,
-                        updated_product=product_of_category,
-                    )
+        # Create ripple task to increase dev time at the end of the quarter
+        ripple_task = RippleTask.objects.create(
+            player=player,
+            run_at_quarter=current_quarter + 1,
+            type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
+            rd_object=dynamic_rd_object,
+        )
 
-                rd_upgrade_serializer = RDUpgradeSerializer(rd_upgrade_obj)
-                response = {"status": "success", "data": rd_upgrade_serializer.data}
-                return Response(response, status=status.HTTP_201_CREATED)
+        serialized_response = DynamicRDSerializer(dynamic_rd_object)
+        response = {"data": serialized_response.data}
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(data=response, status=status.HTTP_201_CREATED)

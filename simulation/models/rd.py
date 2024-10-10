@@ -1,9 +1,6 @@
-from enum import Enum
 from django.db import models
 
 from ..apps import SimulationConfig
-from .common import StateVariable
-from .people import Player
 
 
 class RDStates:
@@ -13,7 +10,7 @@ class RDStates:
     COMPLETED = "completed"
 
 
-class RDStatic(models.Model):
+class StaticRD(models.Model):
     class RDTypes(models.TextChoices):
         PRODUCT = "PR", "Product"
         UPGRADE = "UP", "UPGRADE"
@@ -26,16 +23,16 @@ class RDStatic(models.Model):
         PRODUCTION = "production", "Production"
 
     category = models.CharField(max_length=30, choices=Categories.choices)
-    type = models.CharField(max_length=2, choices=RDTypes.choices)
     order = models.PositiveSmallIntegerField()
+    type = models.CharField(max_length=2, choices=RDTypes.choices)
 
     title = models.CharField(max_length=50)
     description = models.TextField()
 
     development_cost = models.DecimalField(max_digits=15, decimal_places=0)
-    depreciation_time = models.IntegerField(null=True, blank=True)
     development_duration = models.IntegerField()
     available_from_quarter = models.IntegerField(null=True, blank=True)
+    depreciation_time = models.IntegerField(null=True, blank=True)
 
     # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
     original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
@@ -46,84 +43,99 @@ class RDStatic(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["category", "order"]
         unique_together = ["category", "order"]
-        verbose_name = "R&D Static"
-        db_table = f"{SimulationConfig.name}_rd_static"
-
-    @property
-    def previous_item(self):
-        return RDStatic.objects.filter(category=self.category, order=self.order - 1).first()
-
-    def has_dynamic_obj(self, player: Player):
-        return self.products.filter(player=player).exists() or self.upgrades.filter(player=player).exists()
-
-    def get_product(self, player: Player):
-        return self.products.filter(player=player).first()
-
-    def get_upgrade(self, player: Player):
-        return self.upgrades.filter(player=player).first()
-
-    def get_state(self, player: Player):
-        current_quarter = StateVariable.get_player_quarter(player)
-        # time-based availability
-        if self.available_from_quarter:
-            return RDStates.AVAILABLE if self.available_from_quarter <= current_quarter else RDStates.LOCKED
-
-        # dependency-based availability
-        previous_static_item = self.previous_item
-        if previous_static_item:
-            has_dynamic_item = previous_static_item.has_dynamic_obj(player=player)
-            return RDStates.AVAILABLE if has_dynamic_item else RDStates.LOCKED
+        ordering = ["-id"]
+        verbose_name = "Static R&D"
+        db_table = f"{SimulationConfig.name}_static_rd"
 
     def __str__(self):
         return f"{self.category} - {self.title}"
 
 
-class RDProduct(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    static = models.ForeignKey(RDStatic, on_delete=models.CASCADE, related_name="products")
-    started_at = models.IntegerField()
+class DynamicRD(models.Model):
+    # Cannot inherit from StaticRD because bulk_create is not supported
+    # on child models
+    player = models.ForeignKey("simulation.player", on_delete=models.CASCADE, related_name="rd")
+
+    category = models.CharField(max_length=30, choices=StaticRD.Categories.choices)
+    order = models.PositiveSmallIntegerField()
+    type = models.CharField(max_length=2, choices=StaticRD.RDTypes.choices)
+
+    title = models.CharField(max_length=50)
+    description = models.TextField()
+
+    development_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    development_duration = models.IntegerField()
+    available_from_quarter = models.IntegerField(null=True, blank=True)
+    depreciation_time = models.IntegerField(null=True, blank=True)
+
+    # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
+    original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
+    unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    production_emission_effect = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
+
+    started_at = models.IntegerField(default=0)
     time_spent_developing = models.IntegerField(default=0)
-    alias = models.CharField(max_length=100)
-    icon_link = models.CharField(max_length=300)
+    alias = models.CharField(max_length=100, blank=True)
+    icon_link = models.CharField(max_length=300, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "R&D Product"
-        db_table = f"{SimulationConfig.name}_rd_product"
+        ordering = ["player", "-id"]
+        verbose_name = "Dynamic R&D"
+        db_table = f"{SimulationConfig.name}_dynamic_rd"
 
-    def get_state(self):
-        if self.time_spent_developing == self.static.development_duration:
-            return RDStates.COMPLETED
-        elif self.time_spent_developing < self.static.development_duration:
-            return RDStates.RESEARCHING
+    @property
+    def is_completed(self):
+        return (
+            self.time_spent_developing == self.development_duration
+            and self.started_at > 0
+            and self.time_spent_developing != 0
+        )
+
+    @property
+    def is_researching(self):
+        return self.time_spent_developing < self.development_duration and self.started_at > 0
+
+    def get_state(self, current_quarter: int, previous_rd_items):
+        """
+        Determines the current state of an R&D item based on its progress, availability, and dependencies.
+        To check if user has started the research process for this R&D item, check if started_at > 0.
+        Because the start_at must be a valid quarter (a positive integer), and if it's not,
+        it means the user has not started the research process.
+
+        Args:
+            current_quarter (int): The current quarter of the simulation.
+            prefetched_rd_table (dict): A prefetched database query result containing R&D items.
+
+        Returns:
+            RDStates: The current state of the R&D item, which can be one of the following:
+                - RDStates.COMPLETED: The R&D item has been fully developed.
+                - RDStates.RESEARCHING: The R&D item is currently being developed.
+                - RDStates.AVAILABLE: The R&D item is available for research.
+                - RDStates.LOCKED: The R&D item is not yet available for research.
+        """
+        # user has started the research process for this R&D item
+        if self.started_at > 0:
+            return (
+                RDStates.COMPLETED if self.time_spent_developing >= self.development_duration else RDStates.RESEARCHING
+            )
+
+        # time-based availability
+        if self.available_from_quarter:
+            return RDStates.AVAILABLE if self.available_from_quarter <= current_quarter else RDStates.LOCKED
+
+        # dependency-based availability
+        previous_item = previous_rd_items.get((self.category, self.order))
+        if not previous_item:
+            return RDStates.LOCKED
+        return (
+            RDStates.AVAILABLE
+            if previous_item.time_spent_developing >= previous_item.development_duration
+            else RDStates.LOCKED
+        )
 
     def __str__(self):
-        return f"{self.static.title} by {self.player.user.email}"
-
-
-class RDUpgrade(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    static = models.ForeignKey(RDStatic, on_delete=models.CASCADE, related_name="upgrades")
-    started_at = models.IntegerField()
-    time_spent_developing = models.IntegerField(default=0)
-    updated_product = models.ForeignKey(RDProduct, on_delete=models.CASCADE, blank=True, null=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "R&D Upgrade"
-        db_table = f"{SimulationConfig.name}_rd_upgrade"
-
-    def get_state(self):
-        if self.time_spent_developing == self.static.development_duration:
-            return RDStates.COMPLETED
-        elif self.time_spent_developing < self.static.development_duration:
-            return RDStates.RESEARCHING
-
-    def __str__(self):
-        return f"{self.static.title} by {self.player.user.email}"
+        return f"{self.category} - {self.title}"
