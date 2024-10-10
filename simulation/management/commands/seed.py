@@ -4,8 +4,7 @@ from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
 from ...models.people import CustomUser, Instructor, Player, SimulationClass, Team
-from ...models.rd import RDProduct, RDStatic, RDUpgrade
-from ..data_fixtures import players, rd_products, rd_upgrades, simulation_classes, superusers, teams, users
+from ..data_fixtures import dynamic_rd, players, simulation_classes, superusers, teams, users
 
 
 class Command(BaseCommand):
@@ -31,10 +30,7 @@ class Command(BaseCommand):
         self.assign_team_to_players(players)
 
         # RD Products
-        self.create_rd_products(rd_products)
-
-        # RD Upgrades
-        self.create_rd_upgrades(rd_upgrades)
+        self.start_research_for_rd_items(dynamic_rd)
 
     def cerate_super_users(self, superusers):
         for superuser_dict in superusers:
@@ -110,44 +106,24 @@ class Command(BaseCommand):
             player_obj.save()
             self.stdout.write(f"Player {player_obj.user.email} was added to team {team_obj.name}")
 
-    def create_rd_products(self, rd_products):
-        for rd_product_dict in rd_products:
-            email = rd_product_dict["player_email"]
-            category = rd_product_dict["static"]["category"]
-            order = rd_product_dict["static"]["order"]
-            rd_product_kwargs = rd_product_dict["kwargs"]
+    def start_research_for_rd_items(self, dynamic_rd):
+        for dynamic_rd_dict in dynamic_rd:
+            player_email = dynamic_rd_dict["player_email"]
+            category = dynamic_rd_dict["category"]
+            order = dynamic_rd_dict["order"]
+            kwargs = dynamic_rd_dict["kwargs"]
 
-            player = Player.objects.filter(user__email=email).first()
-            static = RDStatic.objects.filter(category=category, order=order).first()
-            rd_product_obj = RDProduct.objects.filter(player=player, static=static).first()
+            player = Player.objects.prefetch_related("rd").filter(user__email=player_email).first()
+            if not player:
+                self.stderr.write(f"No player with email {player_email} was found")
+                continue
 
-            if rd_product_obj:
+            match_items_count = player.rd.filter(category=category, order=order).update(**kwargs)
+
+            if match_items_count:
+                self.stdout.write(f"Player {player_email} started research for {category} | column {order}")
+            else:
                 self.stderr.write(
-                    f"The same R&d Product with alias {rd_product_obj.alias} already exists for {player.user.email}"
+                    f"No Dynamic R&D item with category {category} and order {order} was found for user {player.user.email}."
+                    "Created a new one."
                 )
-                continue
-
-            rd_product_obj = RDProduct.objects.create(player=player, static=static, **rd_product_kwargs)
-            self.stdout.write(f"Created R&D Product {static.title} for {player.user.email}")
-
-    def create_rd_upgrades(self, rd_upgrades):
-        for rd_upgrade_dict in rd_upgrades:
-            email = rd_upgrade_dict["player_email"]
-            category = rd_upgrade_dict["static"]["category"]
-            order = rd_upgrade_dict["static"]["order"]
-            updated_product_alias = rd_upgrade_dict["updated_product_alias"]
-            rd_upgrade_kwargs = rd_upgrade_dict["kwargs"]
-
-            player = Player.objects.filter(user__email=email).first()
-            static = RDStatic.objects.filter(category=category, order=order).first()
-            updated_product_obj = RDProduct.objects.filter(alias=updated_product_alias, player=player).first()
-            rd_upgrade_obj = RDUpgrade.objects.filter(player=player, static=static).first()
-
-            if rd_upgrade_obj:
-                self.stderr.write(f"The same R&d Upgrade already exists for {player.user.email}")
-                continue
-
-            rd_upgrade_obj = RDUpgrade.objects.create(
-                player=player, static=static, updated_product=updated_product_obj, **rd_upgrade_kwargs
-            )
-            self.stdout.write(f"Created R&D Upgrade for {updated_product_obj.alias} for {player.user.email}")

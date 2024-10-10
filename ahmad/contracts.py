@@ -1,7 +1,6 @@
-from typing import TypedDict
-from enum import Enum
-import math
 import random
+from enum import Enum
+from typing import TypedDict
 
 
 class ProductType(Enum):

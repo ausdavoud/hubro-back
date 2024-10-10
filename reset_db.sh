@@ -10,7 +10,7 @@ python manage.py makemigrations
 
 # Run docker and wait for db initialization
 docker compose up --remove-orphans -d
-sleep 5
+sleep 3
 
 # Run prepopulation command 
 python manage.py migrate
