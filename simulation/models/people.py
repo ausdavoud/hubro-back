@@ -2,8 +2,6 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.db.utils import IntegrityError
 
-from ..helper.rd import create_dynamic_rd_items
-
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password, **kwargs):
@@ -22,6 +20,9 @@ class CustomUserManager(BaseUserManager):
                 player = Player.objects.create(user=user)
             except IntegrityError:
                 print(f"A `Player` instance is already assigned to {user.email}")
+
+            from ..views.services.rd import create_dynamic_rd_items
+
             create_dynamic_rd_items(player=player)
 
         elif user.role == CustomUser.UserRoles.INSTRUCTOR:

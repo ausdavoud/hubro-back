@@ -64,18 +64,18 @@ class DynamicRD(models.Model):
     title = models.CharField(max_length=50)
     description = models.TextField()
 
+    depreciation_time = models.IntegerField(null=True, blank=True)
     development_cost = models.DecimalField(max_digits=15, decimal_places=0)
     development_duration = models.IntegerField()
     available_from_quarter = models.IntegerField(null=True, blank=True)
-    depreciation_time = models.IntegerField(null=True, blank=True)
+    started_at = models.IntegerField(default=0)
+    time_spent_developing = models.IntegerField(default=0)
 
     # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
     original_unit_mat_cost = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
     unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     production_emission_effect = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
 
-    started_at = models.IntegerField(default=0)
-    time_spent_developing = models.IntegerField(default=0)
     alias = models.CharField(max_length=100, blank=True)
     icon_link = models.CharField(max_length=300, blank=True)
 
@@ -120,7 +120,7 @@ class DynamicRD(models.Model):
         # user has started the research process for this R&D item
         if self.started_at > 0:
             return (
-                RDStates.COMPLETED if self.time_spent_developing >= self.development_duration else RDStates.RESEARCHING
+                RDStates.COMPLETED if self.time_spent_developing == self.development_duration else RDStates.RESEARCHING
             )
 
         # time-based availability

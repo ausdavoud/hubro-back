@@ -3,7 +3,10 @@ from typing import Any
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
+from ...models.common import RippleTask
 from ...models.people import CustomUser, Instructor, Player, SimulationClass, Team
+from ...models.rd import DynamicRD
+from ...views.services.ripple_tasks import create_dynamic_rd_ripple_task
 from ..data_fixtures import dynamic_rd, players, simulation_classes, superusers, teams, users
 
 
@@ -111,18 +114,31 @@ class Command(BaseCommand):
             player_email = dynamic_rd_dict["player_email"]
             category = dynamic_rd_dict["category"]
             order = dynamic_rd_dict["order"]
-            kwargs = dynamic_rd_dict["kwargs"]
+            started_at = dynamic_rd_dict["started_at"]
+            time_spent_developing = dynamic_rd_dict["time_spent_developing"]
+            alias = dynamic_rd_dict.get("alias", "")
+            icon_link = dynamic_rd_dict.get("icon_link", "")
 
             player = Player.objects.prefetch_related("rd").filter(user__email=player_email).first()
             if not player:
                 self.stderr.write(f"No player with email {player_email} was found")
                 continue
 
-            match_items_count = player.rd.filter(category=category, order=order).update(**kwargs)
-
-            if match_items_count:
+            try:
+                dynamic_rd_object = player.rd.get(category=category, order=order)
+                dynamic_rd_object.started_at = started_at
+                dynamic_rd_object.time_spent_developing = time_spent_developing
+                dynamic_rd_object.alias = alias
+                dynamic_rd_object.icon_link = icon_link
+                dynamic_rd_object.save()
+                ripple_task = create_dynamic_rd_ripple_task(
+                    player=player,
+                    run_at_quarter=started_at + 1,
+                    type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
+                    dynamic_rd_object=dynamic_rd_object,
+                )
                 self.stdout.write(f"Player {player_email} started research for {category} | column {order}")
-            else:
+            except DynamicRD.DoesNotExist:
                 self.stderr.write(
                     f"No Dynamic R&D item with category {category} and order {order} was found for user {player.user.email}."
                     "Created a new one."
