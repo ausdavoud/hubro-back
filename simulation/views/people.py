@@ -16,9 +16,9 @@ def custom_validation(data):
     email = data["email"].strip()
     password = data["password"].strip()
     if not email or CustomUser.objects.filter(email=email).exists():
-        raise people_exceptions.EmailExistsException(email)
+        raise people_exceptions.EmailExists(email)
     if not password or len(password) < 8:
-        raise people_exceptions.ShortPasswordException()
+        raise people_exceptions.ShortPassword()
 
     return data
 
