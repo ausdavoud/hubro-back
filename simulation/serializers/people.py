@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate
 from django.forms import ValidationError
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import serializers, status
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -21,12 +21,15 @@ class TokenObtainPairResponseSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
-class DecoratedTokenObtainPairView(TokenObtainPairView):
-    @extend_schema(
+@extend_schema_view(
+    post=extend_schema(
+        tags=["Register & Login"],
         responses={
             status.HTTP_200_OK: TokenObtainPairResponseSerializer,
         },
     )
+)
+class DecoratedTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
@@ -41,12 +44,15 @@ class TokenRefreshResponseSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
-class DecoratedTokenRefreshView(TokenRefreshView):
-    @extend_schema(
+@extend_schema_view(
+    post=extend_schema(
+        tags=["Register & Login"],
         responses={
             status.HTTP_200_OK: TokenRefreshResponseSerializer,
         },
     )
+)
+class DecoratedTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
@@ -61,20 +67,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create_user(
             email=clean_data["email"], password=clean_data["password"], role=clean_data["role"]
         )
-        user.save()
         return user
-
-
-class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField()
-
-    def check_user(self, clean_data):
-        user = authenticate(username=clean_data["email"], password=clean_data["password"])
-        if not user:
-            raise ValidationError("User not found")
-        return user
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

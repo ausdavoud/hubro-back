@@ -339,29 +339,23 @@ dynamic_rd = [
         "player_email": "h@g.com",
         "category": StaticRD.Categories.BASIC,
         "order": 1,
-        "kwargs": {
-            "started_at": 1,
-            "time_spent_developing": 1,
-            "alias": "SuperSonic Jetpack",
-            "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
-        },
+        "started_at": 1,
+        "time_spent_developing": 1,
+        "alias": "SuperSonic Jetpack",
+        "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
     },
     {
         "player_email": "h@g.com",
         "category": StaticRD.Categories.BASIC,
         "order": 2,
-        "kwargs": {
-            "started_at": 2,
-            "time_spent_developing": 0,
-        },
+        "started_at": 2,
+        "time_spent_developing": 0,
     },
     {
         "player_email": "h@g.com",
         "category": StaticRD.Categories.PRODUCTION,
         "order": 1,
-        "kwargs": {
-            "started_at": 2,
-            "time_spent_developing": 0,
-        },
+        "started_at": 2,
+        "time_spent_developing": 0,
     },
 ]

@@ -31,4 +31,4 @@ class RippleTask(models.Model):
     )
 
     def __str__(self):
-        return self.type
+        return f"{self.type} - {self.rd_object}"

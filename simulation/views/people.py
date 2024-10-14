@@ -1,34 +1,29 @@
 from django.shortcuts import render
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..models.people import CustomUser
 from ..serializers.people import UserRegisterSerializer
-
-
-class EmailExistsException(Exception):
-    pass
-
-
-class ShortPasswordException(Exception):
-    pass
+from .exceptions import people as people_exceptions
 
 
 def custom_validation(data):
     email = data["email"].strip()
     password = data["password"].strip()
     if not email or CustomUser.objects.filter(email=email).exists():
-        raise EmailExistsException("choose another email")
+        raise people_exceptions.EmailExistsException(email)
     if not password or len(password) < 8:
-        raise ShortPasswordException("choose another password, min 8 characters")
+        raise people_exceptions.ShortPasswordException()
 
     return data
 
 
+@extend_schema_view(post=extend_schema(tags=["Register & Login"]))
 class UserRegister(APIView):
     permission_classes = [
         permissions.AllowAny,
@@ -45,8 +40,8 @@ class UserRegister(APIView):
                     OpenApiExample(
                         name="Bad Request",
                         value={
-                            "status": "error",
-                            "data": "email is not valid or already exists",
+                            "error": "error messages",
+                            "data": "generated user",
                         },
                     )
                 ],
@@ -54,23 +49,21 @@ class UserRegister(APIView):
         },
     )
     def post(self, request: Request):
-        try:
-            clean_data = custom_validation(request.data)
-        except EmailExistsException:
-            return Response(
-                {"status": "error", "data": "email is not valid or already exists"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        except ShortPasswordException:
-            return Response({"status": "error", "data": "password is too short"}, status=status.HTTP_400_BAD_REQUEST)
+        clean_data = custom_validation(request.data)
         serializer = UserRegisterSerializer(data=clean_data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.create(clean_data)
             if user:
                 # Return access and refresh token instead of authentication
                 # Return a json without password
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                refresh = RefreshToken.for_user(user)
+                response = {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                }
+                return Response(response, status=status.HTTP_201_CREATED)
 
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        raise people_exceptions.UserNotCreated(response)
 
 
 # Create your views here.
