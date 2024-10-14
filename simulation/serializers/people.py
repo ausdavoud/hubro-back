@@ -55,9 +55,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["email", "password", "role"]
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, clean_data):
-        user = CustomUser.objects.create_user(email=clean_data["email"], password=clean_data["password"])
+        user = CustomUser.objects.create_user(
+            email=clean_data["email"], password=clean_data["password"], role=clean_data["role"]
+        )
         user.save()
         return user
 
