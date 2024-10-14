@@ -1,0 +1,12 @@
+class ErrorCodes:
+    # Common: 00
+    DATABASES_RECORD_NOT_FOUND_CODE = "0001"
+    SERIALIZER_ERROR_CODE = "0002"
+
+    # People: 01
+    EMAIL_EXISTS_CODE = "0101"
+    SHORT_PASSWORD_CODE = "0102"
+    USER_NOT_CREATED_CODE = "0103"
+
+    # R&D: 02
+    RD_STATE_ERROR = "0201"
