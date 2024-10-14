@@ -11,6 +11,7 @@ from ..models.common import RippleTask
 from ..models.people import CustomUser, Player
 from ..models.rd import DynamicRD, RDStates, StaticRD
 from ..serializers.rd import BaseCreateRDSerializer, CreateRDProductSerializer, DynamicRDSerializer
+from .error_codes.common import CommonErrorCodes
 from .error_codes.rd import RDErrorCodes
 
 
@@ -27,7 +28,7 @@ class RDAPIView(APIView):
         try:
             player = Player.objects.prefetch_related("rd", "state_variables").get(user=user)
         except Player.DoesNotExist:
-            response = {"error": RDErrorCodes.PLAYER_NOT_FOUND(user)}
+            response = {"error": CommonErrorCodes.PLAYER_NOT_FOUND(user)}
             return Response(response, status=status.HTTP_404_NOT_FOUND)
 
         current_quarter = player.state_variables.quarter
@@ -54,13 +55,13 @@ class RDAPIView(APIView):
         try:
             player = Player.objects.prefetch_related("rd", "state_variables").get(user=user)
         except Player.DoesNotExist:
-            response = {"error": RDErrorCodes.PLAYER_NOT_FOUND(user)}
+            response = {"error": CommonErrorCodes.PLAYER_NOT_FOUND(user)}
             return Response(response, status=status.HTTP_404_NOT_FOUND)
 
         # Validating category and order
         base_rd_serializer = BaseCreateRDSerializer(data=request.data)
         if not base_rd_serializer.is_valid():
-            response = {"error": RDErrorCodes.SERIALIZER_ERROR(base_rd_serializer.errors)}
+            response = {"error": CommonErrorCodes.SERIALIZER_ERROR(base_rd_serializer.errors)}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
         category = base_rd_serializer.validated_data["category"]
@@ -82,7 +83,7 @@ class RDAPIView(APIView):
             dynamic_rd_object.icon_link = icon_link
 
             if not product_rd_serializer.is_valid():
-                response = {"error": RDErrorCodes.SERIALIZER_ERROR(product_rd_serializer.errors)}
+                response = {"error": CommonErrorCodes.SERIALIZER_ERROR(product_rd_serializer.errors)}
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if the dynamic object is available for development,
