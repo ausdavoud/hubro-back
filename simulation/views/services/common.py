@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -5,7 +6,7 @@ from ...models.people import CustomUser, Player
 from ..exceptions import common as common_exceptions
 
 
-def get_player_or_404(user: CustomUser, prefetch_related_tables: list[str] = ["rd", "state_variables"]):
+def get_player_or_404(user: CustomUser, prefetch_related_tables: list[str | Prefetch] = []):
     try:
         return Player.objects.prefetch_related(*prefetch_related_tables).get(user=user)
     except Player.DoesNotExist:

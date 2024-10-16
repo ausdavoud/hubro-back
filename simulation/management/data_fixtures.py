@@ -341,6 +341,7 @@ dynamic_rd = [
         "order": 1,
         "started_at": 1,
         "time_spent_developing": 1,
+        "run_at_quarter": 2,
         "alias": "SuperSonic Jetpack",
         "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
     },
@@ -349,6 +350,7 @@ dynamic_rd = [
         "category": StaticRD.Categories.BASIC,
         "order": 2,
         "started_at": 2,
+        "run_at_quarter": 2,
         "time_spent_developing": 0,
     },
     {
@@ -356,6 +358,7 @@ dynamic_rd = [
         "category": StaticRD.Categories.PRODUCTION,
         "order": 1,
         "started_at": 2,
+        "run_at_quarter": 2,
         "time_spent_developing": 0,
     },
 ]

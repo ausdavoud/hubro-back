@@ -4,7 +4,6 @@ from ...models.common import RippleTask
 from ...models.people import Player
 from ...models.rd import DynamicRD, RDStates, StaticRD
 from ...serializers.rd import DynamicRDSerializer
-from ...views.services.common import get_serializer_or_400
 from ..exceptions import common as common_exceptions
 from ..exceptions import rd as rd_exceptions
 
@@ -77,5 +76,5 @@ def start_rd_development(player: Player, dynamic_rd_object: DynamicRD) -> Dynami
         dynamic_rd_object=dynamic_rd_object,
     )
 
-    serialized_data = get_serializer_or_400(DynamicRDSerializer, dynamic_rd_object)
-    return serialized_data
+    serialized_model = DynamicRDSerializer(dynamic_rd_object)
+    return serialized_model
