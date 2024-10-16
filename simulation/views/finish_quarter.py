@@ -26,7 +26,7 @@ class FinishQuarter(APIView):
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
-        player = get_player_or_404(user, ["rd", "state_variables", "ripple_tasks"])
+        player = get_player_or_404(user, ["state_variables"])
 
         # TODO: Implement pre-quarter-finish logic
 
@@ -42,20 +42,24 @@ class FinishQuarter(APIView):
 
         # Do ripple tasks
         current_quarter = player.state_variables.quarter
-        ripple_tasks: list[RippleTask] = player.ripple_tasks.filter(run_at_quarter=current_quarter)
-        rd_objects_to_update = []
+        ripple_tasks: list[RippleTask] | None = RippleTask.objects.filter(
+            player=player, run_at_quarter=current_quarter
+        ).select_related("dynamic_rd_object")
+        dynamic_rd_objects_to_update = []
         tasks_to_update = []
         tasks_to_delete = []
         for ripple_task in ripple_tasks:
             if ripple_task.type == RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME:
-                time_spent_developing = ripple_task.rd_object.time_spent_developing
-                ripple_task.rd_object.time_spent_developing = F("time_spent_developing") + 1
-                rd_objects_to_update.append(ripple_task.rd_object)
+                time_spent_developing = ripple_task.dynamic_rd_object.time_spent_developing
+                ripple_task.dynamic_rd_object.time_spent_developing = F("time_spent_developing") + 1
+                dynamic_rd_objects_to_update.append(ripple_task.dynamic_rd_object)
                 # Replicating the 'is_researching' to see if it'll be researching in the next quarter
+                # Can't use ripple_task.dynamic_rd_object.time_spent_developing directly since it hasn't
+                # been saved yet
                 time_spent_developing += 1
                 if (
-                    time_spent_developing < ripple_task.rd_object.development_duration
-                    and ripple_task.rd_object.started_at > 0
+                    time_spent_developing < ripple_task.dynamic_rd_object.development_duration
+                    and ripple_task.dynamic_rd_object.started_at > 0
                 ):
                     # If research is still ongoing, run next quarter, too
                     ripple_task.run_at_quarter = F("run_at_quarter") + 1
@@ -63,11 +67,15 @@ class FinishQuarter(APIView):
                 else:
                     tasks_to_delete.append(ripple_task)
 
-                if rd_objects_to_update:
-                    DynamicRD.objects.bulk_update(rd_objects_to_update, ["time_spent_developing"])
-                if tasks_to_update:
-                    RippleTask.objects.bulk_update(tasks_to_update, ["run_at_quarter"])
-                if tasks_to_delete:
-                    RippleTask.objects.filter(id__in=[task.id for task in tasks_to_delete]).delete()
+        # This may cause problem in the future since more and more ripple task types will be added
+        # But note that it still needs to be outside the for loop for the bulk update to mean.
+        # Otherwise it'll be updated one by one
+        if dynamic_rd_objects_to_update:
+            DynamicRD.objects.bulk_update(dynamic_rd_objects_to_update, ["time_spent_developing"])
+        if tasks_to_update:
+            RippleTask.objects.bulk_update(tasks_to_update, ["run_at_quarter"])
+        if tasks_to_delete:
+            RippleTask.objects.filter(id__in=[task.id for task in tasks_to_delete]).delete()
 
-        return Response(status=status.HTTP_200_OK)
+        response = {"data": {"current_quarter": current_quarter}}
+        return Response(response, status=status.HTTP_200_OK)

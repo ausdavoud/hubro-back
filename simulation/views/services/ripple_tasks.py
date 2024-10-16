@@ -4,15 +4,6 @@ from ...models.rd import DynamicRD
 from ..exceptions import common as common_exceptions
 
 
-def create_dynamic_rd_ripple_task(player: Player, run_at_quarter: int, type: str, dynamic_rd_object: DynamicRD):
-    return RippleTask.objects.create(
-        player=player,
-        run_at_quarter=run_at_quarter,
-        type=type,
-        rd_object=dynamic_rd_object,
-    )
-
-
 def increment_rd_dev_time(dynamic_rd_object: DynamicRD):
     dynamic_rd_object.time_spent_developing += 1
     dynamic_rd_object.save()
@@ -30,7 +21,7 @@ def delete_dynamic_rd_ripple_task_or_404(player: Player, dynamic_rd_object: Dyna
     if dynamic_rd_object.time_spent_developing == 0:
         dynamic_rd_object.started_at = 0
         dynamic_rd_object.save()
-    delete_response = player.ripple_tasks.filter(rd_object=dynamic_rd_object).delete()
+    delete_response = player.ripple_tasks.filter(dynamic_rd_object=dynamic_rd_object).delete()
     delete_count, delete_details = delete_response
     if delete_count == 0:
         context = {"dynamic_rd_object": str(dynamic_rd_object)}

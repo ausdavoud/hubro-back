@@ -64,7 +64,7 @@ class Overdraft(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Player {self.player} Quarter {self.quarter}"
+        return f"{self.player} - Quarter {self.quarter}"
 
 
 class CashChange(models.Model):
@@ -77,7 +77,7 @@ class CashChange(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Player {self.player.user.username} Quarter {self.quarter}"
+        return f"{self.player} - Quarter {self.quarter}"
 
 
 class Loan(models.Model):
@@ -93,7 +93,7 @@ class Loan(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"${self.amount} by {self.player}"
+        return f"{self.player} - ${self.amount}"
 
 
 class Repayment(models.Model):
@@ -108,4 +108,4 @@ class Repayment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"${self.loan.payback_per_quarter} by {self.player.user.username}"
+        return f"{self.player} - ${self.loan.payback_per_quarter}"

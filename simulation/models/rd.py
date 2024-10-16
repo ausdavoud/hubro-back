@@ -138,4 +138,4 @@ class DynamicRD(models.Model):
         )
 
     def __str__(self):
-        return f"{self.category} - {self.title}"
+        return f"{self.player} - {self.category} - {self.title}"

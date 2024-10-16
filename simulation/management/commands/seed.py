@@ -6,7 +6,6 @@ from django.db.utils import IntegrityError
 from ...models.common import RippleTask
 from ...models.people import CustomUser, Instructor, Player, SimulationClass, Team
 from ...models.rd import DynamicRD
-from ...views.services.ripple_tasks import create_dynamic_rd_ripple_task
 from ..data_fixtures import dynamic_rd, players, simulation_classes, superusers, teams, users
 
 
@@ -133,7 +132,7 @@ class Command(BaseCommand):
                 dynamic_rd_object.icon_link = icon_link
                 dynamic_rd_object.save()
                 if dynamic_rd_object.is_researching:
-                    ripple_task = create_dynamic_rd_ripple_task(
+                    ripple_task = RippleTask.objects.create(
                         player=player,
                         run_at_quarter=run_at_quarter,
                         type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,

@@ -16,15 +16,24 @@ class DynamicRDAdmin(admin.ModelAdmin):
     def make_ripple_task(self, request, dynamic_rd_objects):
         user: CustomUser = request.user
         player = get_player_or_404(user)
+        # BUG
+        # This action method uses the current quarter of the logged-in admin user
+        # who is running the action. A better version would sort the dynamic_rd_objects
+        # based on their players, then for each set of dynamic objects related to
+        # a user, SELECT player along with its prefetched state variables and
+        # use the player's current quarter as run_at_quarter field
         current_quarter = player.state_variables.quarter
 
         ripple_tasks = []
         for dynamic_rd_object in dynamic_rd_objects:
+            # BUG
+            # This action does not check for existing ripple tasks.
+            # So you might create duplicates
             ripple_task = RippleTask(
                 player=player,
-                run_at_quarter=current_quarter,
+                run_at_quarter=current_quarter + 1,
                 type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
-                rd_object=dynamic_rd_object,
+                dynamic_rd_object=dynamic_rd_object,
             )
             ripple_tasks.append(ripple_task)
 
