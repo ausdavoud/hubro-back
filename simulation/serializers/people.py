@@ -1,5 +1,3 @@
-from django.contrib.auth import authenticate
-from django.forms import ValidationError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import serializers, status
 from rest_framework_simplejwt.views import (
@@ -68,6 +66,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             email=clean_data["email"], password=clean_data["password"], role=clean_data["role"]
         )
         return user
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

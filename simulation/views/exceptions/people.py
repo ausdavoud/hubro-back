@@ -22,7 +22,12 @@ class ShortPassword(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self):
-        detail = {"error": {"code": ErrorCodes.SHORT_PASSWORD_CODE, "description": "Password should be more than 8 characters"}}
+        detail = {
+            "error": {
+                "code": ErrorCodes.SHORT_PASSWORD_CODE,
+                "description": "Password should be more than 8 characters",
+            }
+        }
         super().__init__(detail)
 
 
