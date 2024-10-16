@@ -30,7 +30,7 @@ class Factory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.ownership} by {self.player.user.username}"
+        return f"{self.player} - {self.ownership}"
 
 
 class Production(models.Model):
@@ -47,4 +47,4 @@ class Production(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.product.alias} by {self.player.user.username} "
+        return f"{self.player} - {self.product.alias}"

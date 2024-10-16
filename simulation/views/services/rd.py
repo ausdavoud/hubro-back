@@ -1,5 +1,3 @@
-from simulation.views.services.ripple_tasks import create_dynamic_rd_ripple_task
-
 from ...models.common import RippleTask
 from ...models.people import Player
 from ...models.rd import DynamicRD, RDStates, StaticRD
@@ -69,7 +67,7 @@ def start_rd_development(player: Player, dynamic_rd_object: DynamicRD) -> Dynami
     dynamic_rd_object.save()
 
     # Create ripple task to increase dev time at the end of the quarter
-    ripple_task = create_dynamic_rd_ripple_task(
+    ripple_task = RippleTask.objects.create(
         player=player,
         run_at_quarter=current_quarter + 1,
         type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,

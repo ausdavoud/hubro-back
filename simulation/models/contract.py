@@ -23,7 +23,7 @@ class Contract(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.total_price} at {self.closure_quarter} by {self.player.user.username}"
+        return f"{self.player} - {self.total_price} at {self.closure_quarter}"
 
 
 class Storage(models.Model):
@@ -42,4 +42,4 @@ class Storage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.count} {self.product.alias} by {self.player.user.username}"
+        return f"{self.player} - {self.count} {self.product.alias}"

@@ -16,7 +16,7 @@ from .exceptions import rd as rd_exceptions
 from .exceptions.rd import PauseRDError, ResumeRDError
 from .services.common import get_player_or_404, get_serializer_or_400
 from .services.rd import get_dynamic_rd_or_404, get_previous_rd_items
-from .services.ripple_tasks import create_dynamic_rd_ripple_task, delete_dynamic_rd_ripple_task_or_404
+from .services.ripple_tasks import delete_dynamic_rd_ripple_task_or_404
 
 
 @extend_schema_view(
@@ -109,10 +109,10 @@ class RDView(ViewSet):
         if not dynamic_rd_object.is_researching:
             raise rd_exceptions.ResumeRDError("The R&D item is not being researched at all, so it cannot be resumed")
         try:
-            ripple_task: RippleTask = player.ripple_tasks.get(rd_object=dynamic_rd_object)
+            ripple_task: RippleTask = player.ripple_tasks.get(dynamic_rd_object=dynamic_rd_object)
             raise ResumeRDError("The R&D item is already being researched")
         except RippleTask.DoesNotExist:
-            ripple_task = create_dynamic_rd_ripple_task(
+            ripple_task = RippleTask.objects.create(
                 player,
                 run_at_quarter=player.state_variables.current_quarter,
                 type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,

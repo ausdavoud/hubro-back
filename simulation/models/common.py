@@ -16,7 +16,7 @@ class StateVariable(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player.user.email}'s state variables"
+        return f"{self.player}'s state variables"
 
 
 class RippleTask(models.Model):
@@ -26,9 +26,9 @@ class RippleTask(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="ripple_tasks")
     run_at_quarter = models.IntegerField()
     type = models.CharField(max_length=50, choices=TaskTypes.choices)
-    rd_object = models.ForeignKey(
+    dynamic_rd_object = models.ForeignKey(
         DynamicRD, on_delete=models.CASCADE, related_name="ripple_tasks", null=True, blank=True
     )
 
     def __str__(self):
-        return f"{self.type} - {self.rd_object}"
+        return f"{self.dynamic_rd_object} - {self.type}"
