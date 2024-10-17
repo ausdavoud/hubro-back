@@ -38,7 +38,14 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     # apps
-    "simulation.apps.SimulationConfig",
+    "people",
+    "rd",
+    "common",
+    "finance",
+    "contracts",
+    "production",
+    "websocket",
+    # django
     "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -53,13 +60,12 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     # swagger (drf)
     "drf_spectacular",
-    # debug_toolbar
-    "debug_toolbar",
 ]
+# debug_toolbar
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
-    # debug_toolbar
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     # cors
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -72,6 +78,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+# debug_toolbar
+if DEBUG:
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = "config.urls"
 
@@ -160,10 +169,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Custom User Model
-AUTH_USER_MODEL = "simulation.CustomUser"
+AUTH_USER_MODEL = "people.CustomUser"
 
 # Neon DB
-CONN_MAX_AGE = 0
+# CONN_MAX_AGE = 0
 
 # Cors
 CORS_ALLOWED_ORIGINS = [
@@ -183,7 +192,6 @@ REST_FRAMEWORK = {
 
 
 # simplejwt
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=3),

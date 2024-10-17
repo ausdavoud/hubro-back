@@ -8,7 +8,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 from django_channels_jwt.middleware import JwtAuthMiddlewareStack
 
-from simulation.routing import websocket_urlpatterns
+from websocket.routing import websocket_urlpatterns
 
 application = ProtocolTypeRouter(
     {
