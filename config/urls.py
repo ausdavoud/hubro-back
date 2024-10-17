@@ -9,9 +9,9 @@ urlpatterns = [
     path("swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"),
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("admin/", admin.site.urls),
-    path("api/", include("simulation.urls"), name="simulation"),
-    # path("chat/", include("simulation.urls")),
-    # path("auth_for_ws_connection/", AsgiValidateTokenView.as_view()),
+    # app urls
+    path("rd/", include("rd.urls"), name="rd"),
+    path('', include('people.urls'))
 ]
 
 if settings.DEBUG:

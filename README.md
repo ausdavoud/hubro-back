@@ -103,7 +103,7 @@ This project uses `uv` as its package manager. Refer to [this link](https://docs
    }
    ```
 
-   > Note: A full list of superusers, players and instructors can be found in `simulation/management/data_fixtures.py`
+   > Note: A full list of superusers, players and instructors can be found in `common/management/data_fixtures.py`
 
 3. Copy the `access_token`.
 4. Scroll up to `Authorization` button on top of the page.
