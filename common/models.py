@@ -4,6 +4,19 @@ from people.models import Player
 from rd.models import DynamicRD
 
 
+class DecisionPool(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="decision_pool")
+    made_at_quarter = models.IntegerField()
+    endpoint = models.CharField(max_length=100)
+    json_body = models.JSONField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player} - {self.endpoint} - {self.json_body}"
+
+
 class StateVariable(models.Model):
     player = models.OneToOneField(Player, on_delete=models.CASCADE, related_name="state_variables")
     esg_index = models.IntegerField(default=0)
@@ -29,6 +42,9 @@ class RippleTask(models.Model):
     dynamic_rd_object = models.ForeignKey(
         DynamicRD, on_delete=models.CASCADE, related_name="ripple_tasks", null=True, blank=True
     )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.dynamic_rd_object} - {self.type}"

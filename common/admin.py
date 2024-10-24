@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.db.models import F
 from django.utils.translation import ngettext
 
-from common.models import RippleTask, StateVariable
+from common.models import DecisionPool, RippleTask, StateVariable
 
 
 class RippleTaskAdmin(admin.ModelAdmin):
@@ -25,3 +25,4 @@ class RippleTaskAdmin(admin.ModelAdmin):
 
 admin.site.register(RippleTask, RippleTaskAdmin)
 admin.site.register(StateVariable)
+admin.site.register(DecisionPool)

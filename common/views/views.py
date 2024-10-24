@@ -1,5 +1,5 @@
 # Create your views here.
-from django.db.models import F
+from django.db.models import F, Prefetch
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -8,10 +8,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from common.models import RippleTask
+from common.models import DecisionPool, RippleTask
 from people.models import CustomUser
 from people.views.services import get_player_or_404
 from rd.models import DynamicRD
+from rd.views.services import pause_rd, resume_rd, start_rd
 
 
 @extend_schema_view(post=extend_schema(tags=["Finish Quarter"]))
@@ -26,10 +27,34 @@ class FinishQuarter(APIView):
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
-        player = get_player_or_404(user, ["state_variables"])
+        player = get_player_or_404(user)
+        current_quarter = player.state_variables.quarter
+
+        prefetch_decision_pool = Prefetch(
+            "decision_pool", queryset=DecisionPool.objects.filter(made_at_quarter=current_quarter)
+        )
+        player = get_player_or_404(user, [prefetch_decision_pool])
+
+        decision_states = []
+        for decision in player.decision_pool.all():
+            match decision.endpoint:
+                case "rd/start":
+                    response = start_rd(player, decision.json_body)
+                    decision_states.append((decision.endpoint, response))
+                case "rd/pause":
+                    response = pause_rd(player, decision.json_body)
+                    decision_states.append((decision.endpoint, response))
+
+                case "rd/resume":
+                    response = resume_rd(player, decision.json_body)
+                    decision_states.append((decision.endpoint, response))
+                case _:
+                    decision_states.append((decision.endpoint, False))
+                    continue
+
+        print(decision_states)
 
         # TODO: Implement pre-quarter-finish logic
-
         # Increment quarter
         if player.state_variables.quarter == player.state_variables.simulation_duration:
             response = {"data": "simulation finished"}

@@ -2,6 +2,7 @@ class ErrorCodes:
     # Common: 00
     DATABASES_RECORD_NOT_FOUND_CODE = "0001"
     SERIALIZER_ERROR_CODE = "0002"
+    FINISH_QUARTER_ERROR_CODE = "0003"
 
     # People: 01
     EMAIL_EXISTS_CODE = "0101"
@@ -10,3 +11,6 @@ class ErrorCodes:
 
     # R&D: 02
     RD_STATE_ERROR = "0201"
+    RD_START_ERROR = "0202"
+    RD_PAUSE_ERROR = "0203"
+    RD_RESUME_ERROR = "0204"

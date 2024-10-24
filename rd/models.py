@@ -56,6 +56,7 @@ class DynamicRD(models.Model):
     # Cannot inherit from StaticRD because bulk_create is not supported
     # on child models
     from people.models import Player
+
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="rd")
 
     category = models.CharField(max_length=30, choices=StaticRD.Categories.choices)
