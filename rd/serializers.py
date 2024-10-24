@@ -52,11 +52,11 @@ class DynamicRDSerializer(serializers.ModelSerializer):
         return rep
 
 
-class BaseCreateRDSerializer(serializers.Serializer):
+class CreateBaseRDSerializer(serializers.Serializer):
     category = serializers.ChoiceField(StaticRD.Categories.choices)
     order = serializers.IntegerField(default=1)
 
 
-class CreateRDProductSerializer(BaseCreateRDSerializer):
+class CreateRDProductSerializer(CreateBaseRDSerializer):
     alias = serializers.CharField(max_length=100)
     icon_link = serializers.CharField(max_length=300)

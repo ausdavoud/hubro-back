@@ -10,8 +10,9 @@ urlpatterns = [
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("admin/", admin.site.urls),
     # app urls
+    path("", include("common.urls"), name="common"),
     path("rd/", include("rd.urls"), name="rd"),
-    path('', include('people.urls'))
+    path("", include("people.urls"), name="people"),
 ]
 
 if settings.DEBUG:

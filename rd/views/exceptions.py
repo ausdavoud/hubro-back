@@ -19,22 +19,35 @@ class RDStateError(APIException):
         super().__init__(detail)
 
 
-class ResumeRDError(APIException):
+class RDStartError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self, detail):
         detail = {
             "error": {
-                "code": ...,
+                "code": ErrorCodes.RD_START_ERROR,
                 "description": detail,
             }
         }
         super().__init__(detail)
 
 
-class PauseRDError(APIException):
+class RDResumeError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self, detail):
-        detail = {"error": {"code": ..., "description": detail}}
+        detail = {
+            "error": {
+                "code": ErrorCodes.RD_RESUME_ERROR,
+                "description": detail,
+            }
+        }
+        super().__init__(detail)
+
+
+class RDPauseError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, detail):
+        detail = {"error": {"code": ErrorCodes.RD_PAUSE_ERROR, "description": detail}}
         super().__init__(detail)

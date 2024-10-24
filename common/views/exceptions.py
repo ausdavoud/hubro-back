@@ -31,3 +31,17 @@ class SerializerError(APIException):
             }
         }
         super().__init__(detail)
+
+
+class FinishQuarterError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, context: dict = {}):
+        detail = {
+            "error": {
+                "code": ErrorCodes.FINISH_QUARTER_ERROR_CODE,
+                "description": "Error while handling post quarter logic",
+                "context": context,
+            }
+        }
+        super().__init__(detail)
