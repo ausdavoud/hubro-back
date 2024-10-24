@@ -362,3 +362,32 @@ dynamic_rd = [
         "time_spent_developing": 0,
     },
 ]
+
+
+FACTORY_NAMES = [
+        "Abbey", "Adeline", "Adrian", "Alexander", "Alice", "Amelia",
+        "Benjamin", "Blake", "Brandon", "Brody",
+        "Caleb", "Cameron", "Caroline", "Charles", "Charlotte", "Coralie",
+        "Daniel", "David", "Diana", "Dorothy",
+        "Edward", "Elena", "Elizabeth", "Emily", "Emma",
+        "Felix", "Florence", "Francis", "Frederick",
+        "Gabriel", "George", "Giles", "Grace",
+        "Hannah", "Harper", "Harrison", "Henry",
+        "Ian", "Iris", "Isaac", "Isabella",
+        "Jack", "James", "Jane", "Jason", "Julia",
+        "Katherine", "Kevin", "Kyle",
+        "Laura", "Liam", "Lily", "Lucas", "Lucy",
+        "Madison", "Mason", "Matthew", "Mia",
+        "Nathan", "Nicholas", "Noah",
+        "Oliver", "Olivia", "Owen",
+        "Patrick", "Paul", "Peter",
+        "Quinn",
+        "Rachel", "Rebecca", "Robert", "Rose",
+        "Samuel", "Sarah", "Sebastian", "Sophie",
+        "Tanya", "Theodore", "Thomas",
+        "Victoria", "Vincent",
+        "Walter", "William",
+        "Xavier",
+        "Yasmine",
+        "Zachary", "Zoe"
+]
