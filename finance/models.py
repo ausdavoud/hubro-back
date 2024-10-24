@@ -14,18 +14,18 @@ class FinancialAccount(models.Model):
         DIRECT_LABOR = 5120, "Direct labor"
         DIRECT_RAW_MATERIALS = 5110, "Direct raw materials"
         FINISHED_GOODS_INVENTORY = 1720, "Finished goods inventory"
-        STORAGE = 9999, "Storage"
+        STORAGE = 5340, "Storage"
         CASH = 1910, "Cash"
         CURRENT_PORTION_OF_LOANS_PAYABLE = (
-            8888,
+            3310,
             "Current portion of loans payable",
         )
-        INTEREST_EXPENSES = 7777, "Interest expenses"
+        INTEREST_EXPENSES = 7210, "Interest expenses"
         MAINTENANCE = 5420, "Maintenance"
         PROMOTION = 5360, "Promotion"
         SALES = 4110, "Sales"
-        OVERDRAFT = 6666, "Overdraft"
-        LONG_TERM_NOTES_PAYABLE = 5555, "Long term notes payable"
+        OVERDRAFT = 3360, "Overdraft"
+        LONG_TERM_NOTES_PAYABLE = 3210, "Long term notes payable"
         RAW_MATERIAL_INVENTORY = 1710, "Raw material inventory"
 
     class AccountTypes(models.TextChoices):
