@@ -1,4 +1,3 @@
-import uuid
 
 from django.db import models
 
@@ -40,11 +39,25 @@ class FinancialAccount(models.Model):
 
 
 class Transaction(models.Model):
-    class TransactionTypes(models.TextChoices):
-        PAID = "PD", "Paid"
-        RECEIVED = "RC", "Received"
+    class Categories(models.TextChoices):
+        DEPRECIATION_OF_FACTORIES = "Depreciation of factories"
+        AMORTIZATION_OF_PROJECTS = "Amortization of projects"
+        MATERIALS_USED_IN_PRODUCTION = "Materials used in production"
+        COST_OF_SOLD_PRODUCTS = "Cost of sold products"
+        WAGES_FOR_PRODUCTION = "Wages for production workers"
+        CURRENT_PORTION_OF_LOANS = "Current portion of loans to be paid this year"
+        NEW_LOANS = "New loans"
+        LOAN_REPAYMENT = "Loan Repayment"
+        OVERDRAFT = "Overdraft"
+        SALES = "Sales"
+        STORAGE = "Storage"
+        PROMOTION = "Promotion"
+        MAINTENANCE = "Maintenance"
+        INTEREST_ON_OVERDRAFT = "Interest on overdraft"
+        LOAN_INTEREST = "Loan interest"
 
-    document = models.UUIDField(default=uuid.uuid4, unique=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    category = models.CharField(max_length=80)
     quarter = models.IntegerField()
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)
     credit_amount = models.DecimalField(max_digits=15, decimal_places=0)

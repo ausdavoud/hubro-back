@@ -1,4 +1,3 @@
-
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
@@ -9,7 +8,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool
-from common.serializers import DecisionSerializer
+from common.serializers import DecisionPoolSerializer
+from common.views import exceptions as common_exceptions
 from common.views.services import get_serializer_or_400
 from people.models import CustomUser, Player
 from people.views.services import get_player_or_404
@@ -61,7 +61,7 @@ class RDView(ViewSet):
         """Check if the R&D item is of type product"""
         return category != StaticRD.Categories.PRODUCTION and order == 1
 
-    def _get_json_body(self, data, start_rd: bool = False) -> dict:
+    def _get_json_body(self, data, is_start_rd: bool = False) -> dict:
         """Return a dictionary as the JSON body for the request.\n
         Since /rd/start also requires alias and icon_link,
         we need to check if the request is for starting R&D or pausing/resuming.
@@ -79,7 +79,7 @@ class RDView(ViewSet):
         category = base_rd_serializer.validated_data.get("category", None)
         order = base_rd_serializer.validated_data.get("order", None)
 
-        if not start_rd:
+        if not is_start_rd:
             return {
                 "category": category,
                 "order": order,
@@ -123,10 +123,10 @@ class RDView(ViewSet):
             player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
         )
 
+        serialized_decision = DecisionPoolSerializer(decision)
+
         if not created:
-            raise rd_exceptions.RDStartError(
-                f"You've already called {endpoint} for this R&D item at this quarter. Can't do it again."
-            )
+            raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
 
         return decision
 
@@ -155,7 +155,7 @@ class RDView(ViewSet):
         user: CustomUser = request.user
         player = get_player_or_404(user)
         current_quarter: int = player.state_variables.quarter
-        json_body = self._get_json_body(request.data, start_rd=True)
+        json_body = self._get_json_body(request.data, is_start_rd=True)
 
         # Pause -> Start
         if self._get_decision(
@@ -185,7 +185,7 @@ class RDView(ViewSet):
         decision = self._create_decision(
             player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.START_RD, json_body=json_body
         )
-        serialized_decision = DecisionSerializer(decision)
+        serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": serialized_decision.data}
         return Response(data=response, status=status.HTTP_200_OK)
 
@@ -242,7 +242,7 @@ class RDView(ViewSet):
         decision = self._create_decision(
             player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.PAUSE_RD, json_body=json_body
         )
-        serialized_decision = DecisionSerializer(decision)
+        serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": serialized_decision.data}
         return Response(data=response, status=status.HTTP_200_OK)
 
@@ -299,6 +299,6 @@ class RDView(ViewSet):
         decision = self._create_decision(
             player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.RESUME_RD, json_body=json_body
         )
-        serialized_decision = DecisionSerializer(decision)
+        serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": serialized_decision.data}
         return Response(data=response, status=status.HTTP_200_OK)
