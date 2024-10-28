@@ -1,5 +1,3 @@
-from rest_framework import status
-from rest_framework.response import Response
 
 from common.models import RippleTask
 from common.views import exceptions as common_exceptions
@@ -123,8 +121,7 @@ def pause_rd(player: Player, json_body: dict):
         raise rd_exceptions.RDPauseError("R&D item is not being researched, so it cannot be paused")
 
     delete_response = delete_dynamic_rd_ripple_task_or_404(player, dynamic_rd_object)
-    response = {"data": delete_response}
-    return Response(response, status=status.HTTP_200_OK)
+    return delete_response
 
 
 def resume_rd(player: Player, json_body: dict):
@@ -145,5 +142,5 @@ def resume_rd(player: Player, json_body: dict):
             type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
             dynamic_rd_object=dynamic_rd_object,
         )
-        response = {"data": {"description": "Auto increment ripple task was created successfully"}}
-        return Response(response, status=status.HTTP_200_OK)
+        response = {"description": "Auto increment ripple task was created successfully"}
+        return response

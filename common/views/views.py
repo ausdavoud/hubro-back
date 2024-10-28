@@ -7,8 +7,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import APIException
 
 from common.models import DecisionPool, RippleTask
+from finance.views.services import new_loan
 from people.models import CustomUser
 from people.views.services import get_player_or_404
 from rd.models import DynamicRD
@@ -37,27 +39,40 @@ class FinishQuarter(APIView):
 
         decision_states = []
         for decision in player.decision_pool.all():
-            match decision.endpoint:
-                case "rd/start":
-                    response = start_rd(player, decision.json_body)
-                    decision_states.append((decision.endpoint, response))
-                case "rd/pause":
-                    response = pause_rd(player, decision.json_body)
-                    decision_states.append((decision.endpoint, response))
+            decision: DecisionPool
+            try:
+                match decision.endpoint:
+                    case "rd/start":
+                        response = start_rd(player, decision.json_body)
+                        decision_states.append((decision.endpoint, response))
+                    case "rd/pause":
+                        response = pause_rd(player, decision.json_body)
+                        decision_states.append((decision.endpoint, response))
+                    case "rd/resume":
+                        response = resume_rd(player, decision.json_body)
+                        decision_states.append((decision.endpoint, response))
 
-                case "rd/resume":
-                    response = resume_rd(player, decision.json_body)
-                    decision_states.append((decision.endpoint, response))
-                case _:
-                    decision_states.append((decision.endpoint, False))
-                    continue
+                    case "finance/new_loan":
+                        response = new_loan(player, decision.json_body)
+                        decision_states.append((decision.endpoint, response))
+
+                        # case "finance/cancel_loan":
+                        """
+                        Loans cannot be canceled after being received,
+                        so we do not have any actions defined to undo
+                        the process of giving a player some loan.
+                        """
+                    case _:
+                        decision_states.append((decision.endpoint, False))
+            except APIException:
+                decision_states.append((decision.endpoint, False))
 
         print(decision_states)
 
         # TODO: Implement pre-quarter-finish logic
         # Increment quarter
         if player.state_variables.quarter == player.state_variables.simulation_duration:
-            response = {"data": "simulation finished"}
+            response = {"data": {"message": "simulation finished", "actions": response}}
             return Response(response, status=status.HTTP_200_OK)
 
         player.state_variables.quarter = F("quarter") + 1
@@ -106,5 +121,5 @@ class FinishQuarter(APIView):
         if tasks_to_delete:
             RippleTask.objects.filter(id__in=[task.id for task in tasks_to_delete]).delete()
 
-        response = {"data": {"current_quarter": current_quarter}}
+        response = {"data": {"current_quarter": current_quarter, "actions": decision_states}}
         return Response(response, status=status.HTTP_200_OK)

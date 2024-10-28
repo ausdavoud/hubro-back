@@ -45,3 +45,31 @@ class FinishQuarterError(APIException):
             }
         }
         super().__init__(detail)
+
+
+class DuplicateDecision(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, context: dict = {}):
+        detail = {
+            "error": {
+                "code": ErrorCodes.DUPLICATE_DECISION_ERROR_CODE,
+                "description": "You've already made the same decision at this quarter",
+                "context": context,
+            }
+        }
+        super().__init__(detail)
+
+
+class AtomicTransactionError(APIException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    def __init__(self, context: dict):
+        detail = {
+            "error": {
+                "code": ErrorCodes.ATOMIC_TRANSACTION_ERROR_CODE,
+                "description": "Failed during an integrated atomic transaction",
+                "context": context,
+            }
+        }
+        super().__init__(detail)
