@@ -62,6 +62,9 @@ class CustomUser(AbstractUser):
     class Meta:
         app_label = "people"
 
+    def __str__(self):
+        return self.email
+
 
 class Instructor(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="instructor")
@@ -84,7 +87,7 @@ class SimulationClass(models.Model):
         verbose_name_plural = "SimulationClasses"
 
     def __str__(self):
-        return f"{self.name} supervised by {self.instructor}"
+        return self.name
 
 
 class Team(models.Model):

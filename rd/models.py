@@ -49,7 +49,7 @@ class StaticRD(models.Model):
         db_table = f"{RdConfig.name}_static_rd"
 
     def __str__(self):
-        return f"{self.category} - {self.title}"
+        return self.title
 
 
 class DynamicRD(models.Model):
@@ -86,6 +86,7 @@ class DynamicRD(models.Model):
 
     class Meta:
         ordering = ["player", "-id"]
+        unique_together = ["player", "category", "order"]
         verbose_name = "Dynamic R&D"
         db_table = f"{RdConfig.name}_dynamic_rd"
 
@@ -140,4 +141,4 @@ class DynamicRD(models.Model):
         )
 
     def __str__(self):
-        return f"{self.player} - {self.category} - {self.title}"
+        return self.title
