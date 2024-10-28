@@ -13,35 +13,36 @@ class Factory(models.Model):
         RENTED = "RN", "Rented"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    name = models.CharField(max_length=20)
+    name = models.CharField(max_length=20, blank=True)
     ownership = models.CharField(max_length=2, choices=OwnershipTypes.choices)
-    quarterly_output = models.IntegerField()
+    output_per_quarter = models.IntegerField()
+    build_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    setup_time = models.IntegerField()
     outsourcing_fee_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
     labor_cost_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
-    maintenance_cost = models.DecimalField(max_digits=15, decimal_places=0)
-    fixed_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    maintenance_cost_per_quarter = models.DecimalField(max_digits=15, decimal_places=0)
     resale_value_percent = models.DecimalField(max_digits=5, decimal_places=2)
-    build_cost = models.DecimalField(max_digits=15, decimal_places=0)
+    emissions_per_unit = models.DecimalField(max_digits=5, decimal_places=2)
+    depreciation_time = models.IntegerField()
+
+    fixed_cost = models.DecimalField(max_digits=15, decimal_places=0)
     workers = models.IntegerField()
     hours = models.DecimalField(max_digits=15, decimal_places=0)
     wage = models.DecimalField(max_digits=5, decimal_places=2)
-    emission_t_unit = models.DecimalField(max_digits=5, decimal_places=2)
-    depreciation_time = models.IntegerField()
-    build_time = models.IntegerField()
     base = models.IntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - {self.ownership}"
+        return f"{self.name | 'Untitled'}"
 
     def save(self, *args, **kwargs):
         if not self.name:
-            self.name = self.generate_unique_name()
+            self.name = self._generate_unique_name()
         super().save(*args, **kwargs)
 
-    def generate_unique_name(self):
+    def _generate_unique_name(self):
         existing_names = set(Factory.objects.filter(player=self.player).values_list("name", flat=True))
         available_names = [name for name in FACTORY_NAMES if f"Factory {name}" not in existing_names]
 
@@ -74,4 +75,4 @@ class Production(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - {self.product.alias}"
+        return self.product.alias

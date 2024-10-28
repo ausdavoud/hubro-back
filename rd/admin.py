@@ -7,8 +7,13 @@ from people.views.services import get_player_or_404
 from rd.models import DynamicRD, StaticRD
 
 
+class StaticRDAdmin(admin.ModelAdmin):
+    list_display = ["id", "category", "order", "title", "type"]
+
+
 class DynamicRDAdmin(admin.ModelAdmin):
     actions = ["make_ripple_task"]
+    list_display = ["id", "player", "category", "order", "title", "type", "started_at", "time_spent_developing"]
 
     @admin.action(description="Add ripple task only for R&D-Upgrade items")
     def make_ripple_task(self, request, dynamic_rd_objects):
@@ -49,5 +54,5 @@ class DynamicRDAdmin(admin.ModelAdmin):
         )
 
 
-admin.site.register(StaticRD)
+admin.site.register(StaticRD, StaticRDAdmin)
 admin.site.register(DynamicRD, DynamicRDAdmin)

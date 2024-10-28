@@ -14,7 +14,7 @@ class DecisionPool(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - {self.endpoint} - {self.json_body}"
+        return self.endpoint
 
 
 class StateVariable(models.Model):
@@ -47,4 +47,4 @@ class RippleTask(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.dynamic_rd_object} - {self.type}"
+        return self.type

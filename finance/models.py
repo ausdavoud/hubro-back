@@ -1,4 +1,3 @@
-
 from django.db import models
 
 from people.models import Player
@@ -35,7 +34,7 @@ class FinancialAccount(models.Model):
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
 
     def __str__(self):
-        return f"({self.type}) ({self.name}) {self.get_name_display()}"
+        return self.get_name_display()
 
 
 class Transaction(models.Model):
@@ -64,7 +63,7 @@ class Transaction(models.Model):
     financial_account = models.ForeignKey(FinancialAccount, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Credit: {self.credit_amount}, Debit: {self.debit_amount} - {self.financial_account.name}"
+        return self.category
 
 
 class Overdraft(models.Model):
@@ -77,7 +76,7 @@ class Overdraft(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - Quarter {self.quarter}"
+        return f"{self.beginning_overdraft}"
 
 
 class CashChange(models.Model):
@@ -90,7 +89,7 @@ class CashChange(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - Quarter {self.quarter}"
+        return f"{self.beginning_cash}"
 
 
 class Loan(models.Model):
@@ -106,7 +105,7 @@ class Loan(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - ${self.amount}"
+        return f"{self.amount}"
 
 
 class Repayment(models.Model):
@@ -121,4 +120,6 @@ class Repayment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.player} - ${self.loan.payback_per_quarter}"
+        # Wrap decimal value into string,
+        # otherwise django raises error in admin panel
+        return f"{self.repayment_amount}"
