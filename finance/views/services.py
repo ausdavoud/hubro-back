@@ -2,6 +2,10 @@ from decimal import Decimal
 
 from django.db import IntegrityError, transaction
 from rest_framework.response import Response
+from ahmad.financials import (
+    calculate_interest,
+    calculate_payback_per_quarter,
+)
 
 from finance.models import FinancialAccount, Loan, Transaction
 from finance.serializer import LoanSerializer, TransactionSerializer
@@ -14,6 +18,8 @@ def new_loan(player: Player, json_body: dict) -> Response:
 
     current_quarter = player.state_variables.quarter
     fixed_interest = player.state_variables.fixed_interest
+    simulation_duration = player.state_variables.simulation_duration
+    esg_index = player.state_variables.esg_index
 
     amount_str = json_body["amount"]
     amount_decimal = Decimal(amount_str)
@@ -34,14 +40,25 @@ def new_loan(player: Player, json_body: dict) -> Response:
 
     try:
         with transaction.atomic():
+            interest = calculate_interest(
+                payback_period=payback_period,
+                esg_index=esg_index,
+                simulation_duration=simulation_duration,
+                current_quarter=current_quarter,
+            )
+            payback_per_quarter = calculate_payback_per_quarter(
+                payback_period=payback_period, interest=interest, amount=amount_decimal
+            )
+            total_payback = payback_per_quarter * payback_period
+
             loan = Loan.objects.create(
                 player=player,
                 amount=amount_decimal,
                 issued_quarter=current_quarter,
-                interest=fixed_interest,
+                interest=interest,
                 payback_period=payback_period,
-                total_payback=amount_decimal + 1,
-                payback_per_quarter=amount_decimal / payback_period,
+                total_payback=total_payback,
+                payback_per_quarter=payback_per_quarter,
             )
             credit_transaction = Transaction.objects.create(
                 player=player,

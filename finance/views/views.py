@@ -28,13 +28,16 @@ class FinanceView(ViewSet):
         CANCEL_LOAN = "finance/cancel_loan"
 
     def _get_json_body(self, data) -> dict:
+        """Using .validated_data instead of .data, converts `amount`
+        to decimal and we can't encode decimal to json in order to
+        save it inside DecisionPool.json_body"""
         serialized_data = get_serializer_or_400(NewLoanSerializer, data)
-        amount = serialized_data.data["amount"]
-        payback_period = serialized_data.data["payback_period"]
+        amount = serialized_data.validated_data["amount"]
+        payback_period = serialized_data.validated_data["payback_period"]
 
         json_body = {
-            "amount": amount,
-            "payback_period": payback_period,
+            "amount": str(amount),
+            "payback_period": str(payback_period),
         }
 
         return json_body
@@ -43,7 +46,7 @@ class FinanceView(ViewSet):
         """Create a new decision in the DecisionPool.\n
         We do not use get_or_create here because the user may ask for a loan with
         different amount or payback period (namely a different json body) and yet
-        they should not be able to make a new decision.
+        they should not be able to make a new decision. (one loan per quarter policy)
         """
 
         try:
@@ -56,7 +59,6 @@ class FinanceView(ViewSet):
             decision = DecisionPool.objects.create(
                 player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
             )
-            serialized_decision = DecisionPoolSerializer(decision)
             return decision
 
     def _delete_loan_decision(self, player: Player, current_quarter: int) -> dict:

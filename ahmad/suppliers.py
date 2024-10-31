@@ -1,10 +1,5 @@
 import math
 
-JET_PACK_BASIC_MAT_COST = 100
-JET_PACK_SPORTY_MAT_COST = 160
-JET_PACK_GREEN_MAT_COST = 120
-JET_PACK_SAFE_MAT_COST = 140
-
 
 def calculate_mat_COSTS(base_cost):
     MID_QUALITY_FACTOR = 1.15
@@ -16,5 +11,11 @@ def calculate_mat_COSTS(base_cost):
     }
 
 
-res = calculate_mat_COSTS(JET_PACK_GREEN_MAT_COST)
-print(res)
+if __name__ == "__main__":
+    JET_PACK_BASIC_MAT_COST = 100
+    JET_PACK_SPORTY_MAT_COST = 160
+    JET_PACK_GREEN_MAT_COST = 120
+    JET_PACK_SAFE_MAT_COST = 140
+
+    res = calculate_mat_COSTS(JET_PACK_GREEN_MAT_COST)
+    print(res)

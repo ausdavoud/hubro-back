@@ -1,4 +1,3 @@
-
 from common.models import RippleTask
 from common.views import exceptions as common_exceptions
 from common.views.services import delete_dynamic_rd_ripple_task_or_404
