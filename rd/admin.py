@@ -13,7 +13,17 @@ class StaticRDAdmin(admin.ModelAdmin):
 
 class DynamicRDAdmin(admin.ModelAdmin):
     actions = ["make_ripple_task"]
-    list_display = ["id", "player", "category", "order", "title", "type", "started_at", "time_spent_developing"]
+    list_display = [
+        "id",
+        "player",
+        "category",
+        "order",
+        "title",
+        "type",
+        "started_at",
+        "development_duration",
+        "time_spent_developing",
+    ]
 
     @admin.action(description="Add ripple task only for R&D-Upgrade items")
     def make_ripple_task(self, request, dynamic_rd_objects):

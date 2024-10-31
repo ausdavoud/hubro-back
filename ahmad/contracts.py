@@ -133,35 +133,34 @@ def create_esg_range_list(max_esg: int, num_contracts: int) -> list[int]:
     return [random.randint(min_esg, max_esg) for _ in range(num_contracts)]
 
 
-# how to use :
+if __name__ == "__main__":
+    # how to use :
 
-# generate_contracts data
-contracts: list[ContractType] = generate_contract_data(
-    4,
-    5900,
-    5,
-    228,
-    266,
-    5,
-    ProductType.BASIC,  # this is a row of the market forecast report
-)
-
-
-# find the priority of each contract:
-# the higher Value represents the higher priority.
-priorities = []
-for contract in contracts:
-    priority = calculate_priority(
-        contract.get("unit_price"),
-        contract.get("product_count"),
-        contract.get("minimum_esg_score"),
-        contract.get("payment_due_date"),
+    # generate_contracts data
+    contracts: list[ContractType] = generate_contract_data(
+        4,
+        5900,
+        5,
+        228,
+        266,
+        5,
+        ProductType.BASIC,  # this is a row of the market forecast report
     )
-    priorities.append(priority)
 
+    # find the priority of each contract:
+    # the higher Value represents the higher priority.
+    priorities = []
+    for contract in contracts:
+        priority = calculate_priority(
+            contract.get("unit_price"),
+            contract.get("product_count"),
+            contract.get("minimum_esg_score"),
+            contract.get("payment_due_date"),
+        )
+        priorities.append(priority)
 
-for contract, priority in zip(contracts, priorities):
-    contract["priority"] = priority
+    for contract, priority in zip(contracts, priorities):
+        contract["priority"] = priority
 
-for contract in contracts:
-    print(contract)
+    for contract in contracts:
+        print(contract)

@@ -25,12 +25,13 @@ def calculate_esg_index(production, material: str) -> float:
     return round((emission_reduction / max_emissions) * 100, 2)
 
 
-production = [
-    {"amount": 1000, "emission_per_unit": 0.5},
-    {"amount": 1000, "emission_per_unit": 0.4},
-    {"amount": 1000, "emission_per_unit": 0.4},
-]
+if __name__ == "__main__":
+    production = [
+        {"amount": 1000, "emission_per_unit": 0.5},
+        {"amount": 1000, "emission_per_unit": 0.4},
+        {"amount": 1000, "emission_per_unit": 0.4},
+    ]
 
-mat = sys.argv[1] if len(sys.argv) > 1 else "standard"
-res = calculate_esg_index(production, mat)
-print(res)
+    mat = sys.argv[1] if len(sys.argv) > 1 else "standard"
+    res = calculate_esg_index(production, mat)
+    print(res)

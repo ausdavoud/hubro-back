@@ -17,22 +17,19 @@ def calculate_interest(
     return esg_component + maturity_component + payback_component + FIXED_INTEREST
 
 
-def calculate_payback_per_quarter(
-    payback_period: float, interest: float, amount: float
-) -> float:
+def calculate_payback_per_quarter(payback_period: float, interest: float, amount: float) -> float:
     interest_rate_base = (interest / 100) + 1
-    power_component = sum(
-        1 / (interest_rate_base ** (i + 1)) for i in range(payback_period)
-    )
+    power_component = sum(1 / (interest_rate_base ** (i + 1)) for i in range(payback_period))
 
     return amount / power_component
 
 
-esg_index = 30
-current_quarter = 4
-simulation_duration = 20
+if __name__ == "__main__":
+    esg_index = 30
+    current_quarter = 4
+    simulation_duration = 20
 
-interest = calculate_interest(16, esg_index, simulation_duration, current_quarter)
-payback_per_quarter = calculate_payback_per_quarter(16, interest, 1000000)
+    interest = calculate_interest(16, esg_index, simulation_duration, current_quarter)
+    payback_per_quarter = calculate_payback_per_quarter(16, interest, 1000000)
 
-print({"interest": interest, "payback_per_quarter": payback_per_quarter})
+    print({"interest": interest, "payback_per_quarter": payback_per_quarter})
