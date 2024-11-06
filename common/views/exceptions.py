@@ -64,12 +64,25 @@ class DuplicateDecision(APIException):
 class AtomicTransactionError(APIException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    def __init__(self, context: dict):
+    def __init__(self, state: str):
         detail = {
             "error": {
                 "code": ErrorCodes.ATOMIC_TRANSACTION_ERROR_CODE,
                 "description": "Failed during an integrated atomic transaction",
-                "context": context,
+                "context": {"state": state},
+            }
+        }
+        super().__init__(detail)
+
+
+class ValidationError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, detail: str):
+        detail = {
+            "error": {
+                "code": ErrorCodes.VALIDATION_ERROR_CODE,
+                "description": detail,
             }
         }
         super().__init__(detail)

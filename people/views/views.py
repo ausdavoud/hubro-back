@@ -27,7 +27,7 @@ def custom_validation(data):
     return data
 
 
-@extend_schema_view(post=extend_schema(tags=["Register & Login"]))
+@extend_schema_view(post=extend_schema(tags=["Auth"]))
 class UserRegister(APIView):
     permission_classes = [
         permissions.AllowAny,
@@ -72,7 +72,7 @@ class UserRegister(APIView):
 
 @extend_schema_view(
     post=extend_schema(
-        tags=["Register & Login"],
+        tags=["Auth"],
         responses={
             status.HTTP_200_OK: TokenObtainPairResponseSerializer,
         },
@@ -85,7 +85,7 @@ class DecoratedTokenObtainPairView(TokenObtainPairView):
 
 @extend_schema_view(
     post=extend_schema(
-        tags=["Register & Login"],
+        tags=["Auth"],
         responses={
             status.HTTP_200_OK: TokenRefreshResponseSerializer,
         },

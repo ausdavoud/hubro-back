@@ -13,6 +13,7 @@ class Factory(models.Model):
         RENTED = "RN", "Rented"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    built_at_quarter = models.IntegerField()
     name = models.CharField(max_length=20, blank=True)
     ownership = models.CharField(max_length=2, choices=OwnershipTypes.choices)
     output_per_quarter = models.IntegerField()
@@ -35,7 +36,7 @@ class Factory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name | 'Untitled'}"
+        return f"{self.name or 'Untitled'}"
 
     def save(self, *args, **kwargs):
         if not self.name:

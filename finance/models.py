@@ -25,6 +25,7 @@ class FinancialAccount(models.Model):
         OVERDRAFT = 3360, "Overdraft"
         LONG_TERM_NOTES_PAYABLE = 3210, "Long term notes payable"
         RAW_MATERIAL_INVENTORY = 1710, "Raw material inventory"
+        LOSS_ON_SALE_OF_ASSETS = 5520, "Loss on sale of assets"
 
     class AccountTypes(models.TextChoices):
         DEBIT = "DE", "Debit"
@@ -54,9 +55,11 @@ class Transaction(models.Model):
         MAINTENANCE = "Maintenance"
         INTEREST_ON_OVERDRAFT = "Interest on overdraft"
         LOAN_INTEREST = "Loan interest"
+        SOLD_FACTORIES = "Sold factories"
+        LOSS_ON_SALE_OF_ASSETS = "Loss on sale of assets"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    category = models.CharField(max_length=80)
+    category = models.CharField(max_length=80, choices=Categories.choices)
     quarter = models.IntegerField()
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)
     credit_amount = models.DecimalField(max_digits=15, decimal_places=0)

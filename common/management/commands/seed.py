@@ -3,10 +3,10 @@ from typing import Any
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
+from common.management.data_fixtures import dynamic_rd, players, simulation_classes, superusers, teams, users
+from common.models import RippleTask
 from people.models import CustomUser, Instructor, Player, SimulationClass, Team
 from rd.models import DynamicRD
-from common.models import RippleTask
-from common.management.data_fixtures import dynamic_rd, players, simulation_classes, superusers, teams, users
 
 
 class Command(BaseCommand):
@@ -132,11 +132,12 @@ class Command(BaseCommand):
                 dynamic_rd_object.icon_link = icon_link
                 dynamic_rd_object.save()
                 if dynamic_rd_object.is_researching:
+                    json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
                     ripple_task = RippleTask.objects.create(
                         player=player,
                         run_at_quarter=run_at_quarter,
                         type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
-                        dynamic_rd_object=dynamic_rd_object,
+                        json_body=json_body,
                     )
 
                 self.stdout.write(f"Player {player_email} started research for {category} | column {order}")

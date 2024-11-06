@@ -1,4 +1,4 @@
-from common.models import RippleTask
+from common.models import DecisionPool, RippleTask
 from common.views import exceptions as common_exceptions
 from common.views.services import delete_dynamic_rd_ripple_task_or_404
 from people.models import Player
@@ -68,18 +68,22 @@ def start_rd_development(player: Player, dynamic_rd_object: DynamicRD) -> Dynami
     dynamic_rd_object.save()
 
     # Create ripple task to increase dev time at the end of the quarter
+    json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
     ripple_task = RippleTask.objects.create(
         player=player,
         run_at_quarter=current_quarter + 1,
         type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
-        dynamic_rd_object=dynamic_rd_object,
+        json_body=json_body,
     )
 
     serialized_model = DynamicRDSerializer(dynamic_rd_object)
     return serialized_model
 
 
-def start_rd(player: Player, json_body: dict):
+def start_rd(player: Player, decision: DecisionPool):
+    json_body = decision.json_body
+    current_quarter = decision.made_at_quarter
+
     # Validating category and order
     category = json_body.get("category")
     order = json_body.get("order")
@@ -97,7 +101,6 @@ def start_rd(player: Player, json_body: dict):
     # Check if the dynamic object is available for development,
     # since only available R&D items can be developed
     dynamic_rd_objects: list[DynamicRD] | None = player.rd.all()
-    current_quarter = player.state_variables.quarter
     previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
     state = dynamic_rd_object.get_state(current_quarter, previous_rd_items)
     if state != RDStates.AVAILABLE:
@@ -110,7 +113,8 @@ def start_rd(player: Player, json_body: dict):
     return serialized_dynamic_rd_object
 
 
-def pause_rd(player: Player, json_body: dict):
+def pause_rd(player: Player, decision: DecisionPool):
+    json_body = decision.json_body
     category = json_body.get("category")
     order = json_body.get("order")
 
@@ -123,23 +127,26 @@ def pause_rd(player: Player, json_body: dict):
     return delete_response
 
 
-def resume_rd(player: Player, json_body: dict):
+def resume_rd(player: Player, decision: DecisionPool):
+    json_body = decision.json_body
     category = json_body.get("category")
     order = json_body.get("order")
+    current_quarter = decision.made_at_quarter
 
     # Finding the static object for which the request has been sent
     dynamic_rd_object = get_dynamic_rd_or_404(player, category=category, order=order)
     if not dynamic_rd_object.is_researching:
         raise rd_exceptions.RDResumeError("The R&D item is not being researched at all, so it cannot be resumed")
+    json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
     try:
-        ripple_task: RippleTask = player.ripple_tasks.get(dynamic_rd_object=dynamic_rd_object)
+        ripple_task: RippleTask = player.ripple_tasks.get(json_body=json_body)
         raise rd_exceptions.RDResumeError("The R&D item is already being researched")
     except RippleTask.DoesNotExist:
         ripple_task = RippleTask.objects.create(
             player,
-            run_at_quarter=player.state_variables.current_quarter,
+            run_at_quarter=current_quarter,
             type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
-            dynamic_rd_object=dynamic_rd_object,
+            json_body=json_body,
         )
         response = {"description": "Auto increment ripple task was created successfully"}
         return response

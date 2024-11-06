@@ -283,6 +283,10 @@ financial_accounts = [
         "name": FinancialAccount.AccountNames.RAW_MATERIAL_INVENTORY,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
+    {
+        "name": FinancialAccount.AccountNames.LOSS_ON_SALE_OF_ASSETS,
+        "type": FinancialAccount.AccountTypes.DEBIT,
+    },
 ]
 
 superusers = [

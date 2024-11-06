@@ -1,7 +1,6 @@
 from django.db import models
 
 from people.models import Player
-from rd.models import DynamicRD
 
 
 class DecisionPool(models.Model):
@@ -35,13 +34,12 @@ class StateVariable(models.Model):
 class RippleTask(models.Model):
     class TaskTypes(models.TextChoices):
         INCREMENT_RD_DEV_TIME = "inc_rd_dev_time", "Increment R&D Project Development Time"
+        PRODUCTION = "production", "Production"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="ripple_tasks")
     run_at_quarter = models.IntegerField()
     type = models.CharField(max_length=50, choices=TaskTypes.choices)
-    dynamic_rd_object = models.ForeignKey(
-        DynamicRD, on_delete=models.CASCADE, related_name="ripple_tasks", null=True, blank=True
-    )
+    json_body = models.JSONField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

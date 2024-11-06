@@ -26,7 +26,7 @@ class DynamicRDAdmin(admin.ModelAdmin):
     ]
 
     @admin.action(description="Add ripple task only for R&D-Upgrade items")
-    def make_ripple_task(self, request, dynamic_rd_objects):
+    def make_ripple_task(self, request, dynamic_rd_objects: list[DynamicRD]):
         user: CustomUser = request.user
         player = get_player_or_404(user)
         # BUG
@@ -42,11 +42,12 @@ class DynamicRDAdmin(admin.ModelAdmin):
             # BUG
             # This action does not check for existing ripple tasks.
             # So you might create duplicates
+            json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
             ripple_task = RippleTask(
                 player=player,
                 run_at_quarter=current_quarter + 1,
                 type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
-                dynamic_rd_object=dynamic_rd_object,
+                json_body=json_body,
             )
             ripple_tasks.append(ripple_task)
 

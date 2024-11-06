@@ -28,7 +28,7 @@ class StateVariableAdmin(admin.ModelAdmin):
 
 
 class RippleTaskAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "run_at_quarter", "type", "dynamic_rd_object"]
+    list_display = ["id", "player", "run_at_quarter", "type", "json_body"]
     actions = ["increment_run_at_quarter"]
 
     @admin.action(description="Increment run_at_quarter by 1")
