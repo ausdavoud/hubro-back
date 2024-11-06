@@ -4,16 +4,26 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+API_V = "api/v1"
+
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"),
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("admin/", admin.site.urls),
     # app urls
-    path("", include("people.urls"), name="people"),
-    path("", include("common.urls"), name="common"),
-    path("rd/", include("rd.urls"), name="rd"),
-    path("finance/", include("finance.urls"), name="finance"),
+    path(
+        f"{API_V}/",
+        include(
+            [
+                path("auth/", include("people.urls"), name="people"),
+                path("common/", include("common.urls"), name="common"),
+                path("rd/", include("rd.urls"), name="rd"),
+                path("finance/", include("finance.urls"), name="finance"),
+                path("production/", include("production.urls"), name="production"),
+            ]
+        ),
+    ),
 ]
 
 if settings.DEBUG:

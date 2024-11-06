@@ -1,3 +1,4 @@
+from django.db.models import Model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -33,7 +34,8 @@ def delete_dynamic_rd_ripple_task_or_404(player: Player, dynamic_rd_object: Dyna
     if dynamic_rd_object.time_spent_developing == 0:
         dynamic_rd_object.started_at = 0
         dynamic_rd_object.save()
-    delete_response = player.ripple_tasks.filter(dynamic_rd_object=dynamic_rd_object).delete()
+    json_body = {"id": dynamic_rd_object.id}
+    delete_response = player.ripple_tasks.filter(json_body=json_body).delete()
     delete_count, delete_details = delete_response
     if delete_count == 0:
         context = {"dynamic_rd_object": str(dynamic_rd_object)}
@@ -41,3 +43,11 @@ def delete_dynamic_rd_ripple_task_or_404(player: Player, dynamic_rd_object: Dyna
 
     response = {"deletion_response": delete_response}
     return response
+
+
+def get_db_record_or_404(database_model: Model, **kwargs) -> Model:
+    try:
+        return database_model.objects.get(**kwargs)
+    except database_model.DoesNotExist:
+        context = {"kwargs": kwargs}
+        raise common_exceptions.DatabaseRecordNotFound(database_model, context)
