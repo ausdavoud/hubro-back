@@ -2,6 +2,9 @@ import random
 from enum import Enum
 from typing import TypedDict
 
+from contracts.models import Contract
+from rd.models import DynamicRD
+
 
 class ProductType(Enum):
     BASIC = "basicJetPack"
@@ -26,24 +29,29 @@ def generate_contract_data(
     start_unit_price_range: int,
     end_unit_price_range: int,
     required_esg: int,
-    product: ProductType,
+    product: DynamicRD,
 ) -> list[ContractType]:
     contracts: list[ContractType] = []
-    amounts = distribute_unevenly(demand, 5)
+    amounts = distribute_unevenly(demand, contracts_number)
     esg_indexes = create_esg_range_list(required_esg, contracts_number)
     unit_prices = create_price_range_list(start_unit_price_range, end_unit_price_range, contracts_number)
     payment_delays = generate_payment_delays(date, contracts_number)
     for i in range(contracts_number):
         contracts.append(
             {
-                "contract_value": amounts[i] * unit_prices[i],
-                "product_count": amounts[i],
-                "product_type": product,
-                "minimum_esg_score": esg_indexes[0],
+                "closure_quarter": date,
+                "payment_quarter": payment_delays[i],
+                "quantity": amounts[i],
                 "unit_price": unit_prices[i],
-                "payment_due_date": payment_delays[i],
+                "total_price": amounts[i] * unit_prices[i],
+                "minimum_esg_index": esg_indexes[0],
+                "deliverable_product": product,
+                "status": Contract.ContractStatuses.NOTASSIGNED,
             }
         )
+
+    contracts = calculate_priorities(contracts)
+    contracts = sorted(contracts, key=lambda x: x["priority"], reverse=True)
     return contracts
 
 
@@ -67,6 +75,23 @@ def calculate_priority(
     return priority
 
 
+def calculate_priorities(contracts: list[ContractType]):
+    priorities = []
+    for contract in contracts:
+        priority = calculate_priority(
+            contract.get("unit_price"),
+            contract.get("quantity"),
+            contract.get("minimum_esg_index"),
+            contract.get("payment_quarter"),
+        )
+        priorities.append(priority)
+
+    for contract, priority in zip(contracts, priorities):
+        contract["priority"] = priority
+
+    return contracts
+
+
 def distribute_unevenly(
     total_amount: int,
     num_parts: int,
@@ -76,7 +101,8 @@ def distribute_unevenly(
 
     if num_parts <= 0:
         raise ValueError("Number of parts must be greater than 0")
-    if total_amount <= num_parts * MIN_CONTRACT_AMOUNT:
+    # Possible BUG. <= or <?
+    if total_amount < num_parts * MIN_CONTRACT_AMOUNT:
         raise ValueError(f"Total amount must be greater than {num_parts * MIN_CONTRACT_AMOUNT}")
 
     parts = [MIN_CONTRACT_AMOUNT] * num_parts
@@ -146,21 +172,6 @@ if __name__ == "__main__":
         5,
         ProductType.BASIC,  # this is a row of the market forecast report
     )
-
-    # find the priority of each contract:
-    # the higher Value represents the higher priority.
-    priorities = []
-    for contract in contracts:
-        priority = calculate_priority(
-            contract.get("unit_price"),
-            contract.get("product_count"),
-            contract.get("minimum_esg_score"),
-            contract.get("payment_due_date"),
-        )
-        priorities.append(priority)
-
-    for contract, priority in zip(contracts, priorities):
-        contract["priority"] = priority
 
     for contract in contracts:
         print(contract)

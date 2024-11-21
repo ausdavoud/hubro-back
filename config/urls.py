@@ -21,6 +21,7 @@ urlpatterns = [
                 path("rd/", include("rd.urls"), name="rd"),
                 path("finance/", include("finance.urls"), name="finance"),
                 path("production/", include("production.urls"), name="production"),
+                path("contracts/", include("contracts.urls"), name="contracts"),
             ]
         ),
     ),

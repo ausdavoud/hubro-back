@@ -47,7 +47,7 @@ class FinishQuarterError(APIException):
         super().__init__(detail)
 
 
-class DuplicateDecision(APIException):
+class DuplicateDecisionError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self, context: dict = {}):
