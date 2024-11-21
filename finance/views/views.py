@@ -54,7 +54,7 @@ class FinanceView(ViewSet):
                 player=player, made_at_quarter=current_quarter, endpoint=endpoint
             )
             serialized_decision = DecisionPoolSerializer(previous_decision)
-            raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
+            raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
         except DecisionPool.DoesNotExist:
             decision = DecisionPool.objects.create(
                 player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body

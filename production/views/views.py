@@ -82,7 +82,7 @@ class ProductionView(ViewSet):
                 player=player, made_at_quarter=current_quarter, endpoint=endpoint
             )
             serialized_decision = DecisionPoolSerializer(previous_decision)
-            raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
+            raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
         except DecisionPool.DoesNotExist:
             decision = DecisionPool.objects.create(
                 player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
@@ -149,7 +149,7 @@ class ProductionView(ViewSet):
         )
         if not created:
             serialized_decision = DecisionPoolSerializer(decision)
-            raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
+            raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
 
         return decision
 
@@ -225,7 +225,7 @@ class ProductionView(ViewSet):
 
             if decision.json_body["product_id"] == json_body["product_id"]:
                 serialized_decision = DecisionPoolSerializer(decision)
-                raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
+                raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
 
             decision.json_body["product_id"] = json_body["product_id"]
             decision.save()
@@ -279,7 +279,7 @@ class ProductionView(ViewSet):
 
             if decision.json_body["activity_level"] == json_body["activity_level"]:
                 serialized_decision = DecisionPoolSerializer(decision)
-                raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
+                raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
 
             decision.json_body["activity_level"] = json_body["activity_level"]
             decision.save()

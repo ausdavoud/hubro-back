@@ -126,7 +126,7 @@ class RDView(ViewSet):
         serialized_decision = DecisionPoolSerializer(decision)
 
         if not created:
-            raise common_exceptions.DuplicateDecision(context={"decision": serialized_decision.data})
+            raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
 
         return decision
 

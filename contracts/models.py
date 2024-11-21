@@ -6,8 +6,9 @@ from rd.models import DynamicRD
 
 class Contract(models.Model):
     class ContractStatuses(models.TextChoices):
-        FULFILLED = "FF", "Fulfilled"
+        NOTASSIGNED = "NA", "Not Assigned"
         WAITING = "WG", "Waiting"
+        FULFILLED = "FF", "Fulfilled"
         EXPIRED = "EX", "Expired"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -17,6 +18,7 @@ class Contract(models.Model):
     unit_price = models.DecimalField(max_digits=15, decimal_places=0)
     total_price = models.DecimalField(max_digits=15, decimal_places=0)
     deliverable_product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
+    minimum_esg_index = models.IntegerField()
     status = models.CharField(max_length=2, choices=ContractStatuses.choices)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -24,6 +26,12 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"{self.player} - {self.total_price} at {self.closure_quarter}"
+
+
+class ContractPriority(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    quarter = models.IntegerField()
+    priorities = models.JSONField()
 
 
 class Storage(models.Model):
