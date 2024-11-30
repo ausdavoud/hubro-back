@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from common.views import exceptions as common_exceptions
 from rd.models import DynamicRD, StaticRD
 
 
@@ -60,3 +61,27 @@ class CreateBaseRDSerializer(serializers.Serializer):
 class CreateRDProductSerializer(CreateBaseRDSerializer):
     alias = serializers.CharField(max_length=100)
     icon_link = serializers.CharField(max_length=300)
+    engine = serializers.IntegerField()
+    chassis = serializers.IntegerField()
+    strap = serializers.IntegerField()
+    color = serializers.IntegerField()
+
+    def validate_engine(self, value):
+        if not 0 <= value <= 2:
+            raise common_exceptions.ValidationError("Invalid engine index. Must be from 0 to 2.")
+        return value
+
+    def validate_chassis(self, value):
+        if not 0 <= value <= 2:
+            raise common_exceptions.ValidationError("Invalid chassis index. Must be from 0 to 2.")
+        return value
+
+    def validate_strap(self, value):
+        if not 0 <= value <= 2:
+            raise common_exceptions.ValidationError("Invalid strap index. Must be from 0 to 2.")
+        return value
+
+    def validate_color(self, value):
+        if not 0 <= value <= 14:
+            raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
+        return value

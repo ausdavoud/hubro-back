@@ -118,6 +118,10 @@ class Command(BaseCommand):
             run_at_quarter = dynamic_rd_dict["run_at_quarter"]
             alias = dynamic_rd_dict.get("alias", "")
             icon_link = dynamic_rd_dict.get("icon_link", "")
+            engine = dynamic_rd_dict.get("engine", None)
+            chassis = dynamic_rd_dict.get("chassis", None)
+            strap = dynamic_rd_dict.get("strap", None)
+            color = dynamic_rd_dict.get("color", None)
 
             player = Player.objects.prefetch_related("rd").filter(user__email=player_email).first()
             if not player:
@@ -130,6 +134,10 @@ class Command(BaseCommand):
                 dynamic_rd_object.time_spent_developing = time_spent_developing
                 dynamic_rd_object.alias = alias
                 dynamic_rd_object.icon_link = icon_link
+                dynamic_rd_object.engine = engine
+                dynamic_rd_object.chassis = chassis
+                dynamic_rd_object.strap = strap
+                dynamic_rd_object.color = color
                 dynamic_rd_object.save()
                 if dynamic_rd_object.is_researching:
                     json_body = {"dynamic_rd_id": dynamic_rd_object.pk}

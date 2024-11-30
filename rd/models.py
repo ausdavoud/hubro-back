@@ -53,6 +53,38 @@ class StaticRD(models.Model):
 
 
 class DynamicRD(models.Model):
+    class Engines(models.IntegerChoices):
+        ENGINE_1 = 0, "Engine 1"
+        ENGINE_2 = 1, "Engine 2"
+        ENGINE_3 = 2, "Engine 3"
+
+    class Chassis(models.IntegerChoices):
+        CHASSIS_1 = 0, "Chassis 1"
+        CHASSIS_2 = 1, "Chassis 2"
+        CHASSIS_3 = 2, "Chassis 3"
+
+    class Straps(models.IntegerChoices):
+        STRAP_1 = 0, "Strap 1"
+        STRAP_2 = 1, "Strap 2"
+        STRAP_3 = 2, "Strap 3"
+
+    class Colors(models.IntegerChoices):
+        COLOR_1 = 0, "rgb(141, 110, 99)"
+        COLOR_2 = 1, "rgb(236, 64, 122)"
+        COLOR_3 = 2, "rgb(126, 87, 194)"
+        COLOR_4 = 3, "rgb(186, 104, 200)"
+        COLOR_5 = 4, "rgb(102, 187, 106)"
+        COLOR_6 = 5, "rgb(205, 220, 57)"
+        COLOR_7 = 6, "rgb(66, 165, 245)"
+        COLOR_8 = 7, "rgb(255, 202, 40)"
+        COLOR_9 = 8, "rgb(239, 83, 80)"
+        COLOR_10 = 9, "rgb(38, 166, 154)"
+        COLOR_11 = 10, "rgb(255, 171, 64)"
+        COLOR_12 = 11, "rgb(238, 238, 238)"
+        COLOR_13 = 12, "rgb(189, 189, 189)"
+        COLOR_14 = 13, "rgb(102, 102, 102)"
+        COLOR_15 = 14, "rgb(55, 71, 79)"
+
     # Cannot inherit from StaticRD because bulk_create is not supported
     # on child models
     from people.models import Player
@@ -80,6 +112,10 @@ class DynamicRD(models.Model):
 
     alias = models.CharField(max_length=100, blank=True)
     icon_link = models.CharField(max_length=300, blank=True)
+    engine = models.IntegerField(choices=Engines.choices, null=True, blank=True)
+    chassis = models.IntegerField(choices=Chassis, null=True, blank=True)
+    strap = models.IntegerField(choices=Straps, null=True, blank=True)
+    color = models.IntegerField(choices=Colors, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
