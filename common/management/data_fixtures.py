@@ -348,6 +348,10 @@ dynamic_rd = [
         "run_at_quarter": 2,
         "alias": "SuperSonic Jetpack",
         "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
+        "engine": 1,
+        "chassis": 2,
+        "strap": 0,
+        "color": 5,
     },
     {
         "player_email": "h@g.com",

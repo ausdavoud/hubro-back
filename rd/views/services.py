@@ -95,8 +95,16 @@ def start_rd(player: Player, decision: DecisionPool):
     if dynamic_rd_object.type == StaticRD.RDTypes.PRODUCT:
         alias = json_body.get("alias")
         icon_link = json_body.get("icon_link")
+        engine = json_body.get("engine")
+        chassis = json_body.get("chassis")
+        strap = json_body.get("strap")
+        color = json_body.get("color")
         dynamic_rd_object.alias = alias
         dynamic_rd_object.icon_link = icon_link
+        dynamic_rd_object.engine = engine
+        dynamic_rd_object.chassis = chassis
+        dynamic_rd_object.strap = strap
+        dynamic_rd_object.color = color
 
     # Check if the dynamic object is available for development,
     # since only available R&D items can be developed
@@ -106,9 +114,7 @@ def start_rd(player: Player, decision: DecisionPool):
     if state != RDStates.AVAILABLE:
         raise rd_exceptions.RDStateError(state)
 
-    serialized_dynamic_rd_object = start_rd_development(
-        player, dynamic_rd_object=dynamic_rd_object, current_quarter=current_quarter
-    )
+    serialized_dynamic_rd_object = start_rd_development(player, dynamic_rd_object=dynamic_rd_object)
 
     return serialized_dynamic_rd_object
 

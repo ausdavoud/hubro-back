@@ -71,7 +71,12 @@ class RDView(ViewSet):
             "category": "production",
             "order": 1,
             "alias": "My Fancy Production Item!",
-            "icon_link": "https://example.com/icon.png"
+            "icon_link": "https://example.com/icon.png",
+            "engine": 0 | 1 | 2,
+            "chassis": 0 | 1 | 2,
+            "strap": 0 | 1 | 2,
+            "color": 0 | 1 | 2 | ... | 14
+
         }
         ```
         """
@@ -90,10 +95,23 @@ class RDView(ViewSet):
             product_rd_serializer = get_serializer_or_400(CreateRDProductSerializer, data)
             alias = product_rd_serializer.validated_data.get("alias", None)
             icon_link = product_rd_serializer.validated_data.get("icon_link", None)
+            engine = product_rd_serializer.validated_data.get("engine", None)
+            chassis = product_rd_serializer.validated_data.get("chassis", None)
+            strap = product_rd_serializer.validated_data.get("strap", None)
+            color = product_rd_serializer.validated_data.get("color", None)
 
         json_body = {
             key: value
-            for key, value in {"category": category, "order": order, "alias": alias, "icon_link": icon_link}.items()
+            for key, value in {
+                "category": category,
+                "order": order,
+                "alias": alias,
+                "icon_link": icon_link,
+                "engine": engine,
+                "chassis": chassis,
+                "strap": strap,
+                "color": color,
+            }.items()
             if value is not None
         }
 

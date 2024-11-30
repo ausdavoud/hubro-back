@@ -123,7 +123,7 @@ class FinishQuarter(APIView):
                 if time_spent_developing < dynamic_rd_object.development_duration and dynamic_rd_object.started_at > 0:
                     # If research is still ongoing, run next quarter, too
                     ripple_task.run_at_quarter = F("run_at_quarter") + 1
-                    tasks_to_update.append(ripple_tasks)
+                    tasks_to_update.append(ripple_task)
                 else:
                     tasks_to_delete.append(ripple_task)
 
@@ -142,5 +142,9 @@ class FinishQuarter(APIView):
         if tasks_to_delete:
             RippleTask.objects.filter(id__in=[task.id for task in tasks_to_delete]).delete()
 
-        response = {"data": {"current_quarter": current_quarter, "actions": decision_states}}
+        response = {
+            "data": {
+                "current_quarter": current_quarter,
+            }
+        }  # "actions": decision_states}}
         return Response(response, status=status.HTTP_200_OK)
