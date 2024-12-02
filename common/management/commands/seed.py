@@ -121,7 +121,9 @@ class Command(BaseCommand):
             engine = dynamic_rd_dict.get("engine", None)
             chassis = dynamic_rd_dict.get("chassis", None)
             strap = dynamic_rd_dict.get("strap", None)
-            color = dynamic_rd_dict.get("color", None)
+            engine_color = dynamic_rd_dict.get("engine_color", None)
+            chassis_color = dynamic_rd_dict.get("chassis_color", None)
+            strap_color = dynamic_rd_dict.get("strap_color", None)
 
             player = Player.objects.prefetch_related("rd").filter(user__email=player_email).first()
             if not player:
@@ -137,7 +139,9 @@ class Command(BaseCommand):
                 dynamic_rd_object.engine = engine
                 dynamic_rd_object.chassis = chassis
                 dynamic_rd_object.strap = strap
-                dynamic_rd_object.color = color
+                dynamic_rd_object.engine_color = engine_color
+                dynamic_rd_object.chassis_color = chassis_color
+                dynamic_rd_object.strap_color = strap_color
                 dynamic_rd_object.save()
                 if dynamic_rd_object.is_researching:
                     json_body = {"dynamic_rd_id": dynamic_rd_object.pk}

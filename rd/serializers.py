@@ -64,7 +64,9 @@ class CreateRDProductSerializer(CreateBaseRDSerializer):
     engine = serializers.IntegerField()
     chassis = serializers.IntegerField()
     strap = serializers.IntegerField()
-    color = serializers.IntegerField()
+    engine_color = serializers.IntegerField()
+    chassis_color = serializers.IntegerField()
+    strap_color = serializers.IntegerField()
 
     def validate_engine(self, value):
         if not 0 <= value <= 2:
@@ -80,8 +82,18 @@ class CreateRDProductSerializer(CreateBaseRDSerializer):
         if not 0 <= value <= 2:
             raise common_exceptions.ValidationError("Invalid strap index. Must be from 0 to 2.")
         return value
+    
+    def validate_engine_color(self, value):
+        if not 0 <= value <= 14:
+            raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
+        return value
+    
+    def validate_chassis_color(self, value):
+        if not 0 <= value <= 14:
+            raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
+        return value
 
-    def validate_color(self, value):
+    def validate_strap_color(self, value):
         if not 0 <= value <= 14:
             raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
         return value
