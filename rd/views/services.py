@@ -98,13 +98,17 @@ def start_rd(player: Player, decision: DecisionPool):
         engine = json_body.get("engine")
         chassis = json_body.get("chassis")
         strap = json_body.get("strap")
-        color = json_body.get("color")
+        engine_color = json_body.get("engine_color")
+        chassis_color = json_body.get("chassis_color")
+        strap_color = json_body.get("strap_color")
         dynamic_rd_object.alias = alias
         dynamic_rd_object.icon_link = icon_link
         dynamic_rd_object.engine = engine
         dynamic_rd_object.chassis = chassis
         dynamic_rd_object.strap = strap
-        dynamic_rd_object.color = color
+        dynamic_rd_object.engine_color = engine_color
+        dynamic_rd_object.chassis_color = chassis_color
+        dynamic_rd_object.strap_color = strap_color
 
     # Check if the dynamic object is available for development,
     # since only available R&D items can be developed

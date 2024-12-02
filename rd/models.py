@@ -115,7 +115,9 @@ class DynamicRD(models.Model):
     engine = models.IntegerField(choices=Engines.choices, null=True, blank=True)
     chassis = models.IntegerField(choices=Chassis, null=True, blank=True)
     strap = models.IntegerField(choices=Straps, null=True, blank=True)
-    color = models.IntegerField(choices=Colors, null=True, blank=True)
+    engine_color = models.IntegerField(choices=Colors, null=True, blank=True)
+    chassis_color = models.IntegerField(choices=Colors, null=True, blank=True)
+    strap_color = models.IntegerField(choices=Colors, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

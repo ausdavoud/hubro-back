@@ -351,7 +351,9 @@ dynamic_rd = [
         "engine": 1,
         "chassis": 2,
         "strap": 0,
-        "color": 5,
+        "engine_color": 5,
+        "chassis_color" : 11,
+        "strap_color": 7,
     },
     {
         "player_email": "h@g.com",

@@ -75,8 +75,9 @@ class RDView(ViewSet):
             "engine": 0 | 1 | 2,
             "chassis": 0 | 1 | 2,
             "strap": 0 | 1 | 2,
-            "color": 0 | 1 | 2 | ... | 14
-
+            "engine_color: 0 | 1 | 2 | ... | 14,
+            "chassis_color": 0 | 1 | 2 | ... | 14,
+            "strap_color": 0 | 1 | 2 | ... | 14,
         }
         ```
         """
@@ -98,7 +99,9 @@ class RDView(ViewSet):
             engine = product_rd_serializer.validated_data.get("engine", None)
             chassis = product_rd_serializer.validated_data.get("chassis", None)
             strap = product_rd_serializer.validated_data.get("strap", None)
-            color = product_rd_serializer.validated_data.get("color", None)
+            engine_color = product_rd_serializer.validated_data.get("engine_color", None)
+            chassis_color = product_rd_serializer.validated_data.get("chassis_color", None)
+            strap_color = product_rd_serializer.validated_data.get("strap_color", None)
 
         json_body = {
             key: value
@@ -110,7 +113,9 @@ class RDView(ViewSet):
                 "engine": engine,
                 "chassis": chassis,
                 "strap": strap,
-                "color": color,
+                "engine_color": engine_color,
+                "chassis_color": chassis_color,
+                "strap_color": strap_color,
             }.items()
             if value is not None
         }
