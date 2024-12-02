@@ -21,7 +21,7 @@ from rd.views.services import get_previous_rd_items
 
 @extend_schema_view(
     get_rds=extend_schema(tags=["R&D"]),
-    start=extend_schema(tags=["R&D"], request=CreateBaseRDSerializer),
+    start=extend_schema(tags=["R&D"], request=CreateRDProductSerializer),
     pause=extend_schema(tags=["R&D"], request=CreateBaseRDSerializer),
     resume=extend_schema(tags=["R&D"], request=CreateBaseRDSerializer),
 )
