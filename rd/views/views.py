@@ -90,6 +90,16 @@ class RDView(ViewSet):
                 "category": category,
                 "order": order,
             }
+        
+        # initiate the variables with none as value
+        alias = None
+        icon_link = None
+        engine = None
+        chassis = None
+        strap = None
+        engine_color = None
+        chassis_color = None
+        strap_color = None
 
         # simple check for being product or upgrade
         if self._is_product_rd(category, order):
