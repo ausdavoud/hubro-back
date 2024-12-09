@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models import CheckConstraint, Q
 from django.db.utils import IntegrityError
 
 
@@ -20,10 +21,6 @@ class CustomUserManager(BaseUserManager):
                 player = Player.objects.create(user=user)
             except IntegrityError:
                 print(f"A `Player` instance is already assigned to {user.email}")
-
-            from rd.views.services import create_dynamic_rd_items
-
-            create_dynamic_rd_items(player=player)
 
         elif user.role == CustomUser.UserRoles.INSTRUCTOR:
             try:
@@ -78,12 +75,24 @@ class Instructor(models.Model):
 
 class SimulationClass(models.Model):
     name = models.CharField(max_length=50)
-    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
+    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE, null=True)
+    is_single_player = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # if
+        # is_single_player is False (It's team mode)
+        # =>
+        # instructor can not be null
+        # p => q is equivalent to ~p | q
+        constraints = [
+            CheckConstraint(
+                check=~Q(is_single_player=False) | Q(instructor=None),
+                name="check_instructor_not_null_if_team_mode",
+            )
+        ]
         verbose_name_plural = "SimulationClasses"
 
     def __str__(self):
@@ -103,18 +112,10 @@ class Team(models.Model):
 
 class Player(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="player")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True, related_name="players")
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, related_name="players")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        had_pk = bool(self.pk)
-        super(Player, self).save(*args, **kwargs)
-        if not had_pk:
-            from common.models import StateVariable
-
-            state_variables = StateVariable.objects.create(player=self)
 
     def __str__(self):
         return self.user.email

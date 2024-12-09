@@ -23,6 +23,7 @@ class DynamicRDAdmin(admin.ModelAdmin):
         "started_at",
         "development_duration",
         "time_spent_developing",
+        "is_completed",
     ]
 
     @admin.action(description="Add ripple task only for R&D-Upgrade items")

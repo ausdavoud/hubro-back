@@ -23,6 +23,7 @@ class StateVariable(models.Model):
     quarter = models.IntegerField(default=1)
     simulation_duration = models.IntegerField(default=20)
     max_loan_repayment_duration = models.IntegerField(default=16)
+    marketing_budget = models.DecimalField(max_digits=15, decimal_places=0, default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
