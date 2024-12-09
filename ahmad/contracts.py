@@ -3,7 +3,6 @@ from enum import Enum
 from typing import TypedDict
 
 from contracts.models import Contract
-from rd.models import DynamicRD
 
 
 class ProductType(Enum):
@@ -29,7 +28,7 @@ def generate_contract_data(
     start_unit_price_range: int,
     end_unit_price_range: int,
     required_esg: int,
-    product: DynamicRD,
+    product: str,
 ) -> list[ContractType]:
     contracts: list[ContractType] = []
     amounts = distribute_unevenly(demand, contracts_number)
@@ -46,12 +45,17 @@ def generate_contract_data(
                 "total_price": amounts[i] * unit_prices[i],
                 "minimum_esg_index": esg_indexes[0],
                 "deliverable_product": product,
-                "status": Contract.ContractStatuses.NOTASSIGNED,
+                "status": Contract.Statuses.PENDING,
             }
         )
 
     contracts = calculate_priorities(contracts)
     contracts = sorted(contracts, key=lambda x: x["priority"], reverse=True)
+    priority = 1
+    for contract in contracts:
+        contract["priority"] = priority
+        priority += 1
+
     return contracts
 
 
@@ -72,7 +76,7 @@ def calculate_priority(
         + minimum_esg_score * FACTOR_MINIMUM_ESG
         + payment_due_date * FACTOR_PAYMENT_DUO_DATE
     )
-    return priority
+    return priority / 100
 
 
 def calculate_priorities(contracts: list[ContractType]):

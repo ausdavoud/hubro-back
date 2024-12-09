@@ -16,6 +16,6 @@ sleep 2
 python manage.py migrate
 python manage.py rd
 python manage.py financial_accounts
-python manage.py seed
+python manage.py superuser
 
 docker compose down

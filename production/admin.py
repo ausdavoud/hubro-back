@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from production.models import Factory, Production
+from production.models import Factory, Production, Storage
 
 
 class FactoryAdmin(admin.ModelAdmin):
@@ -23,11 +23,15 @@ class ProductionAdmin(admin.ModelAdmin):
         "factory",
         "quarter",
         "activity_level",
-        "activity_factor",
         "produced_quantity",
         "labor_cost",
     ]
 
 
+class StorageAdmin(admin.ModelAdmin):
+    list_display = ["id", "player", "product", "quantity"]
+
+
+admin.site.register(Storage, StorageAdmin)
 admin.site.register(Factory, FactoryAdmin)
 admin.site.register(Production, ProductionAdmin)

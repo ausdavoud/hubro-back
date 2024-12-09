@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
@@ -7,21 +5,14 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from ahmad.contracts import generate_contract_data
-from common.management.data_fixtures import (
-    BASIC_JETPACK_CONTRACT,
-    GREEN_JETPACK_CONTRACT,
-    SAFE_JETPACK_CONTRACT,
-    SPORTY_JETPACK_CONTRACT,
-)
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views.exceptions import DuplicateDecisionError
-from common.views.services import get_db_record_or_404, get_serializer_or_400
+from common.views.services import get_serializer_or_400
 from contracts.models import Contract
 from contracts.serializers import ContractSerializer, ContractsOrderSerializer
 from people.views.services import get_player_or_404
-from rd.models import DynamicRD, StaticRD
+from rd.views.services import get_available_rd_dynamics_at_next_quarter
 
 
 @extend_schema_view(
@@ -36,51 +27,38 @@ from rd.models import DynamicRD, StaticRD
 )
 class ContractViewSet(ViewSet):
     class ENDPOINTS:
-        GET_CONTRACTS = "get_contracts"
-        SET_CONTRACTS_ORDER = "set_contracts_order"
+        GET_CONTRACTS = "contracts/get_contracts"
+        SET_CONTRACTS_ORDER = "contracts/set_contracts_order"
 
     @action(detail=False, methods=["get"])
     def get_contracts(self, request: Request):
         user = request.user
         player = get_player_or_404(user)
         current_quarter = player.state_variables.quarter
-        # New contracts should be Created when quarter is incremented
-        # creating contracts:
-        for JETPACK_CONTRACT in [
-            BASIC_JETPACK_CONTRACT,
-            SPORTY_JETPACK_CONTRACT,
-            SAFE_JETPACK_CONTRACT,
-            GREEN_JETPACK_CONTRACT,
-        ]:
-            if JETPACK_CONTRACT.get(current_quarter, None) is None:
-                continue
-            # Generate new contracts
-            dynamic_rd_product: DynamicRD = get_db_record_or_404(
-                DynamicRD, player=player, category=JETPACK_CONTRACT["product_type"], type=StaticRD.RDTypes.PRODUCT
-            )
-            contracts = generate_contract_data(
-                current_quarter,
-                JETPACK_CONTRACT[current_quarter]["product_demand"],
-                JETPACK_CONTRACT[current_quarter]["contracts"],
-                JETPACK_CONTRACT[current_quarter]["contract_price_start"],
-                JETPACK_CONTRACT[current_quarter]["contract_price_end"],
-                JETPACK_CONTRACT[current_quarter]["required_esg_index"],
-                dynamic_rd_product,
-            )
-            # make a new key for each contract called "player" whose
-            # value is the player
-            for contract in contracts:
-                contract["player"] = player
+        esg_index = player.state_variables.esg_index
 
-            pprint(contracts)
-            return Response(data=contracts)
+        # get decisions for r&d
+        # if development_time - time_spent_developing <= 1 and started_at != 0
+        # or
+        # start decision was made for a product that has a development time of 1
+        # => show contracts
 
-            Contract.objects.bulk_create()
+        # development_duration - time_spent_developing <= 1 and started_at is not zero
+        dynamic_rd_objects = get_available_rd_dynamics_at_next_quarter(player=player, current_quarter=current_quarter)
 
-        contracts = Contract.objects.filter(player=player, created_at_quarter=current_quarter)
-        serialized_contracts = ContractSerializer(contracts, many=True)
-        response = {"contracts": serialized_contracts.data}
-        return response
+        available_products_set = {dynamic_rd_object.category for dynamic_rd_object in dynamic_rd_objects}
+
+        available_contracts = Contract.objects.filter(
+            closure_quarter=current_quarter,
+            minimum_esg_index__lte=esg_index,
+            deliverable_product__in=available_products_set,
+        )
+
+        serialized_available_contracts = ContractSerializer(available_contracts, many=True)
+        response = {
+            "available_contracts": serialized_available_contracts.data,
+        }
+        return Response(response, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def set_contracts_order(self, request: Request):

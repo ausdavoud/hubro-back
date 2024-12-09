@@ -9,6 +9,7 @@ class DynamicRDSerializer(serializers.ModelSerializer):
     class Meta:
         model = DynamicRD
         fields = [
+            "id",
             "category",
             "order",
             "type",
