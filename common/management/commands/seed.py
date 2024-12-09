@@ -3,8 +3,21 @@ from typing import Any
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
-from common.management.data_fixtures import dynamic_rd, players, simulation_classes, superusers, teams, users
+from ahmad.contracts import generate_contract_data
+from common.management.data_fixtures import (
+    BASIC_JETPACK_CONTRACT,
+    GREEN_JETPACK_CONTRACT,
+    SAFE_JETPACK_CONTRACT,
+    SPORTY_JETPACK_CONTRACT,
+    dynamic_rd,
+    players,
+    simulation_classes,
+    superusers,
+    teams,
+    users,
+)
 from common.models import RippleTask
+from contracts.models import Contract
 from people.models import CustomUser, Instructor, Player, SimulationClass, Team
 from rd.models import DynamicRD
 
@@ -33,6 +46,9 @@ class Command(BaseCommand):
 
         # RD Products
         self.start_research_for_rd_items(dynamic_rd)
+
+        # Contracts
+        self.create_contracts()
 
     def cerate_super_users(self, superusers):
         for superuser_dict in superusers:
@@ -107,6 +123,32 @@ class Command(BaseCommand):
             player_obj.team = team_obj
             player_obj.save()
             self.stdout.write(f"Player {player_obj.user.email} was added to team {team_obj.name}")
+
+    def create_contracts(self):
+        for JETPACK_CONTRACT in [
+            BASIC_JETPACK_CONTRACT,
+            SPORTY_JETPACK_CONTRACT,
+            SAFE_JETPACK_CONTRACT,
+            GREEN_JETPACK_CONTRACT,
+        ]:
+            for current_quarter in range(1, 14):
+                if JETPACK_CONTRACT.get(current_quarter, None) is None:
+                    self.stderr.write(
+                        f"No contracts for {JETPACK_CONTRACT['product_type']} at quarter {current_quarter}"
+                    )
+                    continue
+                contracts = generate_contract_data(
+                    current_quarter,
+                    JETPACK_CONTRACT[current_quarter]["product_demand"],
+                    JETPACK_CONTRACT[current_quarter]["contracts"],
+                    JETPACK_CONTRACT[current_quarter]["contract_price_start"],
+                    JETPACK_CONTRACT[current_quarter]["contract_price_end"],
+                    JETPACK_CONTRACT[current_quarter]["required_esg_index"],
+                    JETPACK_CONTRACT["product_type"],
+                )
+                contracts_objs = [Contract(**contract) for contract in contracts]
+                contracts = Contract.objects.bulk_create(contracts_objs)
+                self.stdout.write(f"Created {len(contracts)} contracts at quarter {current_quarter}")
 
     def start_research_for_rd_items(self, dynamic_rd):
         for dynamic_rd_dict in dynamic_rd:

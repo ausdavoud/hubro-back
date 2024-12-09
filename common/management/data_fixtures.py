@@ -352,7 +352,7 @@ dynamic_rd = [
         "chassis": 2,
         "strap": 0,
         "engine_color": 5,
-        "chassis_color" : 11,
+        "chassis_color": 11,
         "strap_color": 7,
     },
     {

@@ -63,12 +63,11 @@ class Factory(models.Model):
 
 
 class Production(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="productions")
     product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     factory = models.ForeignKey(Factory, on_delete=models.CASCADE)
     quarter = models.IntegerField()
-    activity_level = models.DecimalField(max_digits=5, decimal_places=2)
-    activity_factor = models.DecimalField(max_digits=5, decimal_places=2)
+    activity_level = models.DecimalField(max_digits=5, decimal_places=2, default=100)
     produced_quantity = models.IntegerField()
     labor_cost = models.DecimalField(max_digits=15, decimal_places=0)
 
@@ -77,3 +76,15 @@ class Production(models.Model):
 
     def __str__(self):
         return self.product.alias
+
+
+class Storage(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="storages")
+    product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player} - {self.quantity} {self.product.alias}"

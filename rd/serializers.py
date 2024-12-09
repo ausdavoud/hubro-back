@@ -10,6 +10,7 @@ class DynamicRDSerializer(serializers.ModelSerializer):
     class Meta:
         model = DynamicRD
         fields = [
+            "id",
             "category",
             "order",
             "type",
@@ -82,12 +83,12 @@ class CreateRDProductSerializer(CreateBaseRDSerializer):
         if not 0 <= value <= 2:
             raise common_exceptions.ValidationError("Invalid strap index. Must be from 0 to 2.")
         return value
-    
+
     def validate_engine_color(self, value):
         if not 0 <= value <= 14:
             raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
         return value
-    
+
     def validate_chassis_color(self, value):
         if not 0 <= value <= 14:
             raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")

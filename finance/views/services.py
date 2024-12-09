@@ -78,7 +78,7 @@ def new_loan(player: Player, decision: DecisionPool) -> Response:
                 financial_account=cash_account,
             )
     except DatabaseError:
-        raise common_exceptions.AtomicTransactionError(state="new loan was not created")
+        raise common_exceptions.AtomicTransactionError(state="Error at making a loan object")
 
     serialized_loan = LoanSerializer(loan)
     serialized_credit_transaction = TransactionSerializer(credit_transaction)

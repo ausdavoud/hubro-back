@@ -90,7 +90,7 @@ class RDView(ViewSet):
                 "category": category,
                 "order": order,
             }
-        
+
         # initiate the variables with none as value
         alias = None
         icon_link = None

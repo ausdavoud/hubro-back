@@ -1,10 +1,12 @@
 from common.models import DecisionPool, RippleTask
+from common.serializers import RippleTaskSerializer
 from common.views import exceptions as common_exceptions
 from common.views.services import delete_dynamic_rd_ripple_task_or_404
 from people.models import Player
 from rd.models import DynamicRD, RDStates, StaticRD
 from rd.serializers import DynamicRDSerializer
 from rd.views import exceptions as rd_exceptions
+from django.db.models import F
 
 
 def create_dynamic_rd_items(player):
@@ -71,7 +73,7 @@ def start_rd_development(player: Player, dynamic_rd_object: DynamicRD) -> Dynami
     json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
     ripple_task = RippleTask.objects.create(
         player=player,
-        run_at_quarter=current_quarter + 1,
+        run_at_quarter=current_quarter,
         type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
         json_body=json_body,
     )
@@ -158,5 +160,36 @@ def resume_rd(player: Player, decision: DecisionPool):
             type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
             json_body=json_body,
         )
-        response = {"description": "Auto increment ripple task was created successfully"}
+        response = RippleTaskSerializer(ripple_task).data
         return response
+
+
+def get_available_rd_dynamics_at_next_quarter(player: Player, current_quarter: int):
+    from rd.views.views import RDView
+
+    # development_duration - time_spent_developing <= 1 and started_at is not zero
+    dynamic_rd_objects = DynamicRD.objects.filter(
+        player=player,
+        type=StaticRD.RDTypes.PRODUCT,
+        development_duration__lte=F("time_spent_developing") + 1,
+        started_at__gte=1,
+    )
+
+    # start decision was made for a product that has a development time of 1
+    current_quarter_rd_decisions = DecisionPool.objects.filter(
+        player=player,
+        made_at_quarter=current_quarter,
+        endpoint=RDView.ENDPOINTS.START_RD,
+    )
+    for rd_decision in current_quarter_rd_decisions:
+        category = rd_decision.json_body["category"]
+        order = rd_decision.json_body["order"]
+        dynamic_rd_objects |= DynamicRD.objects.filter(
+            player=player,
+            type=StaticRD.RDTypes.PRODUCT,
+            category=category,
+            order=order,
+            development_duration=1,
+        )
+
+    return dynamic_rd_objects
