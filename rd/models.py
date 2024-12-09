@@ -129,6 +129,10 @@ class DynamicRD(models.Model):
         db_table = f"{RdConfig.name}_dynamic_rd"
 
     @property
+    def final_cost(self):
+        return self.development_cost * (1 - self.unit_mat_cost_effect)
+
+    @property
     def is_completed(self):
         return (
             self.time_spent_developing == self.development_duration

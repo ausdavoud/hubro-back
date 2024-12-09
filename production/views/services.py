@@ -31,7 +31,7 @@ def new_factory(player: Player, decision: DecisionPool):
             "workers": 0,
             "hours": 0,
             "wage": 0,
-            "base": 0,
+            "base": 1000,
         },
         "RN": {
             "ownership": Factory.OwnershipTypes.RENTED,
@@ -48,7 +48,7 @@ def new_factory(player: Player, decision: DecisionPool):
             "workers": 0,
             "hours": 0,
             "wage": 0,
-            "base": 0,
+            "base": 1000,
         },
     }
     # Technically, the factory is built at the next quarter of the decision
@@ -165,9 +165,8 @@ def select_product(player: Player, decision: DecisionPool):
                 factory=factory,
                 quarter=current_quarter,
                 product=product,
-                activity_level=999,
-                activity_factor=999,
-                produced_quantity=999,
+                activity_level=100,
+                produced_quantity=0,
                 labor_cost=999,
             )
 
@@ -177,7 +176,7 @@ def select_product(player: Player, decision: DecisionPool):
             "product_id": product.pk,
         }
         ripple_task = RippleTask.objects.create(
-            player=player, run_at_quarter=current_quarter + 2, type=RippleTask.TaskTypes.PRODUCTION, json_body=json_body
+            player=player, run_at_quarter=current_quarter + 1, type=RippleTask.TaskTypes.PRODUCTION, json_body=json_body
         )
 
     except DatabaseError:
