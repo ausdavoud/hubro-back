@@ -18,12 +18,22 @@ class DecisionPool(models.Model):
 
 class StateVariable(models.Model):
     player = models.OneToOneField(Player, on_delete=models.CASCADE, related_name="state_variables")
+
     esg_index = models.IntegerField(default=0)
+    esg_reporting_enabled = models.BooleanField(default=False)
+    marketing_budget = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+
     fixed_interest = models.DecimalField(max_digits=5, decimal_places=2, default=2)
     quarter = models.IntegerField(default=1)
     simulation_duration = models.IntegerField(default=20)
     max_loan_repayment_duration = models.IntegerField(default=16)
-    marketing_budget = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+
+    company_name = models.CharField(max_length=20, null=True)
+    company_slogan = models.CharField(max_length=40, null=True)
+    company_icon = models.IntegerField(default=0)
+    company_icon_bg = models.IntegerField(default=0)
+    company_icon_color = models.IntegerField(default=0)
+    company_icon_font = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -36,11 +46,12 @@ class RippleTask(models.Model):
     class TaskTypes(models.TextChoices):
         INCREMENT_RD_DEV_TIME = "inc_rd_dev_time", "Increment R&D Project Development Time"
         PRODUCTION = "production", "Production"
+        ESG_REPORTING = "esg_reporting", "ESG Reporting"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="ripple_tasks")
     run_at_quarter = models.IntegerField()
     type = models.CharField(max_length=50, choices=TaskTypes.choices)
-    json_body = models.JSONField()
+    json_body = models.JSONField(null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

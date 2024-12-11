@@ -28,6 +28,7 @@ from rd.views.services import get_previous_rd_items
 class RDView(ViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+    serializer_class = None
 
     class ENDPOINTS:
         START_RD = "rd/start"

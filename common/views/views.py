@@ -1,8 +1,7 @@
-# Create your views here.
 import random
 from decimal import Decimal
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import F, Prefetch
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
@@ -14,10 +13,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool, RippleTask, StateVariable
-from common.views.services import get_db_record_or_404
+from common.serializers import CompanyInfoSerializer
+from common.views import exceptions as common_exceptions
+from common.views.exceptions import GameLogicError
+from common.views.services import get_db_record_or_404, get_serializer_or_400
 from contracts.models import ContractAssignment, ContractPriority
 from contracts.services import assign_contracts_to_teams, create_contracts, get_winner_teams, set_contracts_order
-from finance.models import CashChange, Loan, Overdraft, Repayment, Transaction
+from finance.models import CashChange, FinancialAccount, Loan, Overdraft, Repayment, Transaction
 from finance.views.services import new_loan
 from people.models import CustomUser, Player, SimulationClass, Team
 from people.views.services import get_player_or_404, get_simulation_teams
@@ -25,6 +27,40 @@ from production.models import Factory, Production, Storage
 from production.views.services import new_factory, select_product, set_activity_level
 from rd.models import DynamicRD
 from rd.views.services import create_dynamic_rd_items, pause_rd, resume_rd, start_rd
+from esg_reporting.views.services import enable_esg_reporting
+
+
+@extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
+class SetCompanyInfo(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    serializer_class = CompanyInfoSerializer
+
+    def post(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_player_or_404(user)
+        if player.state_variables.quarter != 1:
+            raise GameLogicError(description="You can only set company info in the first quarter.")
+        json_body = self._get_company_info_json_body(request.data)
+
+        player.state_variables.company_name = json_body["company_name"]
+        player.state_variables.company_slogan = json_body["company_slogan"]
+        player.state_variables.company_icon = json_body["company_icon"]
+        player.state_variables.company_icon_bg = json_body["company_icon_bg"]
+        player.state_variables.company_icon_color = json_body["company_icon_color"]
+        player.state_variables.company_icon_font = json_body["company_icon_font"]
+        player.state_variables.save()
+
+        response = CompanyInfoSerializer(player.state_variables).data
+        return Response(response, status=status.HTTP_200_OK)
+
+    def _get_company_info_json_body(self, post_data: dict) -> dict:
+        serialized_data = get_serializer_or_400(CompanyInfoSerializer, post_data)
+        return serialized_data.validated_data
 
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
@@ -35,6 +71,7 @@ class StartNewSimulation(APIView):
     authentication_classes = [
         JWTAuthentication,
     ]
+    serializer_class = None
 
     def _start_new_simulation(self, player: Player, team_mode: bool) -> None:
         DynamicRD.objects.filter(player=player).delete()
@@ -91,6 +128,7 @@ class FinishQuarter(APIView):
     authentication_classes = [
         JWTAuthentication,
     ]
+    serializer_class = None
 
     @transaction.atomic
     def post(self, request: Request) -> Response:
@@ -205,6 +243,8 @@ class FinishQuarter(APIView):
                     assignment_response = assign_contracts_to_teams(winners, current_quarter=decision.made_at_quarter)
                     print(assignment_response)
                     return decision.endpoint, response
+                case "esg_reporting/enable":
+                    return decision.endpoint, enable_esg_reporting(player=player)
 
         except APIException as e:
             return decision.endpoint, str(e)
@@ -222,8 +262,13 @@ class FinishQuarter(APIView):
                     ripple_tasks_to_delete=tasks_to_delete,
                     dynamic_rd_objects_to_update=dynamic_rd_objects_to_update,
                 )
-            if ripple_task.type == RippleTask.TaskTypes.PRODUCTION:
-                self._inject_products_into_storage(player=player, ripple_task=ripple_task)
+            if ripple_task.type == RippleTask.TaskTypes.ESG_REPORTING:
+                self._pay_esg_reporting_fee(
+                    player=player,
+                    current_quarter=current_quarter,
+                    ripple_task=ripple_task,
+                    ripple_tasks_to_update=tasks_to_update,
+                )
 
         if dynamic_rd_objects_to_update:
             DynamicRD.objects.bulk_update(dynamic_rd_objects_to_update, ["time_spent_developing"])
@@ -256,7 +301,53 @@ class FinishQuarter(APIView):
         else:
             ripple_tasks_to_delete.append(ripple_task)
 
-    def _inject_products_into_storage(player: Player, ripple_task: RippleTask): ...
+    def _pay_esg_reporting_fee(
+        self,
+        player: Player,
+        current_quarter: int,
+        ripple_task: RippleTask,
+        ripple_tasks_to_update: list[RippleTask],
+    ):
+        try:
+            with transaction.atomic():
+                amount = ripple_task.json_body["amount"]
+                # Transaction
+                # finding cash account
+                cash_account = get_db_record_or_404(
+                    FinancialAccount,
+                    name=FinancialAccount.AccountNames.CASH,
+                )
+                # finding marketing account
+                promotion_account = get_db_record_or_404(
+                    FinancialAccount,
+                    name=FinancialAccount.AccountNames.PROMOTION,
+                )
+                credit_transaction = Transaction.objects.create(
+                    player=player,
+                    category=Transaction.Categories.EXTRAORDINARY_PR_EXPENSES,
+                    quarter=current_quarter,
+                    debit_amount=0,
+                    credit_amount=amount,
+                    financial_account=cash_account,
+                )
+                debit_transaction = Transaction.objects.create(
+                    player=player,
+                    category=Transaction.Categories.EXTRAORDINARY_PR_EXPENSES,
+                    quarter=current_quarter,
+                    debit_amount=amount,
+                    credit_amount=0,
+                    financial_account=promotion_account,
+                )
+
+                if amount != 3000_00:
+                    ripple_task.json_body["amount"] = 3000_00
+                ripple_task.save()
+
+                # We update the `run_at_quarter` using the bulk_update
+                ripple_task.run_at_quarter += 1
+                ripple_tasks_to_update.append(ripple_task)
+        except DatabaseError:
+            raise common_exceptions.AtomicTransactionError("Ripple task: ESG reporting")
 
     def _increment_quarter(self, player: Player) -> None:
         player.state_variables.quarter = F("quarter") + 1

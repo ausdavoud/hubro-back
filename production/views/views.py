@@ -37,6 +37,7 @@ from production.serializers import (
 class ProductionView(ViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+    serializer_class = None
 
     class ENDPOINTS:
         GET_FACTORY = "production/get_factories"

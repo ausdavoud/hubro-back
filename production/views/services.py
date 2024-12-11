@@ -63,7 +63,7 @@ def sell_factory(player: Player, factory_id: int, current_quarter: int):
     factory: Factory = get_db_record_or_404(Factory, id=factory_id, player=player)
 
     if factory.ownership != Factory.OwnershipTypes.RENTED and factory.ownership != Factory.OwnershipTypes.OWNED:
-        raise common_exceptions.ValidationError(detail=f"Factory with id {factory_id} has unknown ownership type")
+        raise common_exceptions.ValidationError(description=f"Factory with id {factory_id} has unknown ownership type")
     try:
         with transaction.atomic():
             # delete productions related to this factory

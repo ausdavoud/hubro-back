@@ -8,9 +8,9 @@ APP_DIR="/app"
 VOLUME_NAME="app_db_psql"
 
 # Shut down the container and remove the volume, then recreate the container
-ssh $PGHOST "cd $APP_DIR && docker compose down && docker volume rm $VOLUME_NAME"
+ssh root@$PGHOST "cd $APP_DIR && docker compose down && docker volume rm $VOLUME_NAME"
 rm */migrations/00*.py
-ssh $PGHOST "cd $APP_DIR && docker compose up --remove-orphans -d"
+ssh root@$PGHOST "cd $APP_DIR && docker compose up --remove-orphans -d"
 
 # Wait for the container to start up and then run the migrations
 sleep 5
