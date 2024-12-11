@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
@@ -26,6 +28,14 @@ from rd.views.services import get_available_rd_dynamics_at_next_quarter
     ),
 )
 class ContractViewSet(ViewSet):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    serializer_class = None
+
     class ENDPOINTS:
         GET_CONTRACTS = "contracts/get_contracts"
         SET_CONTRACTS_ORDER = "contracts/set_contracts_order"

@@ -78,11 +78,24 @@ class AtomicTransactionError(APIException):
 class ValidationError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, detail: str):
+    def __init__(self, description: str):
         detail = {
             "error": {
                 "code": ErrorCodes.VALIDATION_ERROR_CODE,
-                "description": detail,
+                "description": description,
+            }
+        }
+        super().__init__(detail)
+
+
+class GameLogicError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, description: str):
+        detail = {
+            "error": {
+                "code": ErrorCodes.GAME_LOGIC_ERROR_CODE,
+                "description": description,
             }
         }
         super().__init__(detail)

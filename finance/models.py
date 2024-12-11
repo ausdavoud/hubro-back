@@ -57,6 +57,7 @@ class Transaction(models.Model):
         LOAN_INTEREST = "Loan interest"
         SOLD_FACTORIES = "Sold factories"
         LOSS_ON_SALE_OF_ASSETS = "Loss on sale of assets"
+        EXTRAORDINARY_PR_EXPENSES = "Extraordinary PR expenses"
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     category = models.CharField(max_length=80, choices=Categories.choices)

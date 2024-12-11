@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 
 from ahmad.contracts import generate_contract_data
 from common.management.data_fixtures import (
@@ -10,6 +10,7 @@ from common.management.data_fixtures import (
     SPORTY_JETPACK_CONTRACT,
 )
 from common.models import DecisionPool
+from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_or_404
 from contracts.models import Contract, ContractAssignment, ContractPriority
 from contracts.serializers import ContractAssignmentSerializer, ContractPrioritySerializer
@@ -174,9 +175,13 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
         updated_contracts.append(contract)
         team_loads[contract.deliverable_product][team] += 1
 
-    with transaction.atomic():
-        contract_assignments = ContractAssignment.objects.bulk_create(contract_assignment_objs)
-        Contract.objects.bulk_update(updated_contracts, ["status"])
+    try:
+        with transaction.atomic():
+            contract_assignments = ContractAssignment.objects.bulk_create(contract_assignment_objs)
+            Contract.objects.bulk_update(updated_contracts, ["status"])
+
+    except DatabaseError:
+        raise common_exceptions.AtomicTransactionError(state="Error at making a loan object")
 
     serialized_contract_assignment = ContractAssignmentSerializer(contract_assignments, many=True)
 

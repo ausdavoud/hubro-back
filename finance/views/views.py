@@ -22,6 +22,7 @@ from people.views.services import get_player_or_404
 class FinanceView(ViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+    serializer_class = None
 
     class ENDPOINTS:
         NEW_LOAN = "finance/new_loan"
