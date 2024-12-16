@@ -15,7 +15,7 @@ from common.views.services import get_db_record_or_404
 from contracts.models import Contract, ContractAssignment, ContractPriority
 from contracts.serializers import ContractAssignmentSerializer, ContractPrioritySerializer
 from people.models import Player, SimulationClass, Team
-from rd.models import StaticRD
+from rd.models import RDCategories
 from rd.views.services import get_available_rd_dynamics_at_next_quarter
 
 
@@ -98,7 +98,7 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
 
     contract_assignment_objs = []
     updated_contracts = []
-    team_loads = {product_category: {team: 0 for team in teams} for product_category in StaticRD.Categories.values}
+    team_loads = {product_category: {team: 0 for team in teams} for product_category in RDCategories.values}
     # Teams choose contracts
     print(teams)
     for team in teams:

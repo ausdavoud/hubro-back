@@ -4,11 +4,7 @@ from django.utils.translation import ngettext
 from common.models import RippleTask
 from people.models import CustomUser
 from people.views.services import get_player_or_404
-from rd.models import DynamicRD, StaticRD
-
-
-class StaticRDAdmin(admin.ModelAdmin):
-    list_display = ["id", "category", "order", "title", "type"]
+from rd.models import DynamicRD
 
 
 class DynamicRDAdmin(admin.ModelAdmin):
@@ -20,9 +16,10 @@ class DynamicRDAdmin(admin.ModelAdmin):
         "order",
         "title",
         "type",
-        "started_at",
+        "supplier",
         "development_duration",
         "time_spent_developing",
+        "started_at",
         "is_completed",
     ]
 
@@ -66,5 +63,4 @@ class DynamicRDAdmin(admin.ModelAdmin):
         )
 
 
-admin.site.register(StaticRD, StaticRDAdmin)
 admin.site.register(DynamicRD, DynamicRDAdmin)

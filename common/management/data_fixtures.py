@@ -1,16 +1,38 @@
 from finance.models import FinancialAccount
-from people.models import CustomUser
-from rd.models import StaticRD
+from rd.models import DynamicRD, RDCategories
 
-static_rd = [
+SUPPLIERS = {
+    RDCategories.BASIC: {
+        "standard": {"price": 100_00, "emission": 0.4},
+        "eco": {"price": 150_00, "emission": 0.26},
+        "gaia": {"price": 130_00, "emission": 0.16},
+    },
+    RDCategories.SPORTY: {
+        "standard": {"price": 160_00, "emission": 0.65},
+        "eco": {"price": 184_00, "emission": 0.42},
+        "gaia": {"price": 208_00, "emission": 0.26},
+    },
+    RDCategories.GREEN: {
+        "standard": {"price": 999_00, "emission": 0.99},
+        "eco": {"price": 999_00, "emission": 0.99},
+        "gaia": {"price": 999_00, "emission": 0.99},
+    },
+    RDCategories.SAFE: {
+        "standard": {"price": 999_00, "emission": 0.99},
+        "eco": {"price": 999_00, "emission": 0.99},
+        "gaia": {"price": 999_00, "emission": 0.99},
+    },
+}
+
+STATIC_RD = [
     {
         "order": 1,
         "title": "Basic jetpack",
-        "category": StaticRD.Categories.BASIC,
-        "type": StaticRD.RDTypes.PRODUCT,
+        "category": RDCategories.BASIC,
+        "type": DynamicRD.RDTypes.PRODUCT,
         "development_cost": 5000000,
         "depreciation_time": 12,
-        "original_unit_mat_cost": 10000,
+        "supplier": ("basic", "standard"),
         "development_duration": 1,
         "available_from_quarter": 1,
         "description": r"The cheapest configuration of a jetpack available, for those who just need the bare minimum. Adds the ability to produce Basic jetpacks",
@@ -18,8 +40,8 @@ static_rd = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": StaticRD.Categories.BASIC,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.BASIC,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -28,8 +50,8 @@ static_rd = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": StaticRD.Categories.BASIC,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.BASIC,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -38,8 +60,8 @@ static_rd = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": StaticRD.Categories.BASIC,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.BASIC,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -48,11 +70,11 @@ static_rd = [
     {
         "order": 1,
         "title": "Sporty jetpack",
-        "category": StaticRD.Categories.SPORTY,
-        "type": StaticRD.RDTypes.PRODUCT,
+        "category": RDCategories.SPORTY,
+        "type": DynamicRD.RDTypes.PRODUCT,
         "development_cost": 15000000,
         "depreciation_time": 12,
-        "original_unit_mat_cost": 16000,
+        "supplier": ("basic", "standard"),
         "development_duration": 2,
         "available_from_quarter": 2,
         "description": r"Only the best is good enough, the strongest engines and the most durable materials. Adds the ability to produce Sporty Jetpacks.",
@@ -60,8 +82,8 @@ static_rd = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": StaticRD.Categories.SPORTY,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.SPORTY,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -70,8 +92,8 @@ static_rd = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": StaticRD.Categories.SPORTY,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.SPORTY,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -80,8 +102,8 @@ static_rd = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": StaticRD.Categories.SPORTY,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.SPORTY,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -90,11 +112,11 @@ static_rd = [
     {
         "order": 1,
         "title": "Safe jetpack",
-        "category": StaticRD.Categories.SAFE,
-        "type": StaticRD.RDTypes.PRODUCT,
+        "category": RDCategories.SAFE,
+        "type": DynamicRD.RDTypes.PRODUCT,
         "development_cost": 7000000,
         "depreciation_time": 12,
-        "original_unit_mat_cost": 14000,
+        "supplier": ("basic", "standard"),
         "development_duration": 2,
         "available_from_quarter": 4,
         "description": r"Includes parachutes, helmets and advanced AI to avoid collisions. Adds the ability to produce Safe jetpacks",
@@ -102,8 +124,8 @@ static_rd = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": StaticRD.Categories.SAFE,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.SAFE,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -112,8 +134,8 @@ static_rd = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": StaticRD.Categories.SAFE,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.SAFE,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -122,8 +144,8 @@ static_rd = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": StaticRD.Categories.SAFE,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.SAFE,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -132,11 +154,11 @@ static_rd = [
     {
         "order": 1,
         "title": "Green jetpack",
-        "category": StaticRD.Categories.GREEN,
-        "type": StaticRD.RDTypes.PRODUCT,
+        "category": RDCategories.GREEN,
+        "type": DynamicRD.RDTypes.PRODUCT,
         "development_cost": 10000000,
         "depreciation_time": 12,
-        "original_unit_mat_cost": 12000,
+        "supplier": ("basic", "standard"),
         "development_duration": 3,
         "available_from_quarter": 8,
         "description": r"Runs on renewable energy sources, and is made of 100% recyclable materials. Adds the ability to produce Green jetpacks",
@@ -144,8 +166,8 @@ static_rd = [
     {
         "order": 2,
         "title": "Waste reduction",
-        "category": StaticRD.Categories.GREEN,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.GREEN,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 8000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -154,8 +176,8 @@ static_rd = [
     {
         "order": 3,
         "title": "Lightweight construction",
-        "category": StaticRD.Categories.GREEN,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.GREEN,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 16000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -164,8 +186,8 @@ static_rd = [
     {
         "order": 4,
         "title": "Substitute materials",
-        "category": StaticRD.Categories.GREEN,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.GREEN,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 12000000,
         "depreciation_time": 12,
         "development_duration": 1,
@@ -174,9 +196,10 @@ static_rd = [
     {
         "order": 1,
         "title": "Sustainable components",
-        "category": StaticRD.Categories.PRODUCTION,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.PRODUCTION,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 5000000,
+        "depreciation_time": 999,
         "development_duration": 1,
         "available_from_quarter": 1,
         "description": r"Many of the parts in your jetpacks are today made from non-renewable materials like plastics, oils and other petrol-based products. Now a company called Green Chain offers to substitute every fossil-based part of your jetpacks with natural materials, such as biopolymers and natural oils. By investing in this project, Green Chain will map our production line and make changes that will substitute each fossil-based component with a nature-based component. The project only has a one-time cost and will not affect your variable costs. Reduces production emissions by 20 % points.",
@@ -184,9 +207,10 @@ static_rd = [
     {
         "order": 2,
         "title": "Waste material recycling",
-        "category": StaticRD.Categories.PRODUCTION,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.PRODUCTION,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 7000000,
+        "depreciation_time": 999,
         "development_duration": 1,
         "available_from_quarter": 1,
         "description": r"Re-use or sell cutoffs and waste materials from manufacturing processes. Reduces production emissions by 20 % points.",
@@ -194,9 +218,10 @@ static_rd = [
     {
         "order": 3,
         "title": "Heat energy recovery",
-        "category": StaticRD.Categories.PRODUCTION,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.PRODUCTION,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 8500000,
+        "depreciation_time": 999,
         "development_duration": 1,
         "available_from_quarter": 1,
         "description": r"Capture heat energy for re-use in manufacturing processes and for energy generation. Reduces production emissions by 25% points.",
@@ -204,17 +229,17 @@ static_rd = [
     {
         "order": 4,
         "title": "Local energy production",
-        "category": StaticRD.Categories.PRODUCTION,
-        "type": StaticRD.RDTypes.UPGRADE,
+        "category": RDCategories.PRODUCTION,
+        "type": DynamicRD.RDTypes.UPGRADE,
         "development_cost": 10000000,
+        "depreciation_time": 999,
         "development_duration": 1,
         "available_from_quarter": 1,
         "description": r"Install solar panels and wind production units on factory premises. Reduces production emissions by 35% points.",
     },
 ]
 
-
-financial_accounts = [
+FINANCIAL_ACCOUNTS = [
     {
         "name": FinancialAccount.AccountNames.DEPRECIATION_OF_FACTORIES,
         "type": FinancialAccount.AccountTypes.DEBIT,
@@ -288,91 +313,6 @@ financial_accounts = [
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
 ]
-
-superusers = [
-    {
-        "email": "d@g.com",
-        "password": "dddddddd",  # 8d
-        "role": CustomUser.UserRoles.INSTRUCTOR,
-    },
-    {
-        "email": "h@g.com",
-        "password": "hhhhhhhh",  # 8h
-        "role": CustomUser.UserRoles.PLAYER,
-    },
-]
-
-users = [
-    {
-        "email": "p@g.com",
-        "password": "pppppppp",  # 8p
-        "role": CustomUser.UserRoles.INSTRUCTOR,
-    },
-    {
-        "email": "m@g.com",
-        "password": "mmmmmmmm",  # 8m
-        "role": CustomUser.UserRoles.PLAYER,
-    },
-    {
-        "email": "a@g.com",
-        "password": "aaaaaaaa",  # 8a
-        "role": CustomUser.UserRoles.PLAYER,
-    },
-]
-
-simulation_classes = [
-    {"name": "Alphabet Simulation", "instructor_email": "d@g.com"},
-    {"name": "Paya Simulation", "instructor_email": "p@g.com"},
-    {"name": "Shopify Simulation", "instructor_email": "d@g.com"},
-]
-
-teams = [
-    {"name": "Google", "simulation_class_name": "Alphabet Simulation"},
-    {"name": "Decoease", "simulation_class_name": "Paya Simulation"},
-    {"name": "Giftit", "simulation_class_name": "Shopify Simulation"},
-]
-
-players = [
-    {"player_email": "h@g.com", "team_name": "Google"},
-    {"player_email": "m@g.com", "team_name": "Decoease"},
-    {"player_email": "a@g.com", "team_name": "Giftit"},
-]
-
-dynamic_rd = [
-    {
-        "player_email": "h@g.com",
-        "category": StaticRD.Categories.BASIC,
-        "order": 1,
-        "started_at": 1,
-        "time_spent_developing": 1,
-        "run_at_quarter": 2,
-        "alias": "SuperSonic Jetpack",
-        "icon_link": "https://cdn.hubro.com/img/SuperSonicJetpack.png",
-        "engine": 1,
-        "chassis": 2,
-        "strap": 0,
-        "engine_color": 5,
-        "chassis_color": 11,
-        "strap_color": 7,
-    },
-    {
-        "player_email": "h@g.com",
-        "category": StaticRD.Categories.BASIC,
-        "order": 2,
-        "started_at": 2,
-        "run_at_quarter": 2,
-        "time_spent_developing": 0,
-    },
-    {
-        "player_email": "h@g.com",
-        "category": StaticRD.Categories.PRODUCTION,
-        "order": 1,
-        "started_at": 2,
-        "run_at_quarter": 2,
-        "time_spent_developing": 0,
-    },
-]
-
 
 FACTORY_NAMES = [
     "Abbey",
@@ -464,9 +404,8 @@ FACTORY_NAMES = [
     "Zoe",
 ]
 
-
 BASIC_JETPACK_CONTRACT = {
-    "product_type": StaticRD.Categories.BASIC,
+    "product_type": RDCategories.BASIC,
     1: {
         "product_demand": 5000,
         "contracts": 5,
@@ -572,8 +511,6 @@ BASIC_JETPACK_CONTRACT = {
         "required_esg_index": 50,
     },
 }
-
-
 SPORTY_JETPACK_CONTRACT = {
     # 1: {
     #     "product_demand": 0,
@@ -591,7 +528,7 @@ SPORTY_JETPACK_CONTRACT = {
     #     "contract_price_end": None,
     #     "required_esg_index": None,
     # },
-    "product_type": StaticRD.Categories.SPORTY,
+    "product_type": RDCategories.SPORTY,
     3: {
         "product_demand": 4200,
         "contracts": 4,
@@ -681,7 +618,6 @@ SPORTY_JETPACK_CONTRACT = {
         "required_esg_index": 46,
     },
 }
-
 SAFE_JETPACK_CONTRACT = {
     # 1: {
     #     "product_demand": 0,
@@ -715,7 +651,7 @@ SAFE_JETPACK_CONTRACT = {
     #     "contract_price_end": None,
     #     "required_esg_index": None,
     # },
-    "product_type": StaticRD.Categories.SAFE,
+    "product_type": RDCategories.SAFE,
     5: {
         "product_demand": 7000,
         "contracts": 5,
@@ -838,7 +774,7 @@ GREEN_JETPACK_CONTRACT = {
     #     "contract_price_end": 0.0,
     #     "required_esg_index": 0,
     # },
-    "product_type": StaticRD.Categories.GREEN,
+    "product_type": RDCategories.GREEN,
     7: {
         "product_demand": 7000,
         "contracts": 5,

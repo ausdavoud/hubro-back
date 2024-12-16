@@ -1,11 +1,13 @@
 from rest_framework import serializers
 
 from common.views import exceptions as common_exceptions
-from rd.models import DynamicRD, StaticRD
+from rd.models import DynamicRD, RDCategories
+from suppliers.serializers import SupplierSerializer
 
 
 class DynamicRDSerializer(serializers.ModelSerializer):
     state = serializers.SerializerMethodField()
+    supplier = SupplierSerializer()
 
     class Meta:
         model = DynamicRD
@@ -21,9 +23,8 @@ class DynamicRDSerializer(serializers.ModelSerializer):
             "started_at",
             "time_spent_developing",
             "available_from_quarter",
-            "original_unit_mat_cost",
+            "supplier",
             "unit_mat_cost_effect",
-            "production_emission_effect",
             "alias",
             "icon_link",
             "state",
@@ -36,9 +37,7 @@ class DynamicRDSerializer(serializers.ModelSerializer):
 
     fields_to_be_removed = [
         "available_from_quarter",
-        "original_unit_mat_cost",
         "unit_mat_cost_effect",
-        "production_emission_effect",
         "alias",
         "icon_link",
     ]
@@ -55,7 +54,7 @@ class DynamicRDSerializer(serializers.ModelSerializer):
 
 
 class CreateBaseRDSerializer(serializers.Serializer):
-    category = serializers.ChoiceField(StaticRD.Categories.choices)
+    category = serializers.ChoiceField(RDCategories.choices)
     order = serializers.IntegerField(default=1)
 
 

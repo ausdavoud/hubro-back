@@ -18,3 +18,7 @@ class ErrorCodes:
     RD_START_ERROR = "0202"
     RD_PAUSE_ERROR = "0203"
     RD_RESUME_ERROR = "0204"
+
+    # Suppliers: 03
+    INVALID_CATEGORY = "0301"
+    FORBIDDEN_SUPPLIER_ASSIGNMENT = "0302"
