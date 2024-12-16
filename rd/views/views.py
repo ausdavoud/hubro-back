@@ -13,7 +13,7 @@ from common.views import exceptions as common_exceptions
 from common.views.services import get_serializer_or_400
 from people.models import CustomUser, Player
 from people.views.services import get_player_or_404
-from rd.models import DynamicRD, StaticRD
+from rd.models import DynamicRD, RDCategories
 from rd.serializers import CreateBaseRDSerializer, CreateRDProductSerializer, DynamicRDSerializer
 from rd.views import exceptions as rd_exceptions
 from rd.views.services import get_previous_rd_items
@@ -60,7 +60,7 @@ class RDView(ViewSet):
     @staticmethod
     def _is_product_rd(category: str, order: int) -> bool:
         """Check if the R&D item is of type product"""
-        return category != StaticRD.Categories.PRODUCTION and order == 1
+        return category != RDCategories.PRODUCTION and order == 1
 
     def _get_json_body(self, data, is_start_rd: bool = False) -> dict:
         """Return a dictionary as the JSON body for the request.\n
@@ -167,22 +167,25 @@ class RDView(ViewSet):
     @action(methods=["post"], detail=False)
     def start(self, request: Request) -> Response:
         """
-        Format:\n
-        `Previous Decision` -> `Start`:\n
+        Start development of R&D
+        """
+        """
+        Format:
+        `Previous Decision` -> `Start`:
             `Action`
 
-        `Start` -> `Start`:\n
+        `Start` -> `Start`:
             Raise error: Already started.
 
-        `Pause` -> `Start`:\n
+        `Pause` -> `Start`:
             Raise error: Can't start while paused. Because if it was paused,
             it was under development in the previous quarter.
             So it's already been started back in time.
 
-        `Resume` -> `Start`:\n
+        `Resume` -> `Start`:
             Raise error: Can't start. It's been resumed.
 
-        `None of Above` -> `Start`:\n
+        `None of Above` -> `Start`:
             Create Decision object
         """
 
@@ -226,7 +229,10 @@ class RDView(ViewSet):
     @action(methods=["post"], detail=False)
     def pause(self, request: Request) -> Response:
         """
-        Format:\n
+        Pause development of R&D
+        """
+        """
+        Format:
         `Previous Decision` -> `Start`:
             `Action`
 
@@ -283,7 +289,10 @@ class RDView(ViewSet):
     @action(methods=["post"], detail=False)
     def resume(self, request: Request):
         """
-        Format:\n
+        Resume development of R&D
+        """
+        """
+        Format:
         `Previous Decision` -> `Resume`:
             `Action`
 

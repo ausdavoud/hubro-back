@@ -10,7 +10,8 @@ from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
 from common.views.services import get_serializer_or_400
-from finance.serializer import NewLoanSerializer
+from finance.models import Loan
+from finance.serializer import LoanSerializer, NewLoanSerializer
 from people.models import CustomUser, Player
 from people.views.services import get_player_or_404
 
@@ -27,6 +28,18 @@ class FinanceView(ViewSet):
     class ENDPOINTS:
         NEW_LOAN = "finance/new_loan"
         CANCEL_LOAN = "finance/cancel_loan"
+        GET_LOANS = "finance/get_loans"
+
+    @action(methods=["get"], detail=False)
+    def get_loans(self, request):
+        user: CustomUser = request.user
+        player = get_player_or_404(user)
+        loans = Loan.objects.filter(player=player)
+        serialized_loans = LoanSerializer(loans, many=True)
+        response = {
+            "loans": serialized_loans.data,
+        }
+        return Response(response, status=status.HTTP_200_OK)
 
     def _get_json_body(self, data) -> dict:
         """Using .validated_data instead of .data, converts `amount`

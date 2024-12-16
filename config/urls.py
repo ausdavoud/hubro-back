@@ -23,6 +23,7 @@ urlpatterns = [
                 path("production/", include("production.urls"), name="production"),
                 path("contracts/", include("contracts.urls"), name="contracts"),
                 path("esg_reporting/", include("esg_reporting.urls"), name="esg_reporting"),
+                path("suppliers/", include("suppliers.urls"), name="suppliers"),
             ]
         ),
     ),

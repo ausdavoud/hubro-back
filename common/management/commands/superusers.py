@@ -1,7 +1,7 @@
 from typing import Any
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
-from common.management.data_fixtures import superusers
+from common.management.seed_data import superusers
 from people.models import CustomUser
 
 

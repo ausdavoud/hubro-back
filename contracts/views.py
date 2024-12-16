@@ -1,18 +1,18 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views.exceptions import DuplicateDecisionError
 from common.views.services import get_serializer_or_400
-from contracts.models import Contract
-from contracts.serializers import ContractSerializer, ContractsOrderSerializer
+from contracts.models import Contract, ContractAssignment
+from contracts.serializers import ContractAssignmentSerializer, ContractSerializer, ContractsOrderSerializer
 from people.views.services import get_player_or_404
 from rd.views.services import get_available_rd_dynamics_at_next_quarter
 
@@ -22,12 +22,16 @@ from rd.views.services import get_available_rd_dynamics_at_next_quarter
         tags=["Contracts"],
         responses=ContractSerializer(many=True),
     ),
+    get_assigned_contracts=extend_schema(
+        tags=["Contracts"],
+        responses=ContractAssignmentSerializer(many=True),
+    ),
     set_contracts_order=extend_schema(
         tags=["Contracts"],
         request=ContractsOrderSerializer,
     ),
 )
-class ContractViewSet(ViewSet):
+class ContractView(ViewSet):
     permission_classes = [
         IsAuthenticated,
     ]
@@ -38,6 +42,7 @@ class ContractViewSet(ViewSet):
 
     class ENDPOINTS:
         GET_CONTRACTS = "contracts/get_contracts"
+        GET_ASSIGNED_CONTRACTS = "contracts/get_assigned_contracts"
         SET_CONTRACTS_ORDER = "contracts/set_contracts_order"
 
     @action(detail=False, methods=["get"])
@@ -47,13 +52,15 @@ class ContractViewSet(ViewSet):
         current_quarter = player.state_variables.quarter
         esg_index = player.state_variables.esg_index
 
-        # get decisions for r&d
-        # if development_time - time_spent_developing <= 1 and started_at != 0
-        # or
-        # start decision was made for a product that has a development time of 1
-        # => show contracts
+        """
+        get decisions for r&d
+        if development_time - time_spent_developing <= 1 and started_at != 0
+        or
+        start decision was made for a product that has a development time of 1
+        => show contracts
 
-        # development_duration - time_spent_developing <= 1 and started_at is not zero
+        development_duration - time_spent_developing <= 1 and started_at is not zero
+        """
         dynamic_rd_objects = get_available_rd_dynamics_at_next_quarter(player=player, current_quarter=current_quarter)
 
         available_products_set = {dynamic_rd_object.category for dynamic_rd_object in dynamic_rd_objects}
@@ -67,6 +74,17 @@ class ContractViewSet(ViewSet):
         serialized_available_contracts = ContractSerializer(available_contracts, many=True)
         response = {
             "available_contracts": serialized_available_contracts.data,
+        }
+        return Response(response, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def get_assigned_contracts(self, request: Request):
+        user = request.user
+        player = get_player_or_404(user)
+        assigned_contracts = ContractAssignment.objects.filter(player=player)
+        serialized_assigned_contracts = ContractSerializer(assigned_contracts, many=True)
+        response = {
+            "assigned_contracts": serialized_assigned_contracts.data,
         }
         return Response(response, status=status.HTTP_200_OK)
 
