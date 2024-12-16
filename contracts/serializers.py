@@ -25,6 +25,8 @@ class ContractPrioritySerializer(serializers.ModelSerializer):
 
 
 class ContractAssignmentSerializer(serializers.ModelSerializer):
+    contract = ContractSerializer()
+
     class Meta:
         model = ContractAssignment
         fields = "__all__"

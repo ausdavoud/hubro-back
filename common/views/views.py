@@ -19,15 +19,20 @@ from common.views.exceptions import GameLogicError
 from common.views.services import get_db_record_or_404, get_serializer_or_400
 from contracts.models import ContractAssignment, ContractPriority
 from contracts.services import assign_contracts_to_teams, create_contracts, get_winner_teams, set_contracts_order
+from contracts.views import ContractView
+from esg_reporting.views.services import enable_esg_reporting
+from esg_reporting.views.views import ESGReportingView
 from finance.models import CashChange, FinancialAccount, Loan, Overdraft, Repayment, Transaction
 from finance.views.services import new_loan
+from finance.views.views import FinanceView
 from people.models import CustomUser, Player, SimulationClass, Team
 from people.views.services import get_player_or_404, get_simulation_teams
 from production.models import Factory, Production, Storage
 from production.views.services import new_factory, select_product, set_activity_level
+from production.views.views import ProductionView
 from rd.models import DynamicRD
 from rd.views.services import create_dynamic_rd_items, pause_rd, resume_rd, start_rd
-from esg_reporting.views.services import enable_esg_reporting
+from rd.views.views import RDView
 
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
@@ -209,22 +214,22 @@ class FinishQuarter(APIView):
     def _process_decision(self, player: Player, decision: DecisionPool):
         try:
             match decision.endpoint:
-                case "rd/start":
+                case RDView.ENDPOINTS.START_RD:
                     return decision.endpoint, start_rd(player=player, decision=decision)
                 # create pause, resume, new loan, new factory, select_product, set_activity_level and set_contracts_order
-                case "rd/pause":
+                case RDView.ENDPOINTS.PAUSE_RD:
                     return decision.endpoint, pause_rd(player=player, decision=decision)
-                case "rd/resume":
+                case RDView.ENDPOINTS.RESUME_RD:
                     return decision.endpoint, resume_rd(player=player, decision=decision)
-                case "finance/new_loan":
+                case FinanceView.ENDPOINTS.NEW_LOAN:
                     return decision.endpoint, new_loan(player=player, decision=decision)
-                case "production/new_factory":
+                case ProductionView.ENDPOINTS.NEW_FACTORY:
                     return decision.endpoint, new_factory(player=player, decision=decision)
-                case "production/select_product":
+                case ProductionView.ENDPOINTS.SELECT_PRODUCT:
                     return decision.endpoint, select_product(player=player, decision=decision)
-                case "production/set_activity_level":
+                case ProductionView.ENDPOINTS.SET_ACTIVITY_LEVEL:
                     return decision.endpoint, set_activity_level(player=player, decision=decision)
-                case "contracts/set_contracts_order":
+                case ContractView.ENDPOINTS.SET_CONTRACTS_ORDER:
                     # FIXME: We need bots or teams for get_winner_teams
                     # A better response is needed
                     response = set_contracts_order(player=player, decision=decision)
@@ -243,7 +248,7 @@ class FinishQuarter(APIView):
                     assignment_response = assign_contracts_to_teams(winners, current_quarter=decision.made_at_quarter)
                     print(assignment_response)
                     return decision.endpoint, response
-                case "esg_reporting/enable":
+                case ESGReportingView.ENDPOINTS.ENABLE_ESG_REPORTING:
                     return decision.endpoint, enable_esg_reporting(player=player)
 
         except APIException as e:

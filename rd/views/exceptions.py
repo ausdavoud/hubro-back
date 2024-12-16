@@ -2,13 +2,13 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 
 from common.views.error_codes import ErrorCodes
-from rd.models import RDStates
+from rd.models import DynamicRD
 
 
 class RDStateError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, state: RDStates):
+    def __init__(self, state: DynamicRD.RDStates):
         detail = {
             "error": {
                 "code": ErrorCodes.RD_STATE_ERROR,

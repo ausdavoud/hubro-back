@@ -15,8 +15,8 @@ from people.views.services import get_player_or_404
 
 
 @extend_schema_view(
-    enable_esg_reporting=extend_schema(tags=["ESGReporting"], request=None, responses={200: DecisionPoolSerializer}),
-    disable_esg_reporting=extend_schema(tags=["ESGReporting"], request=None),
+    enable_esg_reporting=extend_schema(tags=["ESG Reporting"], request=None, responses={200: DecisionPoolSerializer}),
+    disable_esg_reporting=extend_schema(tags=["ESG Reporting"], request=None),
 )
 class ESGReportingView(ViewSet):
     permission_classes = [

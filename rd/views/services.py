@@ -1,33 +1,39 @@
+from django.db.models import F
+
+from common.management.data_fixtures import STATIC_RD
 from common.models import DecisionPool, RippleTask
 from common.serializers import RippleTaskSerializer
 from common.views import exceptions as common_exceptions
 from common.views.services import delete_dynamic_rd_ripple_task_or_404
 from people.models import Player
-from rd.models import DynamicRD, RDStates, StaticRD
+from rd.models import DynamicRD
 from rd.serializers import DynamicRDSerializer
 from rd.views import exceptions as rd_exceptions
-from django.db.models import F
+from suppliers.models import Supplier
 
 
 def create_dynamic_rd_items(player):
-    static_rd_items = StaticRD.objects.all()
     dynamic_rd_items = []
 
-    for static in static_rd_items:
+    for static in STATIC_RD:
+        supplier_tuple = static.get("supplier")
+        if supplier_tuple:
+            supplier_rd_category = supplier_tuple[0]
+            supplier_name = supplier_tuple[1]
+
+        supplier = Supplier.objects.get(rd_category=supplier_rd_category, name=supplier_name)
         dynamic_rd_item = DynamicRD(
             player=player,
-            category=static.category,
-            order=static.order,
-            type=static.type,
-            title=static.title,
-            description=static.description,
-            development_cost=static.development_cost,
-            development_duration=static.development_duration,
-            available_from_quarter=static.available_from_quarter,
-            depreciation_time=static.depreciation_time,
-            original_unit_mat_cost=static.original_unit_mat_cost,
-            unit_mat_cost_effect=static.unit_mat_cost_effect,
-            production_emission_effect=static.production_emission_effect,
+            category=static["category"],
+            order=static["order"],
+            type=static["type"],
+            title=static["title"],
+            description=static["description"],
+            development_cost=static["development_cost"],
+            development_duration=static["development_duration"],
+            available_from_quarter=static.get("available_from_quarter", None),
+            depreciation_time=static["depreciation_time"],
+            supplier=supplier if supplier else None,
         )
         dynamic_rd_items.append(dynamic_rd_item)
 
@@ -63,7 +69,7 @@ def start_rd_development(player: Player, dynamic_rd_object: DynamicRD) -> Dynami
     current_quarter = player.state_variables.quarter
     previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
     state = dynamic_rd_object.get_state(current_quarter, previous_rd_items)
-    if state != RDStates.AVAILABLE:
+    if state != DynamicRD.RDStates.AVAILABLE:
         raise rd_exceptions.RDStateError(state)
 
     dynamic_rd_object.started_at = current_quarter
@@ -94,7 +100,7 @@ def start_rd(player: Player, decision: DecisionPool):
     dynamic_rd_object = get_dynamic_rd_or_404(player, category=category, order=order)
 
     # Validating alias and icon_link only if the request is for a product
-    if dynamic_rd_object.type == StaticRD.RDTypes.PRODUCT:
+    if dynamic_rd_object.type == DynamicRD.RDTypes.PRODUCT:
         alias = json_body.get("alias")
         icon_link = json_body.get("icon_link")
         engine = json_body.get("engine")
@@ -117,7 +123,7 @@ def start_rd(player: Player, decision: DecisionPool):
     dynamic_rd_objects: list[DynamicRD] | None = player.rd.all()
     previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
     state = dynamic_rd_object.get_state(current_quarter, previous_rd_items)
-    if state != RDStates.AVAILABLE:
+    if state != DynamicRD.RDStates.AVAILABLE:
         raise rd_exceptions.RDStateError(state)
 
     serialized_dynamic_rd_object = start_rd_development(player, dynamic_rd_object=dynamic_rd_object)
@@ -170,7 +176,7 @@ def get_available_rd_dynamics_at_next_quarter(player: Player, current_quarter: i
     # development_duration - time_spent_developing <= 1 and started_at is not zero
     dynamic_rd_objects = DynamicRD.objects.filter(
         player=player,
-        type=StaticRD.RDTypes.PRODUCT,
+        type=DynamicRD.RDTypes.PRODUCT,
         development_duration__lte=F("time_spent_developing") + 1,
         started_at__gte=1,
     )
@@ -186,7 +192,7 @@ def get_available_rd_dynamics_at_next_quarter(player: Player, current_quarter: i
         order = rd_decision.json_body["order"]
         dynamic_rd_objects |= DynamicRD.objects.filter(
             player=player,
-            type=StaticRD.RDTypes.PRODUCT,
+            type=DynamicRD.RDTypes.PRODUCT,
             category=category,
             order=order,
             development_duration=1,

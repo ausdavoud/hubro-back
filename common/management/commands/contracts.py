@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from contracts.models import Contract, ContractPriority
 from contracts.services import assign_contracts_to_teams, get_winner_teams
 from people.models import Player
-from rd.models import DynamicRD, StaticRD
+from rd.models import DynamicRD, RDCategories
 
 
 class Command(BaseCommand):
@@ -25,43 +25,43 @@ class Command(BaseCommand):
 
         # unlock r&d for them
         # user h
-        basic_jetpack = DynamicRD.objects.get(player=player_h, category=StaticRD.Categories.BASIC, order=1)
+        basic_jetpack = DynamicRD.objects.get(player=player_h, category=RDCategories.BASIC, order=1)
         basic_jetpack.started_at = 8
         basic_jetpack.time_spent_developing = 1
         basic_jetpack.save()
-        sporty_jetpack = DynamicRD.objects.get(player=player_h, category=StaticRD.Categories.SPORTY, order=1)
+        sporty_jetpack = DynamicRD.objects.get(player=player_h, category=RDCategories.SPORTY, order=1)
         sporty_jetpack.started_at = 8
         sporty_jetpack.time_spent_developing = 2
         sporty_jetpack.save()
-        safe_jetpack = DynamicRD.objects.get(player=player_h, category=StaticRD.Categories.SAFE, order=1)
+        safe_jetpack = DynamicRD.objects.get(player=player_h, category=RDCategories.SAFE, order=1)
         safe_jetpack.started_at = 8
         safe_jetpack.time_spent_developing = 2
         safe_jetpack.save()
 
         # user a
-        safe_jetpack = DynamicRD.objects.get(player=player_a, category=StaticRD.Categories.SAFE, order=1)
+        safe_jetpack = DynamicRD.objects.get(player=player_a, category=RDCategories.SAFE, order=1)
         safe_jetpack.started_at = 8
         safe_jetpack.time_spent_developing = 2
         safe_jetpack.save()
-        green_jetpack = DynamicRD.objects.get(player=player_a, category=StaticRD.Categories.GREEN, order=1)
+        green_jetpack = DynamicRD.objects.get(player=player_a, category=RDCategories.GREEN, order=1)
         green_jetpack.started_at = 8
         green_jetpack.time_spent_developing = 3
         green_jetpack.save()
-        green_jetpack = DynamicRD.objects.get(player=player_a, category=StaticRD.Categories.GREEN, order=1)
+        green_jetpack = DynamicRD.objects.get(player=player_a, category=RDCategories.GREEN, order=1)
         green_jetpack.started_at = 8
         green_jetpack.time_spent_developing = 3
         green_jetpack.save()
 
         # user h
-        basic_jetpack = DynamicRD.objects.get(player=player_m, category=StaticRD.Categories.BASIC, order=1)
+        basic_jetpack = DynamicRD.objects.get(player=player_m, category=RDCategories.BASIC, order=1)
         basic_jetpack.started_at = 8
         basic_jetpack.time_spent_developing = 1
         basic_jetpack.save()
-        sporty_jetpack = DynamicRD.objects.get(player=player_m, category=StaticRD.Categories.SPORTY, order=1)
+        sporty_jetpack = DynamicRD.objects.get(player=player_m, category=RDCategories.SPORTY, order=1)
         sporty_jetpack.started_at = 8
         sporty_jetpack.time_spent_developing = 2
         sporty_jetpack.save()
-        green_jetpack = DynamicRD.objects.get(player=player_m, category=StaticRD.Categories.GREEN, order=1)
+        green_jetpack = DynamicRD.objects.get(player=player_m, category=RDCategories.GREEN, order=1)
         green_jetpack.started_at = 8
         green_jetpack.time_spent_developing = 3
         green_jetpack.save()
@@ -81,12 +81,12 @@ class Command(BaseCommand):
 
         # teams set priority
         # player h
-        basic_contracts = Contract.objects.filter(
-            closure_quarter=11, deliverable_product=StaticRD.Categories.BASIC
-        ).order_by("?")
-        safe_contracts = Contract.objects.filter(
-            closure_quarter=11, deliverable_product=StaticRD.Categories.SAFE
-        ).order_by("?")
+        basic_contracts = Contract.objects.filter(closure_quarter=11, deliverable_product=RDCategories.BASIC).order_by(
+            "?"
+        )
+        safe_contracts = Contract.objects.filter(closure_quarter=11, deliverable_product=RDCategories.SAFE).order_by(
+            "?"
+        )
         priority = 1
         for basic_contract in basic_contracts:
             ContractPriority.objects.create(player=player_h, contract=basic_contract, priority=priority, quarter=11)
@@ -97,12 +97,12 @@ class Command(BaseCommand):
             priority += 1
 
         # player a
-        safe_contracts = Contract.objects.filter(
-            closure_quarter=11, deliverable_product=StaticRD.Categories.SAFE
-        ).order_by("?")
-        green_contracts = Contract.objects.filter(
-            closure_quarter=11, deliverable_product=StaticRD.Categories.GREEN
-        ).order_by("?")
+        safe_contracts = Contract.objects.filter(closure_quarter=11, deliverable_product=RDCategories.SAFE).order_by(
+            "?"
+        )
+        green_contracts = Contract.objects.filter(closure_quarter=11, deliverable_product=RDCategories.GREEN).order_by(
+            "?"
+        )
         priority = 1
         for safe_contract in safe_contracts:
             ContractPriority.objects.create(player=player_a, contract=safe_contract, priority=priority, quarter=11)
@@ -113,11 +113,11 @@ class Command(BaseCommand):
             priority += 1
 
         # player m
-        green_contracts = Contract.objects.filter(
-            closure_quarter=11, deliverable_product=StaticRD.Categories.GREEN
-        ).order_by("?")
+        green_contracts = Contract.objects.filter(closure_quarter=11, deliverable_product=RDCategories.GREEN).order_by(
+            "?"
+        )
         sporty_contracts = Contract.objects.filter(
-            closure_quarter=11, deliverable_product=StaticRD.Categories.SPORTY
+            closure_quarter=11, deliverable_product=RDCategories.SPORTY
         ).order_by("?")
         priority = 1
         for green_contract in green_contracts:

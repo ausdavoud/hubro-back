@@ -16,6 +16,6 @@ ssh root@$PGHOST "cd $APP_DIR && docker compose up --remove-orphans -d"
 sleep 5
 python manage.py makemigrations
 python manage.py migrate
-python manage.py rd
+python manage.py suppliers
 python manage.py financial_accounts
-python manage.py superuser
+python manage.py superusers

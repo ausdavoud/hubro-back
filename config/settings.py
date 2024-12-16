@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "finance",
     "contracts",
     "production",
-    "websocket",
+    "suppliers",
     # django
     "daphne",
     "django.contrib.admin",
@@ -108,7 +108,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": getenv("PGNAME"),
         "USER": getenv("PGUSER"),
         "PASSWORD": getenv("PGPASSWORD"),
