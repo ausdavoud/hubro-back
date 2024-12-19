@@ -78,51 +78,59 @@ class StartNewSimulation(APIView):
     ]
     serializer_class = None
 
-    def _start_new_simulation(self, player: Player, team_mode: bool) -> None:
-        DynamicRD.objects.filter(player=player).delete()
-        Storage.objects.filter(player=player).delete()
-        Production.objects.filter(player=player).delete()
-        Factory.objects.filter(player=player).delete()
-        if player.team and player.team.simulation_class:
-            player.team.simulation_class.delete()
-            # Contracts and Team will be deleted automatically
-            # since it's on_delete cascade
-        Transaction.objects.filter(player=player).delete()
-        Repayment.objects.filter(player=player).delete()
-        Overdraft.objects.filter(player=player).delete()
-        Loan.objects.filter(player=player).delete()
-        CashChange.objects.filter(player=player).delete()
-        ContractPriority.objects.filter(player=player).delete()
-        ContractAssignment.objects.filter(player=player).delete()
-        StateVariable.objects.filter(player=player).delete()
-        RippleTask.objects.filter(player=player).delete()
-        DecisionPool.objects.filter(player=player).delete()
-
-        simulation_class = SimulationClass.objects.create(name=f"{player}'s Simulation Class")
-        # 1. Create a Team for the single user
-        player_team = Team(name=f"{player}'s Team", simulation_class=simulation_class)
-        bot_teams = [Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class) for i in range(4)]
-        teams_to_create = [player_team] + bot_teams
-        teams = Team.objects.bulk_create(teams_to_create)
-        player.team = teams[0]
-        player.save()
-
-        # 2. Create Contracts
-        create_contracts(simulation_class=simulation_class)
-        # 4. Create Dynamic RD Items
-        create_dynamic_rd_items(player=player)
-        # 5. Create State Variables
-        state_variables = StateVariable.objects.create(player=player)
-
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
         player = get_player_or_404(user, select_related_tables=["team"])
         team_mode = request.data.get("team_mode", False)
 
-        self._start_new_simulation(player, team_mode)
+        delete_previous_simulation_data(player=player)
+        create_new_simulation_data(player=player)
 
         return Response("Welcome to the new simulation!", status=status.HTTP_200_OK)
+
+
+def delete_previous_simulation_data(player: Player):
+    # implementing this outside APIView, since it's used at other modules
+
+    DynamicRD.objects.filter(player=player).delete()
+    Storage.objects.filter(player=player).delete()
+    Production.objects.filter(player=player).delete()
+    Factory.objects.filter(player=player).delete()
+    if player.team and player.team.simulation_class:
+        player.team.simulation_class.delete()
+        # Contracts and Team will be deleted automatically
+        # since it's on_delete cascade
+    Transaction.objects.filter(player=player).delete()
+    Repayment.objects.filter(player=player).delete()
+    Overdraft.objects.filter(player=player).delete()
+    Loan.objects.filter(player=player).delete()
+    CashChange.objects.filter(player=player).delete()
+    ContractPriority.objects.filter(player=player).delete()
+    ContractAssignment.objects.filter(player=player).delete()
+    StateVariable.objects.filter(player=player).delete()
+    RippleTask.objects.filter(player=player).delete()
+    DecisionPool.objects.filter(player=player).delete()
+
+
+def create_new_simulation_data(player: Player):
+    # implementing this outside APIView, since it's used at other modules
+
+    simulation_class = SimulationClass.objects.create(name=f"{player}'s Simulation Class")
+    # 1. Create a Team for the single user
+    player_team = Team(name=f"{player}'s Team", simulation_class=simulation_class)
+    bot_teams = [Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class) for i in range(4)]
+    teams_to_create = [player_team] + bot_teams
+    teams = Team.objects.bulk_create(teams_to_create)
+    player.team = teams[0]
+    player.save()
+
+    # 2. Create Contracts
+    create_contracts(simulation_class=simulation_class)
+    # 4. Create Dynamic RD Items
+    create_dynamic_rd_items(player=player)
+    # 5. Create State Variables
+    state_variables = StateVariable.objects.create(player=player)
 
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
