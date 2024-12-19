@@ -32,7 +32,7 @@ class RDView(ViewSet):
 
     class ENDPOINTS:
         START_RD = "rd/start"
-        PAUSE_RD = "/rd/pause/"
+        PAUSE_RD = "rd/pause/"
         RESUME_RD = "rd/resume"
 
     @action(methods=["get"], detail=False)

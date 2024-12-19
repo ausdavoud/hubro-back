@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from common.models import DecisionPool
 from common.views import exceptions as common_exceptions
 from rd.models import DynamicRD, RDCategories
 from suppliers.serializers import SupplierSerializer
@@ -31,8 +32,13 @@ class DynamicRDSerializer(serializers.ModelSerializer):
         ]
 
     def get_state(self, obj: DynamicRD):
+        # FIXME replace player with team
+        team = obj.player
+        json_body = {"category": obj.category, "order": obj.order}
         current_quarter = self.context.get("current_quarter")
         previous_rd_items = self.context.get("previous_rd_items")
+        if DecisionPool.objects.filter(player=team, json_body__contains=json_body, made_at_quarter=current_quarter).exists():
+            return DynamicRD.RDStates.RESEARCHING
         return obj.get_state(current_quarter, previous_rd_items=previous_rd_items)
 
     fields_to_be_removed = [

@@ -19,6 +19,7 @@ from people.views.services import get_player_or_404
 @extend_schema_view(
     new_loan=extend_schema(tags=["Finance"], request=NewLoanSerializer),
     cancel_loan=extend_schema(tags=["Finance"]),
+    get_loans=extend_schema(tags=["Finance"])
 )
 class FinanceView(ViewSet):
     permission_classes = [IsAuthenticated]
