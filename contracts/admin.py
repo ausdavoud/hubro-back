@@ -18,11 +18,11 @@ class ContractAdmin(admin.ModelAdmin):
 
 
 class ContractPriorityAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "contract", "quarter", "priority"]
+    list_display = ["id", "team", "contract", "quarter", "priority"]
 
 
 class ContractAssignmentAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "contract", "status"]
+    list_display = ["id", "team", "contract", "status"]
 
 
 admin.site.register(Contract, ContractAdmin)

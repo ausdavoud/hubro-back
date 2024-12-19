@@ -9,16 +9,16 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
-from common.views.services import get_serializer_or_400
+from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
 from finance.models import Loan
 from finance.serializer import LoanSerializer, NewLoanSerializer
-from people.models import CustomUser, Player
-from people.views.services import get_player_or_404
+from people.models import CustomUser, Player, Team
 
 
 @extend_schema_view(
     new_loan=extend_schema(tags=["Finance"], request=NewLoanSerializer),
     cancel_loan=extend_schema(tags=["Finance"]),
+    get_loans=extend_schema(tags=["Finance"], responses=LoanSerializer(many=True)),
 )
 class FinanceView(ViewSet):
     permission_classes = [IsAuthenticated]
@@ -33,8 +33,9 @@ class FinanceView(ViewSet):
     @action(methods=["get"], detail=False)
     def get_loans(self, request):
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        loans = Loan.objects.filter(player=player)
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        loans = Loan.objects.filter(team=team)
         serialized_loans = LoanSerializer(loans, many=True)
         response = {
             "loans": serialized_loans.data,
@@ -56,31 +57,32 @@ class FinanceView(ViewSet):
 
         return json_body
 
-    def _create_decision(self, player: Player, current_quarter: int, endpoint: str, json_body) -> DecisionPool:
+    def _create_decision(
+        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body
+    ) -> DecisionPool:
         """Create a new decision in the DecisionPool.\n
         We do not use get_or_create here because the user may ask for a loan with
         different amount or payback period (namely a different json body) and yet
         they should not be able to make a new decision. (one loan per quarter policy)
         """
 
-        try:
-            previous_decision = DecisionPool.objects.get(
-                player=player, made_at_quarter=current_quarter, endpoint=endpoint
-            )
-            serialized_decision = DecisionPoolSerializer(previous_decision)
+        decision, created = DecisionPool.objects.get_or_create(
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=endpoint,
+            defaults={"player": player, "json_body": json_body},
+        )
+        serialized_decision = DecisionPoolSerializer(decision)
+        if not created:
             raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
-        except DecisionPool.DoesNotExist:
-            decision = DecisionPool.objects.create(
-                player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
-            )
-            return decision
+        return decision
 
-    def _delete_loan_decision(self, player: Player, current_quarter: int) -> dict:
+    def _delete_loan_decision(self, team: Team, current_quarter: int) -> dict:
         """Delete the loan application made at this quarter from the DecisionPool."""
 
         try:
             decision = DecisionPool.objects.get(
-                player=player, made_at_quarter=current_quarter, endpoint=self.ENDPOINTS.NEW_LOAN
+                team=team, made_at_quarter=current_quarter, endpoint=self.ENDPOINTS.NEW_LOAN
             )
             serialized_decision = DecisionPoolSerializer(decision)
             serialized_decision_data = serialized_decision.data
@@ -92,12 +94,17 @@ class FinanceView(ViewSet):
     @action(methods=["post"], detail=False)
     def new_loan(self, request):
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter: int = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter: int = team.state_variables.quarter
         json_body = self._get_json_body(request.data)
 
         decision = self._create_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.NEW_LOAN, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.NEW_LOAN,
+            json_body=json_body,
         )
         serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": {"decision": serialized_decision.data}}
@@ -106,10 +113,11 @@ class FinanceView(ViewSet):
     @action(methods=["post"], detail=False)
     def cancel_loan(self, request):
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter: int = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter: int = team.state_variables.quarter
 
-        serialized_deleted_decision = self._delete_loan_decision(player=player, current_quarter=current_quarter)
+        serialized_deleted_decision = self._delete_loan_decision(team=team, current_quarter=current_quarter)
         response = {
             "data": {"message": "Loan application cancelled successfully", "canceled_loan": serialized_deleted_decision}
         }

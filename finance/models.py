@@ -1,6 +1,6 @@
 from django.db import models
 
-from people.models import Player
+from people.models import Team
 
 
 class FinancialAccount(models.Model):
@@ -59,7 +59,7 @@ class Transaction(models.Model):
         LOSS_ON_SALE_OF_ASSETS = "Loss on sale of assets"
         EXTRAORDINARY_PR_EXPENSES = "Extraordinary PR expenses"
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     category = models.CharField(max_length=80, choices=Categories.choices)
     quarter = models.IntegerField()
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)
@@ -71,7 +71,7 @@ class Transaction(models.Model):
 
 
 class Overdraft(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     beginning_overdraft = models.DecimalField(max_digits=15, decimal_places=0)
     ending_overdraft = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
@@ -84,7 +84,7 @@ class Overdraft(models.Model):
 
 
 class CashChange(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     beginning_cash = models.DecimalField(max_digits=15, decimal_places=0)
     ending_cash = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
@@ -97,7 +97,7 @@ class CashChange(models.Model):
 
 
 class Loan(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=15, decimal_places=0)
     issued_quarter = models.IntegerField()
     interest = models.DecimalField(max_digits=5, decimal_places=2)
@@ -113,7 +113,7 @@ class Loan(models.Model):
 
 
 class Repayment(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     loan = models.ForeignKey(Loan, on_delete=models.CASCADE)
     interest_amount = models.DecimalField(max_digits=15, decimal_places=0)
     repayment_amount = models.DecimalField(max_digits=15, decimal_places=0)

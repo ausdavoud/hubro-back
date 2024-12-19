@@ -1,6 +1,6 @@
 from django.db import models
 
-from people.models import Player
+from people.models import Team
 from rd.apps import RdConfig
 
 
@@ -23,7 +23,6 @@ class DynamicRD(models.Model):
         AVAILABLE = "available"
         RESEARCHING = "researching"
         COMPLETED = "completed"
-
 
     class Engines(models.IntegerChoices):
         ENGINE_1 = 0, "Engine 1"
@@ -59,7 +58,7 @@ class DynamicRD(models.Model):
 
     from suppliers.models import Supplier
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="rd")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="rd")
 
     category = models.CharField(max_length=30, choices=RDCategories.choices)
     order = models.PositiveSmallIntegerField()
@@ -93,7 +92,7 @@ class DynamicRD(models.Model):
 
     class Meta:
         ordering = ["category", "order"]
-        unique_together = ["player", "category", "order"]
+        unique_together = ["team", "category", "order"]
         verbose_name = "Dynamic R&D"
         db_table = f"{RdConfig.name}_dynamic_rd"
 
@@ -130,12 +129,18 @@ class DynamicRD(models.Model):
         # user has started the research process for this R&D item
         if self.started_at > 0:
             return (
-                DynamicRD.RDStates.COMPLETED if self.time_spent_developing == self.development_duration else DynamicRD.RDStates.RESEARCHING
+                DynamicRD.RDStates.COMPLETED
+                if self.time_spent_developing == self.development_duration
+                else DynamicRD.RDStates.RESEARCHING
             )
 
         # time-based availability
         if self.available_from_quarter:
-            return DynamicRD.RDStates.AVAILABLE if self.available_from_quarter <= current_quarter else DynamicRD.RDStates.LOCKED
+            return (
+                DynamicRD.RDStates.AVAILABLE
+                if self.available_from_quarter <= current_quarter
+                else DynamicRD.RDStates.LOCKED
+            )
 
         # dependency-based availability
         previous_item = previous_rd_items.get((self.category, self.order))

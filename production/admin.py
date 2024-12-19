@@ -6,7 +6,7 @@ from production.models import Factory, Production, Storage
 class FactoryAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "player",
+        "team",
         "ownership",
         "name",
         "output_per_quarter",
@@ -18,7 +18,7 @@ class FactoryAdmin(admin.ModelAdmin):
 class ProductionAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "player",
+        "team",
         "product",
         "factory",
         "quarter",
@@ -29,7 +29,7 @@ class ProductionAdmin(admin.ModelAdmin):
 
 
 class StorageAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "product", "quantity"]
+    list_display = ["id", "team", "product", "quantity"]
 
 
 admin.site.register(Storage, StorageAdmin)

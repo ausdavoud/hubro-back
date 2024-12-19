@@ -82,14 +82,17 @@ class SimulationClass(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # if
-        # is_single_player is False (It's team mode)
-        # =>
-        # instructor can not be null
-        # p => q is equivalent to ~p | q
+        """
+        if
+        is_single_player is True (it's single mode)
+        =>
+        instructor can be null
+        p => q is equivalent to ~p | q
+        """
+
         constraints = [
             CheckConstraint(
-                check=~Q(is_single_player=False) | Q(instructor=None),
+                check=~Q(is_single_player=True) | Q(instructor=None),
                 name="check_instructor_not_null_if_team_mode",
             )
         ]
@@ -101,7 +104,7 @@ class SimulationClass(models.Model):
 
 class Team(models.Model):
     name = models.CharField(max_length=50)
-    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.CASCADE)
+    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.SET_NULL, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

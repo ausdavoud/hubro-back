@@ -11,7 +11,7 @@ from common.models import DecisionPool
 from common.views import exceptions as common_exceptions
 from finance.models import FinancialAccount, Loan, Transaction
 from finance.serializer import LoanSerializer, TransactionSerializer
-from people.models import Player
+from people.models import Team
 
 
 def get_financial_account_or_404(account_name: str):
@@ -21,14 +21,14 @@ def get_financial_account_or_404(account_name: str):
         raise common_exceptions.DatabaseRecordNotFound(f"Account {account_name} does not exist")
 
 
-def new_loan(player: Player, decision: DecisionPool) -> Response:
-    """Create a new loan for the player."""
+def new_loan(team: Team, decision: DecisionPool) -> Response:
+    """Create a new loan for the team."""
 
     json_body = decision.json_body
     current_quarter = decision.made_at_quarter
-    fixed_interest = player.state_variables.fixed_interest
-    simulation_duration = player.state_variables.simulation_duration
-    esg_index = player.state_variables.esg_index
+    fixed_interest = team.state_variables.fixed_interest
+    simulation_duration = team.state_variables.simulation_duration
+    esg_index = team.state_variables.esg_index
 
     amount_str = json_body["amount"]
     amount_decimal = Decimal(amount_str)
@@ -53,7 +53,7 @@ def new_loan(player: Player, decision: DecisionPool) -> Response:
             total_payback = payback_per_quarter * payback_period
 
             loan = Loan.objects.create(
-                player=player,
+                team=team,
                 amount=amount_decimal,
                 issued_quarter=current_quarter,
                 interest=interest,
@@ -62,7 +62,7 @@ def new_loan(player: Player, decision: DecisionPool) -> Response:
                 payback_per_quarter=payback_per_quarter,
             )
             credit_transaction = Transaction.objects.create(
-                player=player,
+                team=team,
                 category=Transaction.Categories.NEW_LOANS,
                 quarter=current_quarter,
                 debit_amount=0,
@@ -70,7 +70,7 @@ def new_loan(player: Player, decision: DecisionPool) -> Response:
                 financial_account=long_term_notes_payable_account,
             )
             debit_transaction = Transaction.objects.create(
-                player=player,
+                team=team,
                 category=Transaction.Categories.NEW_LOANS,
                 quarter=current_quarter,
                 debit_amount=amount_decimal,

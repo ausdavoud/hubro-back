@@ -11,10 +11,10 @@ from common.management.data_fixtures import (
 )
 from common.models import DecisionPool
 from common.views import exceptions as common_exceptions
-from common.views.services import get_db_record_or_404
+from common.views.services import get_db_record_select_prefetch_or_404
 from contracts.models import Contract, ContractAssignment, ContractPriority
 from contracts.serializers import ContractAssignmentSerializer, ContractPrioritySerializer
-from people.models import Player, SimulationClass, Team
+from people.models import SimulationClass, Team
 from rd.models import RDCategories
 from rd.views.services import get_available_rd_dynamics_at_next_quarter
 
@@ -42,32 +42,30 @@ def create_contracts(simulation_class: SimulationClass):
             contracts = Contract.objects.bulk_create(contracts_objs)
 
 
-def set_contracts_order(player: Player, decision: DecisionPool) -> None:
+def set_contracts_order(team: Team, decision: DecisionPool) -> None:
     """
-    This function sets the priority of the contracts of the player.
+    This function sets the priority of the contracts of the team.
     """
     json_body = decision.json_body
     marketing_budget = json_body["marketing_budget"]
     contract_ids = json_body["contract_ids"]
-    current_quarter = player.state_variables.quarter
-    player_esg_index = player.state_variables.esg_index
-    simulation_class = player.team.simulation_class
+    current_quarter = team.state_variables.quarter
+    team_esg_index = team.state_variables.esg_index
+    simulation_class = team.simulation_class
 
-    player.state_variables.marketing_budget = marketing_budget
-    player.state_variables.save()
+    team.state_variables.marketing_budget = marketing_budget
+    team.state_variables.save()
 
     contract_objs = []
     for index, contract_id in enumerate(contract_ids):
-        contract = get_db_record_or_404(
+        contract = get_db_record_select_prefetch_or_404(
             Contract,
             id=contract_id,
             simulation_class=simulation_class,
             closure_quarter=current_quarter,
-            minimum_esg_index__lte=player_esg_index,
+            minimum_esg_index__lte=team_esg_index,
         )
-        contract_priority = ContractPriority(
-            player=player, contract=contract, priority=index + 1, quarter=current_quarter
-        )
+        contract_priority = ContractPriority(team=team, contract=contract, priority=index + 1, quarter=current_quarter)
         contract_objs.append(contract_priority)
 
     contract_priorities = ContractPriority.objects.bulk_create(contract_objs)
@@ -100,18 +98,12 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
     updated_contracts = []
     team_loads = {product_category: {team: 0 for team in teams} for product_category in RDCategories.values}
     # Teams choose contracts
-    print(teams)
     for team in teams:
-        # FIXME: replace player=team with team=team
-        # FIXME: Remove when multiplayer is implemented
-        if isinstance(team, Team):
-            continue
-
         contract_priorities = (
-            ContractPriority.objects.filter(player=team, quarter=current_quarter).order_by("priority").all()
+            ContractPriority.objects.filter(team=team, quarter=current_quarter).order_by("priority").all()
         )
 
-        dynamic_rd_objects = get_available_rd_dynamics_at_next_quarter(player=team, current_quarter=current_quarter)
+        dynamic_rd_objects = get_available_rd_dynamics_at_next_quarter(team=team, current_quarter=current_quarter)
         available_products = {dynamic_rd.category for dynamic_rd in dynamic_rd_objects}
         for contract_priority in contract_priorities:
             if (
@@ -122,9 +114,8 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
             ):
                 continue
 
-            # FIXME: replace player=team with team=team
             contract_assignment = ContractAssignment(
-                player=team, contract=contract_priority.contract, status=ContractAssignment.Statuses.WAITING
+                team=team, contract=contract_priority.contract, status=ContractAssignment.Statuses.WAITING
             )
             contract_priority.contract.status = Contract.Statuses.ASSIGNED
             contract_assignment_objs.append(contract_assignment)
@@ -140,8 +131,6 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
         eligible_teams = [
             team
             for team in teams
-            # FIXME: remove the next line when multiplayer is implemented
-            if not isinstance(team, Team)
             and team.rd.get(category=contract.deliverable_product, order=1).is_completed
             and team.state_variables.marketing_budget >= 5000
             and team.state_variables.esg_index >= contract_priority.contract.minimum_esg_index
@@ -166,9 +155,8 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
             ),
         )
 
-        # FIXME: replace player=team with team=team
         contract_assignment = ContractAssignment(
-            player=team, contract=contract, status=ContractAssignment.Statuses.WAITING
+            team=team, contract=contract, status=ContractAssignment.Statuses.WAITING
         )
         contract.status = Contract.Statuses.ASSIGNED
         contract_assignment_objs.append(contract_assignment)
