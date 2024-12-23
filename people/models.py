@@ -19,6 +19,8 @@ class CustomUserManager(BaseUserManager):
         if user.role == CustomUser.UserRoles.PLAYER:
             try:
                 player = Player.objects.create(user=user)
+                from common.views.views import create_new_simulation_data
+                create_new_simulation_data(player=player)
             except IntegrityError:
                 print(f"A `Player` instance is already assigned to {user.email}")
 
