@@ -83,36 +83,6 @@ class StartNewSimulation(APIView):
     ]
     serializer_class = None
 
-    def _start_new_simulation(self, player: Player, team_mode: bool) -> None:
-        # if single player mode then delete old data
-        # old data must be owned by the player, meaning
-        # we only delete data if the last quarter was also single player
-        # note: you will lose your current team if you attempt to start
-        # a single player simulation.
-
-        team = player.team
-        # Delete old data
-        if team:
-            if team.simulation_class:
-                team.simulation_class.delete()
-            team.delete()
-
-        simulation_class = SimulationClass.objects.create(name=f"{player}'s Simulation Class")
-        # 1. Create a Team for the single user
-        player_team = Team(name=f"{player}'s Team", simulation_class=simulation_class)
-        bot_teams = [Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class) for i in range(4)]
-        teams_to_create = [player_team] + bot_teams
-        teams = Team.objects.bulk_create(teams_to_create)
-        team = teams[0]
-        player.team = teams[0]
-        player.save()
-
-        # 2. Create Contracts
-        create_contracts(simulation_class=simulation_class)
-        # 4. Create Dynamic RD Items
-        create_dynamic_rd_items(team=team)
-        # 5. Create State Variables
-        state_variables = StateVariable.objects.create(team=team)
 
     def post(self, request: Request) -> Response:
         # Get player
@@ -121,10 +91,38 @@ class StartNewSimulation(APIView):
 
         team_mode = request.data.get("team_mode", False)
 
-        self._start_new_simulation(player, team_mode)
+        delete_previous_simulation_data(player=player)
+        create_new_simulation_data(player=player)
 
         return Response("Welcome to the new simulation!", status=status.HTTP_200_OK)
 
+
+def delete_previous_simulation_data(player: Player):
+    team = player.team
+    # Delete old data
+    if team:
+        if team.simulation_class:
+            team.simulation_class.delete()
+        team.delete()
+
+def create_new_simulation_data(player: Player):
+
+    simulation_class = SimulationClass.objects.create(name=f"{player}'s Simulation Class")
+    # 1. Create a Team for the single user
+    player_team = Team(name=f"{player}'s Team", simulation_class=simulation_class)
+    bot_teams = [Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class) for i in range(4)]
+    teams_to_create = [player_team] + bot_teams
+    teams = Team.objects.bulk_create(teams_to_create)
+    team = teams[0]
+    player.team = teams[0]
+    player.save()
+
+    # 2. Create Contracts
+    create_contracts(simulation_class=simulation_class)
+    # 4. Create Dynamic RD Items
+    create_dynamic_rd_items(team=team)
+    # 5. Create State Variables
+    state_variables = StateVariable.objects.create(team=team)
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
 class FinishQuarter(APIView):
