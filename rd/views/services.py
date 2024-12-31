@@ -33,6 +33,10 @@ def create_dynamic_rd_items(team: Team):
             development_duration=static["development_duration"],
             available_from_quarter=static.get("available_from_quarter", None),
             depreciation_time=static["depreciation_time"],
+            unit_mat_cost_effect=static.get("unit_mat_cost_effect", 0),
+            emission_effect=static.get("emission_effect", 0),
+            unit_mat_cost_reduction=static.get("unit_mat_cost_reduction", 0),
+            emission_reduction=static.get("emission_reduction", 0),
             supplier=supplier if supplier else None,
         )
         dynamic_rd_items.append(dynamic_rd_item)

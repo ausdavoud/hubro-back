@@ -131,7 +131,10 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
         eligible_teams = [
             team
             for team in teams
-            and team.rd.get(category=contract.deliverable_product, order=1).is_completed
+            if (
+                team.team_type == Team.TeamType.BOT
+                or team.rd.get(category=contract.deliverable_product, order=1).is_completed
+            )
             and team.state_variables.marketing_budget >= 5000
             and team.state_variables.esg_index >= contract_priority.contract.minimum_esg_index
         ]
