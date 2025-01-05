@@ -10,9 +10,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
-from common.views.services import get_serializer_or_400
-from people.models import CustomUser, Player
-from people.views.services import get_player_or_404
+from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
+from people.models import CustomUser, Player, Team
 from rd.models import DynamicRD, RDCategories
 from rd.serializers import CreateBaseRDSerializer, CreateRDProductSerializer, DynamicRDSerializer
 from rd.views import exceptions as rd_exceptions
@@ -32,16 +31,16 @@ class RDView(ViewSet):
 
     class ENDPOINTS:
         START_RD = "rd/start"
-        PAUSE_RD = "rd/pause/"
+        PAUSE_RD = "rd/pause"
         RESUME_RD = "rd/resume"
 
     @action(methods=["get"], detail=False)
     def get_rds(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user, ["rd"])
-
-        current_quarter: int = player.state_variables.quarter
-        dynamic_rd_objects: list[DynamicRD] | None = player.rd.all()
+        player: Player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team: Team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["rd"], id=player.team_id)
+        current_quarter: int = team.state_variables.quarter
+        dynamic_rd_objects: list[DynamicRD] | None = team.rd.all()
 
         previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
 
@@ -133,7 +132,7 @@ class RDView(ViewSet):
 
         return json_body
 
-    def _get_decision(self, player: Player, current_quarter: int, endpoint: str, json_body: dict, contains):
+    def _get_decision(self, team: Team, current_quarter: int, endpoint: str, json_body: dict, contains):
         """Return a decision object from the decision pool.\n
         It uses __contained_by JSON operator. Why?\n
         At /rd/start/, json body also has alias and icon_link, but at /rd/pause/ and /rd/resume/,
@@ -143,7 +142,7 @@ class RDView(ViewSet):
         That's why sometimes we need to check if the decision inside the decision pool
         is a subset of the json_body, and other times check if the json_body is a subset of the decision.
         """
-        kwargs = {"player": player, "made_at_quarter": current_quarter, "endpoint": endpoint}
+        kwargs = {"team": team, "made_at_quarter": current_quarter, "endpoint": endpoint}
         if contains:
             kwargs["json_body__contains"] = json_body
         else:
@@ -151,14 +150,19 @@ class RDView(ViewSet):
 
         return DecisionPool.objects.filter(**kwargs)
 
-    def _create_decision(self, player: Player, current_quarter: int, endpoint: str, json_body) -> DecisionPool:
+    def _create_decision(
+        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body
+    ) -> DecisionPool:
         """Create a new decision in the DecisionPool."""
         decision, created = DecisionPool.objects.get_or_create(
-            player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=endpoint,
+            json_body=json_body,
+            defaults={"player": player},
         )
 
         serialized_decision = DecisionPoolSerializer(decision)
-
         if not created:
             raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
 
@@ -190,13 +194,14 @@ class RDView(ViewSet):
         """
 
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter: int = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter: int = team.state_variables.quarter
         json_body = self._get_json_body(request.data, is_start_rd=True)
 
         # Pause -> Start
         if self._get_decision(
-            player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.PAUSE_RD,
             json_body=json_body,
@@ -208,7 +213,7 @@ class RDView(ViewSet):
 
         # Resume -> Start
         if self._get_decision(
-            player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.RESUME_RD,
             json_body=json_body,
@@ -220,7 +225,11 @@ class RDView(ViewSet):
 
         # Start -> Start | None -> Start
         decision = self._create_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.START_RD, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.START_RD,
+            json_body=json_body,
         )
         serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": serialized_decision.data}
@@ -249,13 +258,14 @@ class RDView(ViewSet):
             Create Decision object
         """
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
         json_body = self._get_json_body(request.data)
 
         # Start -> Pause
         start_decision = self._get_decision(
-            player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.START_RD,
             json_body=json_body,
@@ -267,7 +277,7 @@ class RDView(ViewSet):
             return Response(response, status=status.HTTP_200_OK)
 
         resume_decision = self._get_decision(
-            player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.RESUME_RD,
             json_body=json_body,
@@ -280,7 +290,11 @@ class RDView(ViewSet):
 
         # Pause -> Pause | None -> Pause
         decision = self._create_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.PAUSE_RD, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.PAUSE_RD,
+            json_body=json_body,
         )
         serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": serialized_decision.data}
@@ -309,13 +323,14 @@ class RDView(ViewSet):
             Create Decision object
         """
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
         json_body = self._get_json_body(request.data)
 
         # Start -> Resume
         if self._get_decision(
-            player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.START_RD,
             json_body=json_body,
@@ -327,7 +342,7 @@ class RDView(ViewSet):
 
         # Pause -> Resume
         pause_rd_decision = self._get_decision(
-            player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.PAUSE_RD,
             json_body=json_body,
@@ -340,7 +355,11 @@ class RDView(ViewSet):
 
         # Resume -> Resume | None -> Resume
         decision = self._create_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.RESUME_RD, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.RESUME_RD,
+            json_body=json_body,
         )
         serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": serialized_decision.data}
