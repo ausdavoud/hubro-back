@@ -12,9 +12,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
-from common.views.services import get_serializer_or_400
-from people.models import CustomUser, Player
-from people.views.services import get_player_or_404
+from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
+from people.models import CustomUser, Player, Team
 from production.models import Factory
 from production.serializers import (
     FactorySerializer,
@@ -49,8 +48,9 @@ class ProductionView(ViewSet):
     @action(["GET"], detail=False)
     def get_factories(self, request: Request) -> Response:
         user = request.user
-        player = get_player_or_404(user)
-        factories = Factory.objects.filter(player=player)
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        factories = Factory.objects.filter(team=team)
         serialized_factories = FactorySerializer(factories, many=True)
         response = {"data": serialized_factories.data}
         return Response(response, status=status.HTTP_200_OK)
@@ -58,12 +58,17 @@ class ProductionView(ViewSet):
     @action(["POST"], detail=False)
     def new_factory(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter: int = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter: int = team.state_variables.quarter
         json_body = self._get_new_factory_json_body(request.data)
 
         decision = self._create_new_factory_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.NEW_FACTORY, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.NEW_FACTORY,
+            json_body=json_body,
         )
         serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": {"decision": serialized_decision.data}}
@@ -76,27 +81,29 @@ class ProductionView(ViewSet):
         json_body = {"ownership": ownership}
         return json_body
 
-    def _create_new_factory_decision(self, player: Player, current_quarter: int, endpoint: str, json_body: dict):
+    def _create_new_factory_decision(
+        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body: dict
+    ):
         """Why not get_or_create? See finance.views.views._create_decision docs"""
-        try:
-            previous_decision = DecisionPool.objects.get(
-                player=player, made_at_quarter=current_quarter, endpoint=endpoint
-            )
-            serialized_decision = DecisionPoolSerializer(previous_decision)
+        decision, created = DecisionPool.objects.get_or_create(
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=endpoint,
+            defaults={"player": player, "json_body": json_body},
+        )
+        serialized_decision = DecisionPoolSerializer(decision)
+        if not created:
             raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
-        except DecisionPool.DoesNotExist:
-            decision = DecisionPool.objects.create(
-                player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
-            )
-            return decision
+        return decision
 
     @action(["POST"], detail=False)
     def cancel_new_factory(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter: int = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter: int = team.state_variables.quarter
 
-        serialized_deleted_decision = self._delete_new_factory_decision(player=player, current_quarter=current_quarter)
+        serialized_deleted_decision = self._delete_new_factory_decision(team=team, current_quarter=current_quarter)
         response = {
             "data": {
                 "message": "Building new factory cancelled successfully",
@@ -105,12 +112,12 @@ class ProductionView(ViewSet):
         }
         return Response(response, status=status.HTTP_200_OK)
 
-    def _delete_new_factory_decision(self, player: Player, current_quarter: int) -> dict:
+    def _delete_new_factory_decision(self, team: Team, current_quarter: int) -> dict:
         """Cancel the factory that was gonna be built at this quarter"""
 
         try:
             decision = DecisionPool.objects.get(
-                player=player, made_at_quarter=current_quarter, endpoint=self.ENDPOINTS.NEW_FACTORY
+                team=team, made_at_quarter=current_quarter, endpoint=self.ENDPOINTS.NEW_FACTORY
             )
             serialized_decision = DecisionPoolSerializer(decision)
             serialized_decision_data = serialized_decision.data
@@ -126,13 +133,18 @@ class ProductionView(ViewSet):
     @action(["POST"], detail=False)
     def sell_factory(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
 
         json_body = self._get_sell_factory_json_body(request.data)
 
         decision = self._create_sell_factory_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.SELL_FACTORY, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.SELL_FACTORY,
+            json_body=json_body,
         )
         serialized_decision = DecisionPoolSerializer(decision)
         response = {"data": {"decision": serialized_decision.data}}
@@ -144,9 +156,15 @@ class ProductionView(ViewSet):
         json_body = {"factory_id": factory_id}
         return json_body
 
-    def _create_sell_factory_decision(self, player: Player, current_quarter: int, endpoint: str, json_body: dict):
+    def _create_sell_factory_decision(
+        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body: dict
+    ):
         decision, created = DecisionPool.objects.get_or_create(
-            player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=endpoint,
+            json_body=json_body,
+            defaults={"player": player},
         )
         if not created:
             serialized_decision = DecisionPoolSerializer(decision)
@@ -157,13 +175,14 @@ class ProductionView(ViewSet):
     @action(["POST"], detail=False)
     def cancel_sell_factory(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
 
         json_body = self._get_sell_factory_json_body(request.data)
 
         serialized_decision_data = self._delete_sell_factory_decision(
-            player=player, current_quarter=current_quarter, json_body=json_body
+            team=team, current_quarter=current_quarter, json_body=json_body
         )
 
         response = {
@@ -174,14 +193,14 @@ class ProductionView(ViewSet):
         }
         return Response(response, status=status.HTTP_200_OK)
 
-    def _delete_sell_factory_decision(self, player: Player, current_quarter: int, json_body: dict):
+    def _delete_sell_factory_decision(self, team: Team, current_quarter: int, json_body: dict):
         """Cancel the factory that was going be sold at this quarter
         Serialize the decision before deletion to keep the id for the response
         """
 
         try:
             decision = DecisionPool.objects.get(
-                player=player, made_at_quarter=current_quarter, endpoint=self.ENDPOINTS.SELL_FACTORY
+                team=team, made_at_quarter=current_quarter, endpoint=self.ENDPOINTS.SELL_FACTORY
             )
             serialized_decision = DecisionPoolSerializer(decision)
             serialized_decision_data = serialized_decision.data
@@ -195,13 +214,18 @@ class ProductionView(ViewSet):
     @action(["POST"], detail=False)
     def select_product(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
 
         json_body = self._get_select_product_json_body(request.data)
 
         decision = self._create_select_product_decision(
-            player=player, current_quarter=current_quarter, endpoint=self.ENDPOINTS.SELECT_PRODUCT, json_body=json_body
+            player=player,
+            team=team,
+            current_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.SELECT_PRODUCT,
+            json_body=json_body,
         )
 
         serialized_decision = DecisionPoolSerializer(decision)
@@ -215,39 +239,36 @@ class ProductionView(ViewSet):
         json_body = {"factory_id": factory_id, "product_id": product_id}
         return json_body
 
-    def _create_select_product_decision(self, player: Player, current_quarter: int, endpoint: str, json_body: dict):
-        try:
-            decision = DecisionPool.objects.get(
-                player=player,
-                made_at_quarter=current_quarter,
-                endpoint=endpoint,
-                json_body__factory_id=json_body["factory_id"],
-            )
-
+    def _create_select_product_decision(
+        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body: dict
+    ):
+        decision, created = DecisionPool.objects.get_or_create(
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=endpoint,
+            json_body__factory_id=json_body["factory_id"],
+            defaults={"player": player, "json_body": json_body},
+        )
+        if not created:
             if decision.json_body["product_id"] == json_body["product_id"]:
                 serialized_decision = DecisionPoolSerializer(decision)
                 raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
-
             decision.json_body["product_id"] = json_body["product_id"]
             decision.save()
-            return decision
-
-        except DecisionPool.DoesNotExist:
-            decision = DecisionPool.objects.create(
-                player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
-            )
-            return decision
+        return decision
 
     @action(["POST"], detail=False)
     def set_activity_level(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
 
         json_body = self._get_activity_level_json_body(request.data)
 
         decision = self._create_set_activity_level_decision(
             player=player,
+            team=team,
             current_quarter=current_quarter,
             endpoint=self.ENDPOINTS.SET_ACTIVITY_LEVEL,
             json_body=json_body,
@@ -268,26 +289,21 @@ class ProductionView(ViewSet):
         json_body = {"factory_id": factory_id, "activity_level": str(activity_level)}
         return json_body
 
-    def _create_set_activity_level_decision(self, player: Player, current_quarter: int, endpoint: str, json_body: dict):
+    def _create_set_activity_level_decision(
+        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body: dict
+    ):
         """If the decision is already made, update it; Otherwise create a new one"""
-        try:
-            decision = DecisionPool.objects.get(
-                player=player,
-                made_at_quarter=current_quarter,
-                endpoint=endpoint,
-                json_body__factory_id=json_body["factory_id"],
-            )
-
+        decision, created = DecisionPool.objects.get_or_create(
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=endpoint,
+            json_body__factory_id=json_body["factory_id"],
+            defaults={"player": player, "json_body": json_body},
+        )
+        if not created:
             if decision.json_body["activity_level"] == json_body["activity_level"]:
                 serialized_decision = DecisionPoolSerializer(decision)
                 raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
-
             decision.json_body["activity_level"] = json_body["activity_level"]
             decision.save()
-            return decision
-
-        except DecisionPool.DoesNotExist:
-            decision = DecisionPool.objects.create(
-                player=player, made_at_quarter=current_quarter, endpoint=endpoint, json_body=json_body
-            )
-            return decision
+        return decision

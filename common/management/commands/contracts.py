@@ -3,7 +3,7 @@ from typing import Any
 from django.core.management.base import BaseCommand
 
 from contracts.models import Contract, ContractPriority
-from contracts.services import assign_contracts_to_teams, get_winner_teams
+from contracts.views.services import assign_contracts_to_teams, get_winner_teams
 from people.models import Player
 from rd.models import DynamicRD, RDCategories
 
