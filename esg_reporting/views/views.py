@@ -36,14 +36,16 @@ class ESGReportingView(ViewSet):
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = player.state_variables.quarter
-        serialized_decision = self._create_esg_reporting_decision(player, current_quarter=current_quarter)
+        current_quarter = team.state_variables.quarter
+        serialized_decision = self._create_esg_reporting_decision(
+            player=player, team=team, current_quarter=current_quarter
+        )
         response = {"decision": serialized_decision}
         return Response(response, status=status.HTTP_200_OK)
 
     def _create_esg_reporting_decision(self, player: Player, team: Team, current_quarter) -> None:
-        if current_quarter < 3:
-            raise ValidationError("Cannot enable ESG reporting before quarter 3.")
+        if current_quarter != 3:
+            raise ValidationError("You can only enable ESG reporting at quarter 3.")
 
         decision, created = DecisionPool.objects.get_or_create(
             team=team,

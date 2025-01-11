@@ -20,6 +20,7 @@ class CustomUserManager(BaseUserManager):
             try:
                 player = Player.objects.create(user=user)
                 from common.views.views import create_new_simulation_data
+
                 create_new_simulation_data(player=player)
             except IntegrityError:
                 print(f"A `Player` instance is already assigned to {user.email}")
@@ -105,8 +106,13 @@ class SimulationClass(models.Model):
 
 
 class Team(models.Model):
+    class TeamType(models.TextChoices):
+        PLAYER = "PL", "Player"
+        BOT = "BO", "Bot"
+
     name = models.CharField(max_length=50)
     simulation_class = models.ForeignKey(SimulationClass, on_delete=models.SET_NULL, null=True)
+    team_type = models.CharField(max_length=2, choices=TeamType.choices, default=TeamType.PLAYER)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

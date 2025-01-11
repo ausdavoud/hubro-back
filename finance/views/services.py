@@ -32,7 +32,7 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
 
     amount_str = json_body["amount"]
     amount_decimal = Decimal(amount_str)
-    payback_period = json_body["payback_period"]
+    payback_period = int(json_body["payback_period"])
 
     long_term_notes_payable_account = get_financial_account_or_404(
         account_name=FinancialAccount.AccountNames.LONG_TERM_NOTES_PAYABLE

@@ -37,9 +37,8 @@ class RDView(ViewSet):
     @action(methods=["get"], detail=False)
     def get_rds(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team = player.team.prefetch_related("rd")
-
+        player: Player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team: Team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["rd"], id=player.team_id)
         current_quarter: int = team.state_variables.quarter
         dynamic_rd_objects: list[DynamicRD] | None = team.rd.all()
 
