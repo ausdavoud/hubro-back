@@ -1,11 +1,10 @@
 from django.db import models
 
-from people.models import Player, Team
+from people.models import Player
 
 
 class DecisionPool(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="decision_pool")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="decision_pool")
     made_at_quarter = models.IntegerField()
     endpoint = models.CharField(max_length=100)
     json_body = models.JSONField()
@@ -18,7 +17,7 @@ class DecisionPool(models.Model):
 
 
 class StateVariable(models.Model):
-    team = models.OneToOneField(Team, on_delete=models.CASCADE, related_name="state_variables")
+    player = models.OneToOneField(Player, on_delete=models.CASCADE, related_name="state_variables")
 
     esg_index = models.IntegerField(default=0)
     esg_reporting_enabled = models.BooleanField(default=False)
@@ -40,7 +39,7 @@ class StateVariable(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.team}'s state variables"
+        return f"{self.player}'s state variables"
 
 
 class RippleTask(models.Model):
@@ -49,7 +48,7 @@ class RippleTask(models.Model):
         PRODUCTION = "production", "Production"
         ESG_REPORTING = "esg_reporting", "ESG Reporting"
 
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="ripple_tasks")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="ripple_tasks")
     run_at_quarter = models.IntegerField()
     type = models.CharField(max_length=50, choices=TaskTypes.choices)
     json_body = models.JSONField(null=True)

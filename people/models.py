@@ -20,7 +20,6 @@ class CustomUserManager(BaseUserManager):
             try:
                 player = Player.objects.create(user=user)
                 from common.views.views import create_new_simulation_data
-
                 create_new_simulation_data(player=player)
             except IntegrityError:
                 print(f"A `Player` instance is already assigned to {user.email}")
@@ -85,17 +84,14 @@ class SimulationClass(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        """
-        if
-        is_single_player is True (it's single mode)
-        =>
-        instructor can be null
-        p => q is equivalent to ~p | q
-        """
-
+        # if
+        # is_single_player is False (It's team mode)
+        # =>
+        # instructor can not be null
+        # p => q is equivalent to ~p | q
         constraints = [
             CheckConstraint(
-                check=~Q(is_single_player=True) | Q(instructor=None),
+                check=~Q(is_single_player=False) | Q(instructor=None),
                 name="check_instructor_not_null_if_team_mode",
             )
         ]
@@ -106,13 +102,8 @@ class SimulationClass(models.Model):
 
 
 class Team(models.Model):
-    class TeamType(models.TextChoices):
-        PLAYER = "PL", "Player"
-        BOT = "BO", "Bot"
-
     name = models.CharField(max_length=50)
-    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.SET_NULL, null=True)
-    team_type = models.CharField(max_length=2, choices=TeamType.choices, default=TeamType.PLAYER)
+    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

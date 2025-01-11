@@ -1,17 +1,17 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import status
-from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework import status
+from rest_framework.decorators import action
 
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views.exceptions import DatabaseRecordNotFound, DuplicateDecisionError, ValidationError
-from common.views.services import get_db_record_select_prefetch_or_404
-from people.models import Player, Team
+from people.models import Player
+from people.views.services import get_player_or_404
 
 
 @extend_schema_view(
@@ -34,47 +34,41 @@ class ESGReportingView(ViewSet):
     @action(methods=["post"], detail=False)
     def enable_esg_reporting(self, request: Request) -> Response:
         user = request.user
-        player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team = player.team
-        current_quarter = team.state_variables.quarter
-        serialized_decision = self._create_esg_reporting_decision(
-            player=player, team=team, current_quarter=current_quarter
-        )
+        player: Player = get_player_or_404(user)
+        current_quarter = player.state_variables.quarter
+        serialized_decision = self._create_esg_reporting_decision(player, current_quarter=current_quarter)
         response = {"decision": serialized_decision}
         return Response(response, status=status.HTTP_200_OK)
 
-    def _create_esg_reporting_decision(self, player: Player, team: Team, current_quarter) -> None:
-        if current_quarter != 3:
-            raise ValidationError("You can only enable ESG reporting at quarter 3.")
+    def _create_esg_reporting_decision(self, player: Player, current_quarter) -> None:
+        if current_quarter < 3:
+            raise ValidationError("Cannot enable ESG reporting before quarter 3.")
 
         decision, created = DecisionPool.objects.get_or_create(
-            team=team,
+            player=player,
             made_at_quarter=current_quarter,
             endpoint=ESGReportingView.ENDPOINTS.ENABLE_ESG_REPORTING,
             json_body={},
-            defaults={"player": player},
         )
         if not created:
             raise DuplicateDecisionError(context={"duplication at": "esg_reporting"})
-
         serialized_decision = DecisionPoolSerializer(decision).data
         return serialized_decision
 
     @action(methods=["post"], detail=False)
     def disable_esg_reporting(self, request: Request) -> Response:
         user = request.user
-        player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team = player.team
-        current_quarter = team.state_variables.quarter
-        serialized_deleted_decision = self._delete_esg_reporting_decision(team, current_quarter=current_quarter)
+        player: Player = get_player_or_404(user)
+        current_quarter = player.state_variables.quarter
+        serialized_deleted_decision = self._delete_esg_reporting_decision(player, current_quarter=current_quarter)
         response = {"deleted_decision": serialized_deleted_decision}
         return Response(response, status=status.HTTP_200_OK)
 
-    def _delete_esg_reporting_decision(self, team: Team, current_quarter) -> None:
+    def _delete_esg_reporting_decision(self, player: Player, current_quarter) -> None:
         if current_quarter != 3:
             raise ValidationError("You can only disable ESG reporting at quarter 3.")
         decision = DecisionPool.objects.filter(
-            team=team,
+            player=player,
             made_at_quarter=current_quarter,
             endpoint=ESGReportingView.ENDPOINTS.ENABLE_ESG_REPORTING,
         ).first()

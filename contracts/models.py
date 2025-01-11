@@ -1,6 +1,6 @@
 from django.db import models
 
-from people.models import SimulationClass, Team
+from people.models import Player, SimulationClass
 
 
 class Contract(models.Model):
@@ -33,7 +33,7 @@ class Contract(models.Model):
 
 
 class ContractPriority(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
     quarter = models.IntegerField()
     priority = models.IntegerField()
@@ -42,7 +42,7 @@ class ContractPriority(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.team} - {self.contract} - {self.priority}"
+        return f"{self.player} - {self.contract} - {self.priority}"
 
 
 class ContractAssignment(models.Model):
@@ -56,7 +56,7 @@ class ContractAssignment(models.Model):
         FULFILLED = "FF", "Fulfilled"
         EXPIRED = "EX", "Expired"
 
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="contracts")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="contracts")
     contract = models.OneToOneField(Contract, on_delete=models.CASCADE)
     status = models.CharField(max_length=2, choices=Statuses.choices)
 
@@ -64,4 +64,4 @@ class ContractAssignment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.team} - {self.contract}"
+        return f"{self.player} - {self.contract}"

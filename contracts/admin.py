@@ -6,7 +6,6 @@ from contracts.models import Contract, ContractAssignment, ContractPriority
 class ContractAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "simulation_class",
         "closure_quarter",
         "payment_quarter",
         "quantity",
@@ -19,11 +18,11 @@ class ContractAdmin(admin.ModelAdmin):
 
 
 class ContractPriorityAdmin(admin.ModelAdmin):
-    list_display = ["id", "team", "contract", "quarter", "priority"]
+    list_display = ["id", "player", "contract", "quarter", "priority"]
 
 
 class ContractAssignmentAdmin(admin.ModelAdmin):
-    list_display = ["id", "team", "contract", "status"]
+    list_display = ["id", "player", "contract", "status"]
 
 
 admin.site.register(Contract, ContractAdmin)

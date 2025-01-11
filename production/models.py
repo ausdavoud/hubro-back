@@ -3,7 +3,7 @@ import random
 from django.db import models
 
 from common.management.data_fixtures import FACTORY_NAMES
-from people.models import Team
+from people.models import Player
 from rd.models import DynamicRD
 
 
@@ -12,7 +12,7 @@ class Factory(models.Model):
         OWNED = "OW", "Owned"
         RENTED = "RN", "Rented"
 
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     built_at_quarter = models.IntegerField()
     name = models.CharField(max_length=20, blank=True)
     ownership = models.CharField(max_length=2, choices=OwnershipTypes.choices)
@@ -44,7 +44,7 @@ class Factory(models.Model):
         super().save(*args, **kwargs)
 
     def _generate_unique_name(self):
-        existing_names = set(Factory.objects.filter(team=self.team).values_list("name", flat=True))
+        existing_names = set(Factory.objects.filter(player=self.player).values_list("name", flat=True))
         available_names = [name for name in FACTORY_NAMES if f"Factory {name}" not in existing_names]
 
         if not available_names:
@@ -59,11 +59,11 @@ class Factory(models.Model):
 
     class Meta:
         verbose_name_plural = "Factories"
-        constraints = [models.UniqueConstraint(fields=["team", "name"], name="unique_factory_name_per_team")]
+        constraints = [models.UniqueConstraint(fields=["player", "name"], name="unique_factory_name_per_player")]
 
 
 class Production(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="productions")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="productions")
     product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     factory = models.ForeignKey(Factory, on_delete=models.CASCADE)
     quarter = models.IntegerField()
@@ -79,7 +79,7 @@ class Production(models.Model):
 
 
 class Storage(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="storages")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="storages")
     product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
 
@@ -87,4 +87,4 @@ class Storage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.team} - {self.quantity} {self.product.alias}"
+        return f"{self.player} - {self.quantity} {self.product.alias}"
