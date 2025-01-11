@@ -1,6 +1,7 @@
 from django.db import models
 
-from people.models import Team
+from common.models import DecisionPool
+from people.models import Player
 from rd.apps import RdConfig
 
 
@@ -23,6 +24,7 @@ class DynamicRD(models.Model):
         AVAILABLE = "available"
         RESEARCHING = "researching"
         COMPLETED = "completed"
+
 
     class Engines(models.IntegerChoices):
         ENGINE_1 = 0, "Engine 1"
@@ -58,7 +60,7 @@ class DynamicRD(models.Model):
 
     from suppliers.models import Supplier
 
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="rd")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="rd")
 
     category = models.CharField(max_length=30, choices=RDCategories.choices)
     order = models.PositiveSmallIntegerField()
@@ -76,13 +78,7 @@ class DynamicRD(models.Model):
 
     # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    # below is for upgrade type only
-    unit_mat_cost_reduction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    # below is for production type only
-    emission_reduction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    # below is for product type only, namely the sum of all reductions for a product
     unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    emission_effect = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     alias = models.CharField(max_length=100, blank=True)
     icon_link = models.CharField(max_length=300, blank=True)
@@ -98,7 +94,7 @@ class DynamicRD(models.Model):
 
     class Meta:
         ordering = ["category", "order"]
-        unique_together = ["team", "category", "order"]
+        unique_together = ["player", "category", "order"]
         verbose_name = "Dynamic R&D"
         db_table = f"{RdConfig.name}_dynamic_rd"
 
@@ -135,18 +131,12 @@ class DynamicRD(models.Model):
         # user has started the research process for this R&D item
         if self.started_at > 0:
             return (
-                DynamicRD.RDStates.COMPLETED
-                if self.time_spent_developing == self.development_duration
-                else DynamicRD.RDStates.RESEARCHING
+                DynamicRD.RDStates.COMPLETED if self.time_spent_developing == self.development_duration else DynamicRD.RDStates.RESEARCHING
             )
 
         # time-based availability
         if self.available_from_quarter:
-            return (
-                DynamicRD.RDStates.AVAILABLE
-                if self.available_from_quarter <= current_quarter
-                else DynamicRD.RDStates.LOCKED
-            )
+            return DynamicRD.RDStates.AVAILABLE if self.available_from_quarter <= current_quarter else DynamicRD.RDStates.LOCKED
 
         # dependency-based availability
         previous_item = previous_rd_items.get((self.category, self.order))

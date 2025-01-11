@@ -2,8 +2,8 @@ from django.contrib import admin, messages
 from django.utils.translation import ngettext
 
 from common.models import RippleTask
-from common.views.services import get_db_record_select_prefetch_or_404
-from people.models import CustomUser, Player
+from people.models import CustomUser
+from people.views.services import get_player_or_404
 from rd.models import DynamicRD
 
 
@@ -11,7 +11,7 @@ class DynamicRDAdmin(admin.ModelAdmin):
     actions = ["make_ripple_task"]
     list_display = [
         "id",
-        "team",
+        "player",
         "category",
         "order",
         "title",
@@ -26,15 +26,14 @@ class DynamicRDAdmin(admin.ModelAdmin):
     @admin.action(description="Add ripple task only for R&D-Upgrade items")
     def make_ripple_task(self, request, dynamic_rd_objects: list[DynamicRD]):
         user: CustomUser = request.user
-        player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team = player.team
+        player = get_player_or_404(user)
         # BUG
         # This action method uses the current quarter of the logged-in admin user
         # who is running the action. A better version would sort the dynamic_rd_objects
         # based on their players, then for each set of dynamic objects related to
         # a user, SELECT player along with its prefetched state variables and
         # use the player's current quarter as run_at_quarter field
-        current_quarter = team.state_variables.quarter
+        current_quarter = player.state_variables.quarter
 
         ripple_tasks = []
         for dynamic_rd_object in dynamic_rd_objects:
@@ -43,7 +42,7 @@ class DynamicRDAdmin(admin.ModelAdmin):
             # So you might create duplicates
             json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
             ripple_task = RippleTask(
-                team=team,
+                player=player,
                 run_at_quarter=current_quarter + 1,
                 type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
                 json_body=json_body,

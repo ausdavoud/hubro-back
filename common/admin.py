@@ -18,7 +18,7 @@ class DecisionPoolAdmin(admin.ModelAdmin):
 class StateVariableAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "team",
+        "player",
         "esg_index",
         "fixed_interest",
         "quarter",
@@ -28,7 +28,7 @@ class StateVariableAdmin(admin.ModelAdmin):
 
 
 class RippleTaskAdmin(admin.ModelAdmin):
-    list_display = ["id", "team", "run_at_quarter", "type", "json_body"]
+    list_display = ["id", "player", "run_at_quarter", "type", "json_body"]
     actions = ["increment_run_at_quarter"]
 
     @admin.action(description="Increment run_at_quarter by 1")
