@@ -4,7 +4,6 @@ if [ "$1" == "-r" ]; then
   echo "Remigrating database..."
   rm */migrations/00*.py
   python manage.py makemigrations
-  python manage.py dbshell -- -c "drop schema public cascade; create schema public;"
   python manage.py migrate
   echo "Database remigrated."
 else

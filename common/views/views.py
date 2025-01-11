@@ -29,7 +29,7 @@ from people.views.services import get_simulation_teams
 from production.models import Production, Storage
 from production.views.services import new_factory, select_product, set_activity_level
 from production.views.views import ProductionView
-from rd.models import DynamicRD, RDCategories
+from rd.models import DynamicRD
 from rd.views.services import create_dynamic_rd_items, pause_rd, resume_rd, start_rd
 from rd.views.views import RDView
 
@@ -83,6 +83,7 @@ class StartNewSimulation(APIView):
     ]
     serializer_class = None
 
+
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
@@ -104,15 +105,12 @@ def delete_previous_simulation_data(player: Player):
             team.simulation_class.delete()
         team.delete()
 
-
 def create_new_simulation_data(player: Player):
+
     simulation_class = SimulationClass.objects.create(name=f"{player}'s Simulation Class")
     # 1. Create a Team for the single user
     player_team = Team(name=f"{player}'s Team", simulation_class=simulation_class)
-    bot_teams = [
-        Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class, team_type=Team.TeamType.BOT)
-        for i in range(4)
-    ]
+    bot_teams = [Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class) for i in range(4)]
     teams_to_create = [player_team] + bot_teams
     teams = Team.objects.bulk_create(teams_to_create)
     team = teams[0]
@@ -124,9 +122,7 @@ def create_new_simulation_data(player: Player):
     # 4. Create Dynamic RD Items
     create_dynamic_rd_items(team=team)
     # 5. Create State Variables
-    state_variables = [StateVariable(team=team) for team in teams]
-    StateVariable.objects.bulk_create(state_variables)
-
+    state_variables = StateVariable.objects.create(team=team)
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
 class FinishQuarter(APIView):
@@ -143,13 +139,12 @@ class FinishQuarter(APIView):
         # Get player
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
-        current_quarter = player.team.state_variables.quarter
+        team = player.team
+        current_quarter = team.state_variables.quarter
         prefetch_decision_pool = Prefetch(
             "decision_pool", queryset=DecisionPool.objects.filter(made_at_quarter=current_quarter)
         )
-        team = get_db_record_select_prefetch_or_404(
-            Team, prefetch_related_tables=[prefetch_decision_pool], id=player.team.id
-        )
+        team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=[prefetch_decision_pool], user=user)
 
         # Process Team's decisions
         decisions = DecisionPool.objects.filter(team=team)
@@ -157,12 +152,14 @@ class FinishQuarter(APIView):
 
         # calculate each production's produced quantity
         productions: list[Production] = team.productions.filter(quarter=current_quarter)
+        print(f"A total of {len(productions)} at quarter {current_quarter} was found.")
         for production in productions:
             base = production.factory.base
             factor = production.activity_level / 100
             production.produced_quantity = base * (3 - factor) * factor**2 / 2
             # FIXME: Use bulk_update for fewer queries
             production.save()
+            print(f"Factory base is {base}, factor is {factor}, produced quantity is {production.produced_quantity}")
         # add produced units to storage
         for production in productions:
             storage, _ = Storage.objects.get_or_create(
@@ -293,8 +290,7 @@ class FinishQuarter(APIView):
         ripple_tasks_to_delete: list[RippleTask],
         dynamic_rd_objects_to_update: list[DynamicRD],
     ):
-        team = ripple_task.team
-        dynamic_rd_object: DynamicRD = get_db_record_select_prefetch_or_404(
+        dynamic_rd_object = get_db_record_select_prefetch_or_404(
             DynamicRD,
             id=ripple_task.json_body["dynamic_rd_id"],
         )
@@ -312,25 +308,6 @@ class FinishQuarter(APIView):
             ripple_task.run_at_quarter = F("run_at_quarter") + 1
             ripple_tasks_to_update.append(ripple_task)
         else:
-            # If research is done, delete the task
-
-            # if dynamic rd object is of type Production, we should update emission_effect of all products
-            if dynamic_rd_object.category == RDCategories.PRODUCTION:
-                DynamicRD.objects.filter(
-                    team=team,
-                    type=DynamicRD.RDTypes.PRODUCT,
-                ).update(
-                    emission_effect=F("emission_effect") + dynamic_rd_object.emission_reduction,
-                )
-            # if it's not production but it's an upgrade, upgrade the mat_cost_effect of its product
-            elif dynamic_rd_object.type == DynamicRD.RDTypes.UPGRADE:
-                DynamicRD.objects.filter(
-                    team=team,
-                    category=dynamic_rd_object.category,
-                    order=1,
-                ).update(
-                    unit_mat_cost_effect=F("unit_mat_cost_effect") + dynamic_rd_object.unit_mat_cost_reduction,
-                )
             ripple_tasks_to_delete.append(ripple_task)
 
     def _pay_esg_reporting_fee(

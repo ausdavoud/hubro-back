@@ -67,7 +67,6 @@ class ContractView(ViewSet):
         available_products_set = {dynamic_rd_object.category for dynamic_rd_object in dynamic_rd_objects}
 
         available_contracts = Contract.objects.filter(
-            simulation_class=team.simulation_class,
             closure_quarter=current_quarter,
             minimum_esg_index__lte=esg_index,
             deliverable_product__in=available_products_set,
@@ -85,7 +84,7 @@ class ContractView(ViewSet):
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
         assigned_contracts = ContractAssignment.objects.filter(team=team)
-        serialized_assigned_contracts = ContractAssignmentSerializer(assigned_contracts, many=True)
+        serialized_assigned_contracts = ContractSerializer(assigned_contracts, many=True)
         response = {
             "assigned_contracts": serialized_assigned_contracts.data,
         }

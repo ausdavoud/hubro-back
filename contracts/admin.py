@@ -6,7 +6,6 @@ from contracts.models import Contract, ContractAssignment, ContractPriority
 class ContractAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "simulation_class",
         "closure_quarter",
         "payment_quarter",
         "quantity",
