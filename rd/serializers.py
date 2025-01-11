@@ -25,6 +25,9 @@ class DynamicRDSerializer(serializers.ModelSerializer):
             "time_spent_developing",
             "available_from_quarter",
             "supplier",
+            "unit_mat_cost_reduction",
+            "emission_reduction",
+            "emission_effect",
             "unit_mat_cost_effect",
             "alias",
             "icon_link",
@@ -44,7 +47,10 @@ class DynamicRDSerializer(serializers.ModelSerializer):
 
     fields_to_be_removed = [
         "available_from_quarter",
+        "unit_mat_cost_reduction",
         "unit_mat_cost_effect",
+        "emission_reduction",
+        "emission_effect",
         "alias",
         "icon_link",
     ]

@@ -76,7 +76,13 @@ class DynamicRD(models.Model):
 
     # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    # below is for upgrade type only
+    unit_mat_cost_reduction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    # below is for production type only
+    emission_reduction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    # below is for product type only, namely the sum of all reductions for a product
     unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    emission_effect = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     alias = models.CharField(max_length=100, blank=True)
     icon_link = models.CharField(max_length=300, blank=True)

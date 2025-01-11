@@ -1,5 +1,3 @@
-from typing import Literal
-
 from django.db.models import Model, Prefetch
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
