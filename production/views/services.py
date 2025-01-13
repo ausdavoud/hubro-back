@@ -54,7 +54,10 @@ def new_factory(team: Team, decision: DecisionPool):
     # Technically, the factory is built at the next quarter of the decision
     built_at_quarter = decision.made_at_quarter + 1
     ownership = decision.json_body["ownership"]
-    factory = Factory.objects.create(team=team, built_at_quarter=built_at_quarter, **factories[ownership])
+    factory_name = decision.json_body["factory_name"]
+    factory = Factory.objects.create(
+        team=team, name=factory_name, built_at_quarter=built_at_quarter, **factories[ownership]
+    )
     serialized_factory = FactorySerializer(factory)
     return {"factory": serialized_factory.data}
 

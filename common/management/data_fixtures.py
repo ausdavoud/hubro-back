@@ -328,6 +328,10 @@ FINANCIAL_ACCOUNTS = [
         "name": FinancialAccount.AccountNames.LOSS_ON_SALE_OF_ASSETS,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
+    {
+        "name": FinancialAccount.AccountNames.PRODUCTS_BLUEPRINTS,
+        "type": FinancialAccount.AccountTypes.DEBIT,
+    },
 ]
 
 FACTORY_NAMES = [

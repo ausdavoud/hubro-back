@@ -26,7 +26,7 @@ class StateVariable(models.Model):
 
     fixed_interest = models.DecimalField(max_digits=5, decimal_places=2, default=2)
     quarter = models.IntegerField(default=1)
-    simulation_duration = models.IntegerField(default=20)
+    simulation_duration = models.IntegerField(default=4)
     max_loan_repayment_duration = models.IntegerField(default=16)
 
     company_name = models.CharField(max_length=20, null=True)
@@ -48,6 +48,8 @@ class RippleTask(models.Model):
         INCREMENT_RD_DEV_TIME = "inc_rd_dev_time", "Increment R&D Project Development Time"
         PRODUCTION = "production", "Production"
         ESG_REPORTING = "esg_reporting", "ESG Reporting"
+        LOAN_REPAYMENT = "loan_repayment", "Loan Repayment"
+        LOAN_INTEREST = "loan_interest", "Loan Interest"
 
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="ripple_tasks")
     run_at_quarter = models.IntegerField()

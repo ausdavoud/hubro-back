@@ -26,6 +26,7 @@ class FinancialAccount(models.Model):
         LONG_TERM_NOTES_PAYABLE = 3210, "Long term notes payable"
         RAW_MATERIAL_INVENTORY = 1710, "Raw material inventory"
         LOSS_ON_SALE_OF_ASSETS = 5520, "Loss on sale of assets"
+        PRODUCTS_BLUEPRINTS = 1320, "Products blueprints"
 
     class AccountTypes(models.TextChoices):
         DEBIT = "DE", "Debit"
@@ -48,18 +49,19 @@ class Transaction(models.Model):
         CURRENT_PORTION_OF_LOANS = "Current portion of loans to be paid this year"
         NEW_LOANS = "New loans"
         LOAN_REPAYMENT = "Loan Repayment"
+        LOAN_INTEREST = "Loan interest"
         OVERDRAFT = "Overdraft"
         SALES = "Sales"
         STORAGE = "Storage"
         PROMOTION = "Promotion"
         MAINTENANCE = "Maintenance"
         INTEREST_ON_OVERDRAFT = "Interest on overdraft"
-        LOAN_INTEREST = "Loan interest"
         SOLD_FACTORIES = "Sold factories"
         LOSS_ON_SALE_OF_ASSETS = "Loss on sale of assets"
         EXTRAORDINARY_PR_EXPENSES = "Extraordinary PR expenses"
+        RESEARCH_PROJECTS = "Research projects"
 
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transactions")
     category = models.CharField(max_length=80, choices=Categories.choices)
     quarter = models.IntegerField()
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)

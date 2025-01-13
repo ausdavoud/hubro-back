@@ -31,7 +31,7 @@ class RDView(ViewSet):
 
     class ENDPOINTS:
         START_RD = "rd/start"
-        PAUSE_RD = "rd/pause/"
+        PAUSE_RD = "rd/pause"
         RESUME_RD = "rd/resume"
 
     @action(methods=["get"], detail=False)
@@ -44,13 +44,21 @@ class RDView(ViewSet):
 
         previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
 
-        serialized_data = DynamicRDSerializer(
+        serialized_rd = DynamicRDSerializer(
             dynamic_rd_objects,
             many=True,
             context={"current_quarter": current_quarter, "previous_rd_items": previous_rd_items},
         )
-
-        response = {"data": serialized_data.data}
+        decisions: list[DecisionPool] | None = team.decision_pool.filter(
+            team=team, endpoint=RDView.ENDPOINTS.START_RD, made_at_quarter=current_quarter
+        )
+        serialized_decisions = DecisionPoolSerializer(decisions, many=True)
+        response = {
+            "data": {
+                "rds": serialized_rd.data,
+                "decisions": serialized_decisions.data,
+            }
+        }
         return Response(
             response,
             status=status.HTTP_200_OK,

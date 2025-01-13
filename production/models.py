@@ -40,26 +40,27 @@ class Factory(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.name:
-            self.name = self._generate_unique_name()
+            self.name = generate_unique_factory_name(team=self.team)
         super().save(*args, **kwargs)
-
-    def _generate_unique_name(self):
-        existing_names = set(Factory.objects.filter(team=self.team).values_list("name", flat=True))
-        available_names = [name for name in FACTORY_NAMES if f"Factory {name}" not in existing_names]
-
-        if not available_names:
-            base_name = random.choice(FACTORY_NAMES)
-            i = 1
-            while f"Factory {base_name} {i}" in existing_names:
-                i += 1
-            return f"Factory {base_name} {i}"
-
-        chosen_name = random.choice(available_names)
-        return f"Factory {chosen_name}"
 
     class Meta:
         verbose_name_plural = "Factories"
         constraints = [models.UniqueConstraint(fields=["team", "name"], name="unique_factory_name_per_team")]
+
+
+def generate_unique_factory_name(team: Team = None):
+    existing_names = set(Factory.objects.filter(team=team).values_list("name", flat=True))
+    available_names = [name for name in FACTORY_NAMES if f"Factory {name}" not in existing_names]
+
+    if not available_names:
+        base_name = random.choice(FACTORY_NAMES)
+        i = 1
+        while f"Factory {base_name} {i}" in existing_names:
+            i += 1
+        return f"Factory {base_name} {i}"
+
+    chosen_name = random.choice(available_names)
+    return f"Factory {chosen_name}"
 
 
 class Production(models.Model):

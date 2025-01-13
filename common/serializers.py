@@ -45,3 +45,9 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
         if not 0 <= value <= 5:
             raise serializers.ValidationError("Icon font must be between 0 and 5.")
         return value
+
+
+class StateVariableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StateVariable
+        fields = "__all__"

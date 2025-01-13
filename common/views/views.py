@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool, RippleTask, StateVariable
-from common.serializers import CompanyInfoSerializer
+from common.serializers import CompanyInfoSerializer, StateVariableSerializer
 from common.views import exceptions as common_exceptions
 from common.views.exceptions import GameLogicError
 from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
@@ -22,7 +22,7 @@ from contracts.views.views import ContractView
 from esg_reporting.views.services import enable_esg_reporting
 from esg_reporting.views.views import ESGReportingView
 from finance.models import FinancialAccount, Transaction
-from finance.views.services import new_loan
+from finance.views.services import create_transaction, new_loan
 from finance.views.views import FinanceView
 from people.models import CustomUser, Player, SimulationClass, Team
 from people.views.services import get_simulation_teams
@@ -37,6 +37,24 @@ from rd.views.views import RDView
 class IsInstructor(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.role == CustomUser.UserRoles.INSTRUCTOR
+
+
+@extend_schema_view(get=extend_schema(tags=["Quarter-Wise"]))
+class StateVariableView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    authentication_classes = [JWTAuthentication]
+    serializer_class = StateVariableSerializer
+
+    def get(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        state_variable = team.state_variables
+        serialized_state_variable = StateVariableSerializer(state_variable)
+        response = {"data": serialized_state_variable.data}
+        return Response(response, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
@@ -278,6 +296,22 @@ class FinishQuarter(APIView):
                     ripple_task=ripple_task,
                     ripple_tasks_to_update=tasks_to_update,
                 )
+            if ripple_task.type == RippleTask.TaskTypes.LOAN_REPAYMENT:
+                self._loan_repayment(
+                    ripple_task=ripple_task,
+                    team=team,
+                    current_quarter=current_quarter,
+                    ripple_tasks_to_update=tasks_to_update,
+                    ripple_tasks_to_delete=tasks_to_delete,
+                )
+            if ripple_task.type == RippleTask.TaskTypes.LOAN_INTEREST:
+                self._loan_interest(
+                    ripple_task=ripple_task,
+                    team=team,
+                    current_quarter=current_quarter,
+                    ripple_tasks_to_update=tasks_to_update,
+                    ripple_tasks_to_delete=tasks_to_delete,
+                )
 
         if dynamic_rd_objects_to_update:
             DynamicRD.objects.bulk_update(dynamic_rd_objects_to_update, ["time_spent_developing"])
@@ -299,6 +333,21 @@ class FinishQuarter(APIView):
             id=ripple_task.json_body["dynamic_rd_id"],
         )
         time_spent_developing = dynamic_rd_object.time_spent_developing
+        if time_spent_developing == 0:
+            products_blueprints_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, name=FinancialAccount.AccountNames.PRODUCTS_BLUEPRINTS
+            )
+            cash_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, name=FinancialAccount.AccountNames.CASH
+            )
+            pay_dynamic_rd_cost = create_transaction(
+                team=team,
+                quarter=ripple_task.run_at_quarter,
+                amount=dynamic_rd_object.development_cost,
+                category=Transaction.Categories.RESEARCH_PROJECTS,
+                debit_account=products_blueprints_account,
+                credit_account=cash_account,
+            )
         dynamic_rd_object.time_spent_developing = F("time_spent_developing") + 1
         dynamic_rd_objects_to_update.append(dynamic_rd_object)
 
@@ -387,13 +436,66 @@ class FinishQuarter(APIView):
         team.state_variables.save()
         team.state_variables.refresh_from_db()
 
+    def _loan_repayment(
+        self,
+        ripple_task: RippleTask,
+        team: Team,
+        current_quarter: int,
+        ripple_tasks_to_update: list[RippleTask],
+        ripple_tasks_to_delete: list[RippleTask],
+    ) -> None:
+        current_portion_of_loans_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount, name=FinancialAccount.AccountNames.CURRENT_PORTION_OF_LOANS_PAYABLE
+        )
+        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, name=FinancialAccount.AccountNames.CASH)
+        amount = ripple_task.json_body["amount"]
+        create_transaction(
+            team=team,
+            quarter=current_quarter,
+            amount=amount,
+            category=Transaction.Categories.LOAN_REPAYMENT,
+            debit_account=current_portion_of_loans_account,
+            credit_account=cash_account,
+        )
+        ripple_task.json_body["quarters_paid"] += 1
+        if ripple_task.json_body["quarters_paid"] == ripple_task.json_body["quarters_to_pay"]:
+            ripple_tasks_to_delete.append(ripple_task)
+        ripple_tasks_to_update.append(ripple_task)
+
+    def _loan_interest(
+        self,
+        ripple_task: RippleTask,
+        team: Team,
+        current_quarter: int,
+        ripple_tasks_to_update: list[RippleTask],
+        ripple_tasks_to_delete: list[RippleTask],
+    ) -> None:
+        interest_expenses_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount, name=FinancialAccount.AccountNames.INTEREST_EXPENSES
+        )
+        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, name=FinancialAccount.AccountNames.CASH)
+        amount = ripple_task.json_body["amount"]
+        create_transaction(
+            team=team,
+            quarter=current_quarter,
+            amount=amount,
+            category=Transaction.Categories.LOAN_INTEREST,
+            debit_account=interest_expenses_account,
+            credit_account=cash_account,
+        )
+        ripple_task.json_body["quarters_paid"] += 1
+        if ripple_task.json_body["quarters_paid"] == ripple_task.json_body["quarters_to_pay"]:
+            ripple_tasks_to_delete.append(ripple_task)
+        ripple_tasks_to_update
+
     def _generate_response(self, team: Team):
         if team.state_variables.quarter == team.state_variables.simulation_duration:
             response = {
                 "data": {
-                    "message": "simulation finished",
+                    "message": "Simulation is over!",
                     "current_quarter": team.state_variables.quarter,
                 }
             }
+            return response
         response = {"data": {"current_quarter": team.state_variables.quarter}}
         return response

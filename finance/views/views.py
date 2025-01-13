@@ -11,7 +11,7 @@ from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
 from finance.models import Loan
-from finance.serializer import LoanSerializer, NewLoanSerializer
+from finance.serializer import LoanSerializer, NewLoanSerializer, TransactionSerializer
 from people.models import CustomUser, Player, Team
 
 
@@ -33,12 +33,18 @@ class FinanceView(ViewSet):
     @action(methods=["get"], detail=False)
     def get_loans(self, request):
         user: CustomUser = request.user
-        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        player = get_db_record_select_prefetch_or_404(Player, user=user, prefetch_related_tables=["decision_pool"])
         team = player.team
+        current_quarter = team.state_variables.quarter
         loans = Loan.objects.filter(team=team)
         serialized_loans = LoanSerializer(loans, many=True)
+        decisions = team.decision_pool.filter(
+            team=team, endpoint=FinanceView.ENDPOINTS.NEW_LOAN, made_at_quarter=current_quarter
+        )
+        serialized_decisions = DecisionPoolSerializer(decisions, many=True)
         response = {
             "loans": serialized_loans.data,
+            "decisions": serialized_decisions.data,
         }
         return Response(response, status=status.HTTP_200_OK)
 
@@ -121,4 +127,21 @@ class FinanceView(ViewSet):
         response = {
             "data": {"message": "Loan application cancelled successfully", "canceled_loan": serialized_deleted_decision}
         }
+        return Response(response, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(get_transactions=extend_schema(tags=["Finance"], responses=TransactionSerializer(many=True)))
+class TransactionView(ViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    serializer_class = None
+
+    @action(methods=["get"], detail=False)
+    def get_transactions(self, request):
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team: Team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["rd"], id=player.team_id)
+        transactions = team.transactions.all()
+        serialized_transactions = TransactionSerializer(transactions, many=True)
+        response = {"data": serialized_transactions.data}
         return Response(response, status=status.HTTP_200_OK)

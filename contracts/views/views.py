@@ -30,6 +30,10 @@ from rd.views.services import get_available_rd_dynamics_at_next_quarter
         tags=["Contracts"],
         request=ContractsOrderSerializer,
     ),
+    get_contracts_order=extend_schema(
+        tags=["Contracts"],
+        responses=ContractsOrderSerializer,
+    ),
 )
 class ContractView(ViewSet):
     permission_classes = [
@@ -131,3 +135,20 @@ class ContractView(ViewSet):
                 json_body=json_body,
             )
         return decision
+
+    @action(detail=False, methods=["get"])
+    def get_contracts_order(self, request: Request):
+        user = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
+        decision = get_db_record_select_prefetch_or_404(
+            DecisionPool,
+            player=player,
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.SET_CONTRACTS_ORDER,
+        )
+        serialized_decision = DecisionPoolSerializer(decision)
+        response = {"data": {"decision": serialized_decision.data}}
+        return Response(response, status=status.HTTP_200_OK)

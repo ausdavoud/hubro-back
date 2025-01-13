@@ -14,7 +14,7 @@ from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
 from people.models import CustomUser, Player, Team
-from production.models import Factory
+from production.models import Factory, generate_unique_factory_name
 from production.serializers import (
     FactorySerializer,
     NewFactorySerializer,
@@ -22,6 +22,8 @@ from production.serializers import (
     SellFactorySerializer,
     SetActivityLevelSerializer,
 )
+from rd.models import DynamicRD
+from rd.serializers import DynamicRDSerializer
 
 
 @extend_schema_view(
@@ -30,7 +32,9 @@ from production.serializers import (
     cancel_new_factory=extend_schema(tags=["Production"]),
     sell_factory=extend_schema(tags=["Production"], request=SellFactorySerializer),
     cancel_sell_factory=extend_schema(tags=["Production"], request=SellFactorySerializer),
+    get_selected_product=extend_schema(tags=["Production"], responses=DynamicRDSerializer),
     select_product=extend_schema(tags=["Production"], request=SelectProductSerializer),
+    get_activity_level=extend_schema(tags=["Production"], responses=SetActivityLevelSerializer),
     set_activity_level=extend_schema(tags=["Production"], request=SetActivityLevelSerializer),
 )
 class ProductionView(ViewSet):
@@ -42,17 +46,21 @@ class ProductionView(ViewSet):
         GET_FACTORY = "production/get_factories"
         NEW_FACTORY = "production/new_factory"
         SELL_FACTORY = "production/sell_factory"
+        GET_SELECTED_PRODUCT = "production/get_selected_product"
         SELECT_PRODUCT = "production/select_product"
+        GET_ACTIVITY_LEVEL = "production/get_activity_level"
         SET_ACTIVITY_LEVEL = "production/set_activity_level"
 
     @action(["GET"], detail=False)
     def get_factories(self, request: Request) -> Response:
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team = player.team
+        team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["decision_pool"], id=player.team_id)
         factories = Factory.objects.filter(team=team)
         serialized_factories = FactorySerializer(factories, many=True)
-        response = {"data": serialized_factories.data}
+        decisions = team.decision_pool.filter(endpoint=ProductionView.ENDPOINTS.NEW_FACTORY)
+        serialized_decisions = DecisionPoolSerializer(decisions, many=True)
+        response = {"data": {"factories": serialized_factories.data, "decisions": serialized_decisions.data}}
         return Response(response, status=status.HTTP_200_OK)
 
     @action(["POST"], detail=False)
@@ -62,6 +70,7 @@ class ProductionView(ViewSet):
         team = player.team
         current_quarter: int = team.state_variables.quarter
         json_body = self._get_new_factory_json_body(request.data)
+        json_body["factory_name"] = generate_unique_factory_name(team=team)
 
         decision = self._create_new_factory_decision(
             player=player,
@@ -211,6 +220,28 @@ class ProductionView(ViewSet):
                 DecisionPool, context={"endpoint": self.ENDPOINTS.SELL_FACTORY}
             )
 
+    @action(["GET"], detail=False)
+    def get_selected_product(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
+        decision: DecisionPool = get_db_record_select_prefetch_or_404(
+            DecisionPool,
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.SELECT_PRODUCT,
+        )
+        product_id = decision.json_body["product_id"]
+        selected_product = get_db_record_select_prefetch_or_404(DynamicRD, pk=product_id)
+        serialized_product = DynamicRDSerializer(selected_product)
+        response = {
+            "data": {
+                "selected_product": serialized_product.data,
+            }
+        }
+        return Response(response, status=status.HTTP_200_OK)
+
     @action(["POST"], detail=False)
     def select_product(self, request: Request) -> Response:
         user: CustomUser = request.user
@@ -256,6 +287,21 @@ class ProductionView(ViewSet):
             decision.json_body["product_id"] = json_body["product_id"]
             decision.save()
         return decision
+
+    @action(methods=["GET"], detail=False)
+    def get_activity_level(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.state_variables.quarter
+        decision: DecisionPool = team.decision_pool.filter(
+            team=team,
+            made_at_quarter=current_quarter,
+            endpoint=self.ENDPOINTS.SET_ACTIVITY_LEVEL,
+        )
+        serialized_decision = DecisionPoolSerializer(decision, many=True)
+        response = {"data": {"decisions": serialized_decision.data}}
+        return Response(response, status=status.HTTP_200_OK)
 
     @action(["POST"], detail=False)
     def set_activity_level(self, request: Request) -> Response:
