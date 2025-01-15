@@ -119,6 +119,7 @@ def delete_previous_simulation_data(player: Player):
     # Delete old data
     if team:
         if team.simulation_class:
+            team.simulation_class.teams.filter(team_type=Team.TeamType.BOT).delete()
             team.simulation_class.delete()
         team.delete()
 

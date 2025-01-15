@@ -111,7 +111,7 @@ class Team(models.Model):
         BOT = "BO", "Bot"
 
     name = models.CharField(max_length=50)
-    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.SET_NULL, null=True)
+    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.SET_NULL, null=True, related_name='teams')
     team_type = models.CharField(max_length=2, choices=TeamType.choices, default=TeamType.PLAYER)
 
     created_at = models.DateTimeField(auto_now_add=True)
