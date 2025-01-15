@@ -7,7 +7,6 @@ from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_select_prefetch_or_404
 from finance.models import FinancialAccount, Transaction
 from finance.serializer import TransactionSerializer
-from finance.views.services import get_financial_account_or_404
 from people.models import Team
 from production.models import Factory, Production
 from production.serializers import FactorySerializer, ProductionSerializer
@@ -87,9 +86,10 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
             elif factory.ownership == Factory.OwnershipTypes.OWNED:
                 sale_amount = Decimal(factory.resale_value_percent * factory.build_cost)
                 loss_amount = Decimal(factory.build_cost - sale_amount)
-                factories_account = get_financial_account_or_404(FinancialAccount.AccountNames.FACTORIES)
-                loss_on_sale_of_assets_account = get_financial_account_or_404(
-                    FinancialAccount.AccountNames.LOSS_ON_SALE_OF_ASSETS
+                factories_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountNames.FACTORIES)
+                loss_on_sale_of_assets_account = get_db_record_select_prefetch_or_404(
+                    FinancialAccount,
+                    code=FinancialAccount.AccountNames.LOSS_ON_SALE_OF_ASSETS
                 )
                 loss_credit_transaction = Transaction.objects.create(
                     team=team,
@@ -109,7 +109,7 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
                     financial_account=loss_on_sale_of_assets_account,
                 )
 
-                cash_account = get_financial_account_or_404(FinancialAccount.AccountNames.CASH)
+                cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountNames.CASH)
                 sale_credit_transaction = Transaction.objects.create(
                     team=team,
                     category=Transaction.Categories.SOLD_FACTORIES,

@@ -19,6 +19,6 @@ class Command(BaseCommand):
                 self.stderr.write(f"{index + 1:2}. Found multiple records with name: {financial_account_dict['name']}")
                 continue
             if created:
-                self.stdout.write(f"{index + 1:2}. Added record with name: {financial_account_obj.name}")
+                self.stdout.write(f"{index + 1:2}. Added record with name: {financial_account_obj.code}")
                 continue
-            self.stderr.write(f"{index + 1:2}. Found record with name: {financial_account_obj.name}")
+            self.stderr.write(f"{index + 1:2}. Found record with name: {financial_account_obj.code}")

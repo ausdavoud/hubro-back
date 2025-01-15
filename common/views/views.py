@@ -335,10 +335,10 @@ class FinishQuarter(APIView):
         time_spent_developing = dynamic_rd_object.time_spent_developing
         if time_spent_developing == 0:
             products_blueprints_account = get_db_record_select_prefetch_or_404(
-                FinancialAccount, name=FinancialAccount.AccountNames.PRODUCTS_BLUEPRINTS
+                FinancialAccount, code=FinancialAccount.AccountNames.PRODUCTS_BLUEPRINTS
             )
             cash_account = get_db_record_select_prefetch_or_404(
-                FinancialAccount, name=FinancialAccount.AccountNames.CASH
+                FinancialAccount, code=FinancialAccount.AccountNames.CASH
             )
             pay_dynamic_rd_cost = create_transaction(
                 team=team,
@@ -396,12 +396,12 @@ class FinishQuarter(APIView):
                 # finding cash account
                 cash_account = get_db_record_select_prefetch_or_404(
                     FinancialAccount,
-                    name=FinancialAccount.AccountNames.CASH,
+                    code=FinancialAccount.AccountNames.CASH,
                 )
                 # finding marketing account
                 promotion_account = get_db_record_select_prefetch_or_404(
                     FinancialAccount,
-                    name=FinancialAccount.AccountNames.PROMOTION,
+                    code=FinancialAccount.AccountNames.PROMOTION,
                 )
 
                 credit_transaction = Transaction.objects.create(
@@ -445,9 +445,9 @@ class FinishQuarter(APIView):
         ripple_tasks_to_delete: list[RippleTask],
     ) -> None:
         current_portion_of_loans_account = get_db_record_select_prefetch_or_404(
-            FinancialAccount, name=FinancialAccount.AccountNames.CURRENT_PORTION_OF_LOANS_PAYABLE
+            FinancialAccount, code=FinancialAccount.AccountNames.CURRENT_PORTION_OF_LOANS_PAYABLE
         )
-        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, name=FinancialAccount.AccountNames.CASH)
+        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountNames.CASH)
         amount = ripple_task.json_body["amount"]
         create_transaction(
             team=team,
@@ -471,9 +471,9 @@ class FinishQuarter(APIView):
         ripple_tasks_to_delete: list[RippleTask],
     ) -> None:
         interest_expenses_account = get_db_record_select_prefetch_or_404(
-            FinancialAccount, name=FinancialAccount.AccountNames.INTEREST_EXPENSES
+            FinancialAccount, code=FinancialAccount.AccountNames.INTEREST_EXPENSES
         )
-        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, name=FinancialAccount.AccountNames.CASH)
+        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountNames.CASH)
         amount = ripple_task.json_body["amount"]
         create_transaction(
             team=team,

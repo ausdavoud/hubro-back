@@ -49,16 +49,9 @@ class RDView(ViewSet):
             many=True,
             context={"current_quarter": current_quarter, "previous_rd_items": previous_rd_items},
         )
-        decisions: list[DecisionPool] | None = team.decision_pool.filter(
-            team=team, endpoint=RDView.ENDPOINTS.START_RD, made_at_quarter=current_quarter
-        )
-        serialized_decisions = DecisionPoolSerializer(decisions, many=True)
-
         # Data for decisions can easily be accessed via checking the state of the whole data
         response = {
-            "data": {
-                serialized_rd.data,
-            }
+            "data": serialized_rd.data,
         }
         return Response(
             response,

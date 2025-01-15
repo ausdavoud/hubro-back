@@ -20,8 +20,8 @@ superusers = [
     {
         "email": "dvin@gmail.com",
         "password": "11111111",
-        "role": CustomUser.UserRoles.PLAYER
-    }
+        "role": CustomUser.UserRoles.PLAYER,
+    },
 ]
 
 

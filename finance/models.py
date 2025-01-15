@@ -32,7 +32,7 @@ class FinancialAccount(models.Model):
         DEBIT = "DE", "Debit"
         CREDIT = "CR", "Credit"
 
-    name = models.IntegerField(choices=AccountNames.choices)
+    code = models.IntegerField(choices=AccountNames.choices)
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
 
     def __str__(self):
