@@ -48,6 +48,10 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
 
 
 class StateVariableSerializer(serializers.ModelSerializer):
+    simulation_name = serializers.SerializerMethodField()
     class Meta:
         model = StateVariable
         fields = "__all__"
+
+    def get_simulation_name(self, obj: StateVariable):
+        return obj.team.simulation_class.name

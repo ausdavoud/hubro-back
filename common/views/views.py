@@ -170,7 +170,7 @@ class FinishQuarter(APIView):
         )
 
         # Process Team's decisions
-        decisions = DecisionPool.objects.filter(team=team)
+        decisions = DecisionPool.objects.filter(team=team, made_at_quarter=current_quarter)
         decision_states = [self._process_decision(team=team, decision=decision) for decision in decisions]
 
         # calculate each production's produced quantity
