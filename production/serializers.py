@@ -5,7 +5,9 @@ from production.models import Factory, Production
 
 
 class FactorySerializer(serializers.ModelSerializer):
-    is_finished = serializers.BooleanField(default=True)
+    # is_new shows if the factory is a decision (true) 
+    # or has been created successfully (false)
+    is_new = serializers.BooleanField(default=False)
 
     class Meta:
         model = Factory

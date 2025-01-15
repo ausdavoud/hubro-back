@@ -18,6 +18,7 @@ class NewLoanSerializer(serializers.ModelSerializer):
 
 
 class LoanSerializer(serializers.ModelSerializer):
+    is_new = serializers.BooleanField(default=False)
     class Meta:
         model = Loan
         fields = "__all__"

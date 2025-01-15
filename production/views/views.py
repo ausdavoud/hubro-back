@@ -68,7 +68,7 @@ class ProductionView(ViewSet):
         for factory in serialized_decisions.data:
             factory["json_body"]["name"] = factory["json_body"]["factory_name"]
             del factory["json_body"]["factory_name"]
-            factory["json_body"]["is_finished"] = False
+            factory["json_body"]["is_new"] = True
             serialized_json_body.append(factory["json_body"])
         serialized_factories = serialized_json_body + serialized_factories.data
         response = {

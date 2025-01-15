@@ -42,9 +42,15 @@ class FinanceView(ViewSet):
             team=team, endpoint=FinanceView.ENDPOINTS.NEW_LOAN, made_at_quarter=current_quarter
         )
         serialized_decisions = DecisionPoolSerializer(decisions, many=True)
+                # Include decisions inside the response
+        serialized_json_body = []
+        for loan in serialized_decisions.data:
+            loan["json_body"]["is_new"] = True
+            loan["json_body"]["issued_quarter"] = loan["made_at_quarter"]
+            serialized_json_body.append(loan["json_body"])
+        serialized_loans = serialized_json_body + serialized_loans.data
         response = {
-            "loans": serialized_loans.data,
-            "decisions": serialized_decisions.data,
+            "loans": serialized_loans,
         }
         return Response(response, status=status.HTTP_200_OK)
 
