@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from finance.models import Loan, Transaction
+from finance.models import FinancialAccount, Loan, Transaction
 
 
 class NewLoanSerializer(serializers.ModelSerializer):
@@ -22,8 +22,18 @@ class LoanSerializer(serializers.ModelSerializer):
         model = Loan
         fields = "__all__"
 
+class FinancialAcountSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FinancialAccount
+        fields = "__all__"
+
+    def get_display_name(self, obj):
+        return obj.get_code_display()
 
 class TransactionSerializer(serializers.ModelSerializer):
+    financial_account = FinancialAcountSerializer()
     class Meta:
         model = Transaction
         fields = "__all__"

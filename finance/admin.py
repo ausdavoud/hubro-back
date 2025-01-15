@@ -4,7 +4,7 @@ from finance.models import CashChange, FinancialAccount, Loan, Overdraft, Repaym
 
 
 class FinancialAccountAdmin(admin.ModelAdmin):
-    list_display = ["id", "name", "type"]
+    list_display = ["id", "code", "type"]
 
 
 class TransactionAdmin(admin.ModelAdmin):

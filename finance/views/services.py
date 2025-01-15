@@ -9,16 +9,10 @@ from ahmad.financials import (
 )
 from common.models import DecisionPool, RippleTask
 from common.views import exceptions as common_exceptions
+from common.views.services import get_db_record_select_prefetch_or_404
 from finance.models import FinancialAccount, Loan, Transaction
 from finance.serializer import LoanSerializer, TransactionSerializer
 from people.models import Team
-
-
-def get_financial_account_or_404(account_name: str):
-    try:
-        return FinancialAccount.objects.get(name=account_name)
-    except FinancialAccount.DoesNotExist:
-        raise common_exceptions.DatabaseRecordNotFound(f"Account {account_name} does not exist")
 
 
 def create_transaction(
@@ -65,10 +59,10 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
     amount_decimal = Decimal(amount_str)
     payback_period = int(json_body["payback_period"])
 
-    long_term_notes_payable_account = get_financial_account_or_404(
-        account_name=FinancialAccount.AccountNames.LONG_TERM_NOTES_PAYABLE
+    long_term_notes_payable_account = get_db_record_select_prefetch_or_404(FinancialAccount,
+        code=FinancialAccount.AccountNames.LONG_TERM_NOTES_PAYABLE
     )
-    cash_account = get_financial_account_or_404(account_name=FinancialAccount.AccountNames.CASH)
+    cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountNames.CASH)
 
     try:
         interest = calculate_interest(
