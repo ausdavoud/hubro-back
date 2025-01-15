@@ -5,6 +5,8 @@ from production.models import Factory, Production
 
 
 class FactorySerializer(serializers.ModelSerializer):
+    is_finished = serializers.BooleanField(default=True)
+
     class Meta:
         model = Factory
         fields = "__all__"

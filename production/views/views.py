@@ -58,9 +58,22 @@ class ProductionView(ViewSet):
         team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["decision_pool"], id=player.team_id)
         factories = Factory.objects.filter(team=team)
         serialized_factories = FactorySerializer(factories, many=True)
-        decisions = team.decision_pool.filter(endpoint=ProductionView.ENDPOINTS.NEW_FACTORY)
+        decisions = team.decision_pool.filter(
+            endpoint=ProductionView.ENDPOINTS.NEW_FACTORY, made_at_quarter=team.state_variables.quarter
+        )
         serialized_decisions = DecisionPoolSerializer(decisions, many=True)
-        response = {"data": {"factories": serialized_factories.data, "decisions": serialized_decisions.data}}
+
+        # Include decisions inside the response
+        serialized_json_body = []
+        for factory in serialized_decisions.data:
+            factory["json_body"]["name"] = factory["json_body"]["factory_name"]
+            del factory["json_body"]["factory_name"]
+            factory["json_body"]["is_finished"] = False
+            serialized_json_body.append(factory["json_body"])
+        serialized_factories = serialized_json_body + serialized_factories.data
+        response = {
+            "data": serialized_factories,
+        }
         return Response(response, status=status.HTTP_200_OK)
 
     @action(["POST"], detail=False)
