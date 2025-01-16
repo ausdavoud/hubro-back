@@ -178,7 +178,7 @@ class FinishQuarter(APIView):
                     "current_quarter": team.state_variables.quarter,
                 }
             }
-            return Response(response, status=status.HTTP_200_OK)
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
         # Process Team's decisions
         decisions = DecisionPool.objects.filter(team=team, made_at_quarter=current_quarter)
