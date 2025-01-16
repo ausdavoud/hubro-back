@@ -170,6 +170,16 @@ class FinishQuarter(APIView):
             Team, prefetch_related_tables=[prefetch_decision_pool], id=player.team.id
         )
 
+        # Check if it is the last quarter
+        if team.state_variables.quarter == team.state_variables.simulation_duration:
+            response = {
+                "data": {
+                    "message": "Simulation is over!",
+                    "current_quarter": team.state_variables.quarter,
+                }
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
         # Process Team's decisions
         decisions = DecisionPool.objects.filter(team=team, made_at_quarter=current_quarter)
         decision_states = [self._process_decision(team=team, decision=decision) for decision in decisions]
