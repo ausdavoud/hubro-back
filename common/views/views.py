@@ -119,6 +119,7 @@ def delete_previous_simulation_data(player: Player):
     # Delete old data
     if team:
         if team.simulation_class:
+            team.simulation_class.teams.filter(team_type=Team.TeamType.BOT).delete()
             team.simulation_class.delete()
         team.delete()
 
@@ -168,6 +169,16 @@ class FinishQuarter(APIView):
         team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=[prefetch_decision_pool], id=player.team.id
         )
+
+        # Check if it is the last quarter
+        if team.state_variables.quarter == team.state_variables.simulation_duration:
+            response = {
+                "data": {
+                    "message": "Simulation is over!",
+                    "current_quarter": team.state_variables.quarter,
+                }
+            }
+            return Response(response, status=status.HTTP_200_OK)
 
         # Process Team's decisions
         decisions = DecisionPool.objects.filter(team=team, made_at_quarter=current_quarter)
