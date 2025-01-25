@@ -6,6 +6,10 @@ from common.management.data_fixtures import FACTORY_NAMES
 from people.models import Team
 from rd.models import DynamicRD
 
+# factory_string_en = 'Factory'
+# unused for now
+factory_string_fa = 'کارخانه'
+
 
 class Factory(models.Model):
     class OwnershipTypes(models.TextChoices):
@@ -50,17 +54,17 @@ class Factory(models.Model):
 
 def generate_unique_factory_name(team: Team = None):
     existing_names = set(Factory.objects.filter(team=team).values_list("name", flat=True))
-    available_names = [name for name in FACTORY_NAMES if f"Factory {name}" not in existing_names]
+    available_names = [name for name in FACTORY_NAMES if f"{factory_string_fa} {name}" not in existing_names]
 
     if not available_names:
         base_name = random.choice(FACTORY_NAMES)
         i = 1
-        while f"Factory {base_name} {i}" in existing_names:
+        while f"{factory_string_fa} {base_name} {i}" in existing_names:
             i += 1
-        return f"Factory {base_name} {i}"
+        return f"{factory_string_fa} {base_name} {i}"
 
     chosen_name = random.choice(available_names)
-    return f"Factory {chosen_name}"
+    return f"{factory_string_fa} {chosen_name}"
 
 
 class Production(models.Model):

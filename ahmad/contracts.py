@@ -150,12 +150,15 @@ def generate_payment_delays(quarter: int, contract_count: int):
 
     return payment_delays
 
+def create_price_range_list(min_price: int | float, max_price: int | float, num_contracts: int | float) -> list[int]:
+    min_price = int(min_price)
+    max_price = int(max_price)
+    num_contracts = int(num_contracts)
 
-def create_price_range_list(min_price: int, max_price: int, num_contracts: int) -> list[int]:
     if min_price > max_price:
         raise ValueError("Start value must be less than or equal to end value")
-    return [random.randint(min_price, max_price) for _ in range(num_contracts)]
 
+    return [random.randint(min_price, max_price) for _ in range(num_contracts)]
 
 def create_esg_range_list(max_esg: int, num_contracts: int) -> list[int]:
     ESG_RANGE = 6

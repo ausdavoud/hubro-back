@@ -154,7 +154,7 @@ def assign_contracts_to_teams(teams: list[Team], current_quarter: int) -> dict[i
             eligible_teams,
             key=lambda t: (
                 team_loads[contract.deliverable_product][t],
-                -0.1 * t.state_variables.esg_index - 0.9 * t.state_variables.marketing_budget,
+                Decimal(-0.1 * t.state_variables.esg_index) - Decimal(0.9) * t.state_variables.marketing_budget,
             ),
         )
 
