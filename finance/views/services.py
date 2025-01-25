@@ -59,10 +59,10 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
     amount_decimal = Decimal(amount_str)
     payback_period = int(json_body["payback_period"])
 
-    long_term_notes_payable_account = get_db_record_select_prefetch_or_404(FinancialAccount,
-        code=FinancialAccount.AccountNames.LONG_TERM_NOTES_PAYABLE
+    long_term_notes_payable_account = get_db_record_select_prefetch_or_404(
+        FinancialAccount, code=FinancialAccount.AccountCodes.LONG_TERM_NOTES_PAYABLE
     )
-    cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountNames.CASH)
+    cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountCodes.CASH)
 
     try:
         interest = calculate_interest(
