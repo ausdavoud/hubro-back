@@ -36,6 +36,7 @@ class FinancialAccount(models.Model):
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
 
     def __str__(self):
+        return ""
         return self.get_name_display()
 
 

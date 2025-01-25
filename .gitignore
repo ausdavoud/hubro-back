@@ -5,3 +5,4 @@ db
 venv
 *.pyc
 .env
+**/*/000*.py
