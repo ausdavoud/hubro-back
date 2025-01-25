@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
@@ -42,7 +44,7 @@ class FinanceView(ViewSet):
             team=team, endpoint=FinanceView.ENDPOINTS.NEW_LOAN, made_at_quarter=current_quarter
         )
         serialized_decisions = DecisionPoolSerializer(decisions, many=True)
-                # Include decisions inside the response
+        # Include decisions inside the response
         serialized_json_body = []
         for loan in serialized_decisions.data:
             loan["json_body"]["is_new"] = True
@@ -151,3 +153,12 @@ class TransactionView(ViewSet):
         serialized_transactions = TransactionSerializer(transactions, many=True)
         response = {"data": serialized_transactions.data}
         return Response(response, status=status.HTTP_200_OK)
+
+    def _group_transactions_by_quarter(
+        self, transactions: list[TransactionSerializer]
+    ) -> dict[int, list[TransactionSerializer]]:
+        """Group transactions by quarter."""
+        grouped_transactions = defaultdict(list)
+        for transaction in transactions:
+            grouped_transactions[transaction["quarter"]].append(transaction)
+        return grouped_transactions
