@@ -57,7 +57,7 @@ def new_factory(team: Team, decision: DecisionPool):
     factory = Factory.objects.create(
         team=team, name=factory_name, built_at_quarter=built_at_quarter, **factories[ownership]
     )
-    serialized_factory = FactorySerializer(factory)
+    serialized_factory = FactorySerializer(factory, context={"team": team})
     return {"factory": serialized_factory.data}
 
 
@@ -79,7 +79,7 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
             ).delete()
 
             if factory.ownership == Factory.OwnershipTypes.RENTED:
-                serialized_factory_data = FactorySerializer(factory).data
+                serialized_factory_data = FactorySerializer(factory, context={"team": team}).data
                 factory.delete()
                 return serialized_factory_data
 
