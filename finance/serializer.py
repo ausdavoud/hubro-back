@@ -11,8 +11,8 @@ class NewLoanSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs["payback_period"] not in [4, 8, 12, 16]:
             raise serializers.ValidationError("Payback period must be 4, 8, 12 or 16")
-        if attrs["amount"] > 100_000_000:  # Cents, not Dollars
-            raise serializers.ValidationError("Amount must be less than 100_000_000")
+        if not 200_000_00 < attrs["amount"] < 2_000_000_00:  # Cents, not Dollars
+            raise serializers.ValidationError("Amount must be between $200,000 and $1,000,000.")
 
         return super().validate(attrs)
 
