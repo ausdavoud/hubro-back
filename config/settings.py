@@ -31,7 +31,7 @@ SECRET_KEY = getenv("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["hubro.divaresorkh.ir"]
 
 
 # Application definition
@@ -179,6 +179,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5173",
+    "https://hubro.divaresorkh.ir"
 ]
 
 CORS_ALLOWED_CREDENTIALS = True
