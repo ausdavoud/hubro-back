@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.db.models import Sum
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
@@ -12,7 +13,7 @@ from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
-from finance.models import Loan
+from finance.models import FinancialAccount, Loan, Transaction
 from finance.serializer import LoanSerializer, NewLoanSerializer, TransactionSerializer
 from people.models import CustomUser, Player, Team
 
@@ -138,7 +139,10 @@ class FinanceView(ViewSet):
         return Response(response, status=status.HTTP_200_OK)
 
 
-@extend_schema_view(get_transactions=extend_schema(tags=["Finance"], responses=TransactionSerializer(many=True)))
+@extend_schema_view(
+    get_transactions=extend_schema(tags=["Finance"], responses=TransactionSerializer(many=True)),
+    get_cash=extend_schema(tags=["Finance"]),
+)
 class TransactionView(ViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
@@ -151,7 +155,9 @@ class TransactionView(ViewSet):
         team: Team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["rd"], id=player.team_id)
         transactions = team.transactions.all()
         serialized_transactions = TransactionSerializer(transactions, many=True)
-        response = {"data": serialized_transactions.data}
+        grouped_transactions = self._group_transactions_by_quarter(serialized_transactions.data)
+        grouped_transactions = self._group_transactions_by_category(grouped_transactions)
+        response = {"data": grouped_transactions}
         return Response(response, status=status.HTTP_200_OK)
 
     def _group_transactions_by_quarter(
@@ -162,3 +168,55 @@ class TransactionView(ViewSet):
         for transaction in transactions:
             grouped_transactions[transaction["quarter"]].append(transaction)
         return grouped_transactions
+    
+    def _group_transactions_by_category(
+        self, transactions: list[TransactionSerializer]
+        ) -> dict[str, list[TransactionSerializer]]:
+        """Group transactions by category."""
+        grouped_transactions = defaultdict(lambda: defaultdict(list))
+        for quarter, transactions in transactions.items():
+            for transaction in transactions:
+                print(transaction)
+                grouped_transactions[quarter][transaction["category"]].append(transaction)
+        return grouped_transactions
+
+    @action(methods=["GET"], detail=False)
+    def get_cash(self, request):
+        """
+        If there is a cash-credit, it's an expense
+        If there is a cash-debit, it's an income.
+        """
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team: Team = get_db_record_select_prefetch_or_404(
+            Team, prefetch_related_tables=["transactions"], id=player.team_id
+        )
+        cash_flow = _get_cash_flow(team=team, current_quarter=team.state_variables.quarter)
+
+        response = {"data": {"cash": cash_flow}}
+        return Response(response, status=status.HTTP_200_OK)
+    
+
+def _get_cash_flow(team: Team, current_quarter: int):
+    """
+    If user asks for beginning cash of quarter 2, we need to check the
+    cash flow that happened at the end of quarter 1"""
+    cash_flow = {
+        1: 20000000
+    }
+
+    for quarter in range(1, current_quarter):
+        cash_financial_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+        )
+        get_incoming_cash = team.transactions.filter(
+            quarter=quarter, financial_account=cash_financial_account, credit_amount=0
+        ).aggregate(Sum("debit_amount"))
+        get_outgoing_cash = team.transactions.filter(
+            quarter=quarter , financial_account=cash_financial_account, debit_amount=0
+        ).aggregate(Sum("credit_amount"))
+        get_incoming_cash = get_incoming_cash["debit_amount__sum"] or 0
+        get_outgoing_cash = get_outgoing_cash["credit_amount__sum"] or 0
+        cash_flow[quarter + 1] = cash_flow[quarter] + get_incoming_cash - get_outgoing_cash
+    
+    return cash_flow

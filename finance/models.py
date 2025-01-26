@@ -4,7 +4,7 @@ from people.models import Team
 
 
 class FinancialAccount(models.Model):
-    class AccountNames(models.IntegerChoices):
+    class AccountCodes(models.IntegerChoices):
         DEPRECIATION_OF_FACTORIES = 6030, "Depreciation of factories"
         FACTORIES = 1121, "Factories"
         AMORTIZATION = 6040, "Amortization"
@@ -32,12 +32,11 @@ class FinancialAccount(models.Model):
         DEBIT = "DE", "Debit"
         CREDIT = "CR", "Credit"
 
-    code = models.IntegerField(choices=AccountNames.choices)
+    code = models.IntegerField(choices=AccountCodes.choices)
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
 
     def __str__(self):
-        return ""
-        return self.get_name_display()
+        return self.get_code_display()
 
 
 class Transaction(models.Model):

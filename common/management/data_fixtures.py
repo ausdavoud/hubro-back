@@ -257,79 +257,79 @@ STATIC_RD = [
 
 FINANCIAL_ACCOUNTS = [
     {
-        "code": FinancialAccount.AccountNames.DEPRECIATION_OF_FACTORIES,
+        "code": FinancialAccount.AccountCodes.DEPRECIATION_OF_FACTORIES,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.FACTORIES,
+        "code": FinancialAccount.AccountCodes.FACTORIES,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.AMORTIZATION,
+        "code": FinancialAccount.AccountCodes.AMORTIZATION,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.RESEARCHED_TECHNOLOGY,
+        "code": FinancialAccount.AccountCodes.RESEARCHED_TECHNOLOGY,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.DIRECT_LABOR,
+        "code": FinancialAccount.AccountCodes.DIRECT_LABOR,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.DIRECT_RAW_MATERIALS,
+        "code": FinancialAccount.AccountCodes.DIRECT_RAW_MATERIALS,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.FINISHED_GOODS_INVENTORY,
+        "code": FinancialAccount.AccountCodes.FINISHED_GOODS_INVENTORY,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.STORAGE,
+        "code": FinancialAccount.AccountCodes.STORAGE,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.CASH,
+        "code": FinancialAccount.AccountCodes.CASH,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.CURRENT_PORTION_OF_LOANS_PAYABLE,
+        "code": FinancialAccount.AccountCodes.CURRENT_PORTION_OF_LOANS_PAYABLE,
         "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
-        "code": FinancialAccount.AccountNames.INTEREST_EXPENSES,
+        "code": FinancialAccount.AccountCodes.INTEREST_EXPENSES,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.MAINTENANCE,
+        "code": FinancialAccount.AccountCodes.MAINTENANCE,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.PROMOTION,
+        "code": FinancialAccount.AccountCodes.PROMOTION,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.SALES,
+        "code": FinancialAccount.AccountCodes.SALES,
         "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
-        "code": FinancialAccount.AccountNames.OVERDRAFT,
+        "code": FinancialAccount.AccountCodes.OVERDRAFT,
         "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
-        "code": FinancialAccount.AccountNames.LONG_TERM_NOTES_PAYABLE,
+        "code": FinancialAccount.AccountCodes.LONG_TERM_NOTES_PAYABLE,
         "type": FinancialAccount.AccountTypes.CREDIT,
     },
     {
-        "code": FinancialAccount.AccountNames.RAW_MATERIAL_INVENTORY,
+        "code": FinancialAccount.AccountCodes.RAW_MATERIAL_INVENTORY,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.LOSS_ON_SALE_OF_ASSETS,
+        "code": FinancialAccount.AccountCodes.LOSS_ON_SALE_OF_ASSETS,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
     {
-        "code": FinancialAccount.AccountNames.PRODUCTS_BLUEPRINTS,
+        "code": FinancialAccount.AccountCodes.PRODUCTS_BLUEPRINTS,
         "type": FinancialAccount.AccountTypes.DEBIT,
     },
 ]
