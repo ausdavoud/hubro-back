@@ -35,5 +35,10 @@ class UserNotCreated(APIException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(self):
-        detail = {"error": {"code": ErrorCodes.USER_NOT_CREATED_CODE, "description": "User creation failed"}}
+        detail = {
+            "error": {
+                "code": ErrorCodes.USER_NOT_CREATED_CODE,
+                "description": "User creation failed",
+            }
+        }
         super().__init__(detail)

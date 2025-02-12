@@ -33,7 +33,9 @@ def generate_contract_data(
     contracts: list[ContractType] = []
     amounts = distribute_unevenly(demand, contracts_number)
     esg_indexes = create_esg_range_list(required_esg, contracts_number)
-    unit_prices = create_price_range_list(start_unit_price_range, end_unit_price_range, contracts_number)
+    unit_prices = create_price_range_list(
+        start_unit_price_range, end_unit_price_range, contracts_number
+    )
     payment_delays = generate_payment_delays(date, contracts_number)
     for i in range(contracts_number):
         contracts.append(
@@ -107,7 +109,9 @@ def distribute_unevenly(
         raise ValueError("Number of parts must be greater than 0")
     # Possible BUG. <= or <?
     if total_amount < num_parts * MIN_CONTRACT_AMOUNT:
-        raise ValueError(f"Total amount must be greater than {num_parts * MIN_CONTRACT_AMOUNT}")
+        raise ValueError(
+            f"Total amount must be greater than {num_parts * MIN_CONTRACT_AMOUNT}"
+        )
 
     parts = [MIN_CONTRACT_AMOUNT] * num_parts
     remaining = total_amount - sum(parts)
@@ -133,7 +137,11 @@ def generate_payment_delays(quarter: int, contract_count: int):
     max_delay_quarters = (
         MAX_DELAY_QUARTERS_Q1_Q3
         if quarter < QUARTER_4
-        else (MAX_DELAY_QUARTERS_Q4_Q6 if quarter < QUARTER_7 else MAX_DELAY_QUARTERS_Q7_PLUS)
+        else (
+            MAX_DELAY_QUARTERS_Q4_Q6
+            if quarter < QUARTER_7
+            else MAX_DELAY_QUARTERS_Q7_PLUS
+        )
     )
     payment_delays = [0] * contract_count
 
@@ -143,14 +151,19 @@ def generate_payment_delays(quarter: int, contract_count: int):
     if quarter < QUARTER_7:
         delayed_contract_count = random.randint(1, MAX_DELAYED_CONTRACTS_Q1_Q6)
     elif quarter >= QUARTER_7:
-        delayed_contract_count = random.randint(1, MAX_DELAYED_CONTRACTS_Q7_PLUS)
+        delayed_contract_count = random.randint(
+            1, MAX_DELAYED_CONTRACTS_Q7_PLUS
+        )
 
     for i in range(delayed_contract_count):
         payment_delays[i] = random.randint(1, max_delay_quarters)
 
     return payment_delays
 
-def create_price_range_list(min_price: int | float, max_price: int | float, num_contracts: int | float) -> list[int]:
+
+def create_price_range_list(
+    min_price: int | float, max_price: int | float, num_contracts: int | float
+) -> list[int]:
     min_price = int(min_price)
     max_price = int(max_price)
     num_contracts = int(num_contracts)
@@ -159,6 +172,7 @@ def create_price_range_list(min_price: int | float, max_price: int | float, num_
         raise ValueError("Start value must be less than or equal to end value")
 
     return [random.randint(min_price, max_price) for _ in range(num_contracts)]
+
 
 def create_esg_range_list(max_esg: int, num_contracts: int) -> list[int]:
     ESG_RANGE = 6

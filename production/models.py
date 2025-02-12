@@ -8,7 +8,7 @@ from rd.models import DynamicRD
 
 # factory_string_en = 'Factory'
 # unused for now
-factory_string_fa = 'کارخانه'
+factory_string_fa = "کارخانه"
 
 
 class Factory(models.Model):
@@ -23,9 +23,13 @@ class Factory(models.Model):
     output_per_quarter = models.IntegerField()
     build_cost = models.DecimalField(max_digits=15, decimal_places=0)
     setup_time = models.IntegerField()
-    outsourcing_fee_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
+    outsourcing_fee_per_unit = models.DecimalField(
+        max_digits=15, decimal_places=0
+    )
     labor_cost_per_unit = models.DecimalField(max_digits=15, decimal_places=0)
-    maintenance_cost_per_quarter = models.DecimalField(max_digits=15, decimal_places=0)
+    maintenance_cost_per_quarter = models.DecimalField(
+        max_digits=15, decimal_places=0
+    )
     resale_value_percent = models.DecimalField(max_digits=5, decimal_places=2)
     emissions_per_unit = models.DecimalField(max_digits=5, decimal_places=2)
     depreciation_time = models.IntegerField()
@@ -49,12 +53,22 @@ class Factory(models.Model):
 
     class Meta:
         verbose_name_plural = "Factories"
-        constraints = [models.UniqueConstraint(fields=["team", "name"], name="unique_factory_name_per_team")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["team", "name"], name="unique_factory_name_per_team"
+            )
+        ]
 
 
 def generate_unique_factory_name(team: Team = None):
-    existing_names = set(Factory.objects.filter(team=team).values_list("name", flat=True))
-    available_names = [name for name in FACTORY_NAMES if f"{factory_string_fa} {name}" not in existing_names]
+    existing_names = set(
+        Factory.objects.filter(team=team).values_list("name", flat=True)
+    )
+    available_names = [
+        name
+        for name in FACTORY_NAMES
+        if f"{factory_string_fa} {name}" not in existing_names
+    ]
 
     if not available_names:
         base_name = random.choice(FACTORY_NAMES)
@@ -68,11 +82,15 @@ def generate_unique_factory_name(team: Team = None):
 
 
 class Production(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="productions")
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, related_name="productions"
+    )
     product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     factory = models.ForeignKey(Factory, on_delete=models.CASCADE)
     quarter = models.IntegerField()
-    activity_level = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    activity_level = models.DecimalField(
+        max_digits=5, decimal_places=2, default=100
+    )
     produced_quantity = models.IntegerField()
     labor_cost = models.DecimalField(max_digits=15, decimal_places=0)
 
@@ -84,7 +102,9 @@ class Production(models.Model):
 
 
 class Storage(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="storages")
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, related_name="storages"
+    )
     product = models.ForeignKey(DynamicRD, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
 

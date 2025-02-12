@@ -53,16 +53,24 @@ class Command(BaseCommand):
     def cerate_super_users(self, superusers):
         for superuser_dict in superusers:
             try:
-                superuser_obj = CustomUser.objects.create_superuser(**superuser_dict)
-                self.stdout.write(f"Created superuser {superuser_obj.email} as {superuser_dict['role']}")
+                superuser_obj = CustomUser.objects.create_superuser(
+                    **superuser_dict
+                )
+                self.stdout.write(
+                    f"Created superuser {superuser_obj.email} as {superuser_dict['role']}"
+                )
             except IntegrityError:
-                self.stderr.write(f"Superuser {superuser_dict['email']} already exists")
+                self.stderr.write(
+                    f"Superuser {superuser_dict['email']} already exists"
+                )
 
     def create_users(self, users):
         for user_dict in users:
             try:
                 user_obj = CustomUser.objects.create_user(**user_dict)
-                self.stdout.write(f"Created user {user_obj.email} as {user_dict['role']} ")
+                self.stdout.write(
+                    f"Created user {user_obj.email} as {user_dict['role']} "
+                )
             except IntegrityError:
                 self.stderr.write(f"User {user_dict['email']} already exists")
 
@@ -75,14 +83,22 @@ class Command(BaseCommand):
                 self.stderr.write(f"Simulation class {name} already exists")
                 continue
 
-            instructor_obj = Instructor.objects.filter(user__email=instructor_email).first()
+            instructor_obj = Instructor.objects.filter(
+                user__email=instructor_email
+            ).first()
 
             if not instructor_obj:
-                self.stderr.write(f"No instructor {instructor_email} for simulation class {name} was found")
+                self.stderr.write(
+                    f"No instructor {instructor_email} for simulation class {name} was found"
+                )
                 continue
 
-            simulation_class_obj = SimulationClass.objects.create(name=name, instructor=instructor_obj)
-            self.stdout.write(f"Simulation class {simulation_class_obj.name} was created")
+            simulation_class_obj = SimulationClass.objects.create(
+                name=name, instructor=instructor_obj
+            )
+            self.stdout.write(
+                f"Simulation class {simulation_class_obj.name} was created"
+            )
 
     def create_teams(self, teams):
         for team_dict in teams:
@@ -93,13 +109,19 @@ class Command(BaseCommand):
                 self.stderr.write(f"Team {name} already exists")
                 continue
 
-            simulation_class_obj = SimulationClass.objects.filter(name=simulation_class_name).first()
+            simulation_class_obj = SimulationClass.objects.filter(
+                name=simulation_class_name
+            ).first()
 
             if not simulation_class_obj:
-                self.stderr.write(f"No simulation class {simulation_class_name} for team {name} was found")
+                self.stderr.write(
+                    f"No simulation class {simulation_class_name} for team {name} was found"
+                )
                 continue
 
-            team_obj = Team.objects.create(name=name, simulation_class=simulation_class_obj)
+            team_obj = Team.objects.create(
+                name=name, simulation_class=simulation_class_obj
+            )
             self.stdout.write(f"Team {team_obj.name} was created")
 
     def assign_team_to_players(self, players):
@@ -110,7 +132,9 @@ class Command(BaseCommand):
             player_obj = Player.objects.filter(user__email=email).first()
             team_obj = Team.objects.filter(name=team_name).first()
 
-            if Player.objects.filter(user__email=email, team=team_obj).exists():
+            if Player.objects.filter(
+                user__email=email, team=team_obj
+            ).exists():
                 self.stderr.write(f"Player {email} already exists")
                 continue
             if not player_obj:
@@ -122,7 +146,9 @@ class Command(BaseCommand):
 
             player_obj.team = team_obj
             player_obj.save()
-            self.stdout.write(f"Player {player_obj.user.email} was added to team {team_obj.name}")
+            self.stdout.write(
+                f"Player {player_obj.user.email} was added to team {team_obj.name}"
+            )
 
     def create_contracts(self):
         for JETPACK_CONTRACT in [
@@ -146,9 +172,13 @@ class Command(BaseCommand):
                     JETPACK_CONTRACT[current_quarter]["required_esg_index"],
                     JETPACK_CONTRACT["product_type"],
                 )
-                contracts_objs = [Contract(**contract) for contract in contracts]
+                contracts_objs = [
+                    Contract(**contract) for contract in contracts
+                ]
                 contracts = Contract.objects.bulk_create(contracts_objs)
-                self.stdout.write(f"Created {len(contracts)} contracts at quarter {current_quarter}")
+                self.stdout.write(
+                    f"Created {len(contracts)} contracts at quarter {current_quarter}"
+                )
 
     def start_research_for_rd_items(self, dynamic_rd):
         for dynamic_rd_dict in dynamic_rd:
@@ -167,13 +197,21 @@ class Command(BaseCommand):
             chassis_color = dynamic_rd_dict.get("chassis_color", None)
             strap_color = dynamic_rd_dict.get("strap_color", None)
 
-            player = Player.objects.prefetch_related("rd").filter(user__email=player_email).first()
+            player = (
+                Player.objects.prefetch_related("rd")
+                .filter(user__email=player_email)
+                .first()
+            )
             if not player:
-                self.stderr.write(f"No player with email {player_email} was found")
+                self.stderr.write(
+                    f"No player with email {player_email} was found"
+                )
                 continue
 
             try:
-                dynamic_rd_object: DynamicRD = player.rd.get(category=category, order=order)
+                dynamic_rd_object: DynamicRD = player.rd.get(
+                    category=category, order=order
+                )
                 dynamic_rd_object.started_at = started_at
                 dynamic_rd_object.time_spent_developing = time_spent_developing
                 dynamic_rd_object.alias = alias
@@ -194,7 +232,9 @@ class Command(BaseCommand):
                         json_body=json_body,
                     )
 
-                self.stdout.write(f"Player {player_email} started research for {category} | column {order}")
+                self.stdout.write(
+                    f"Player {player_email} started research for {category} | column {order}"
+                )
 
             except DynamicRD.DoesNotExist:
                 self.stderr.write(

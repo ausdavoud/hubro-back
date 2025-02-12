@@ -55,21 +55,33 @@ def new_factory(team: Team, decision: DecisionPool):
     ownership = decision.json_body["ownership"]
     factory_name = decision.json_body["factory_name"]
     factory = Factory.objects.create(
-        team=team, name=factory_name, built_at_quarter=built_at_quarter, **factories[ownership]
+        team=team,
+        name=factory_name,
+        built_at_quarter=built_at_quarter,
+        **factories[ownership],
     )
     serialized_factory = FactorySerializer(factory, context={"team": team})
     return {"factory": serialized_factory.data}
 
 
 def sell_factory(team: Team, factory_id: int, current_quarter: int):
-    factory: Factory = get_db_record_select_prefetch_or_404(Factory, id=factory_id, team=team)
+    factory: Factory = get_db_record_select_prefetch_or_404(
+        Factory, id=factory_id, team=team
+    )
 
-    if factory.ownership != Factory.OwnershipTypes.RENTED and factory.ownership != Factory.OwnershipTypes.OWNED:
-        raise common_exceptions.ValidationError(description=f"Factory with id {factory_id} has unknown ownership type")
+    if (
+        factory.ownership != Factory.OwnershipTypes.RENTED
+        and factory.ownership != Factory.OwnershipTypes.OWNED
+    ):
+        raise common_exceptions.ValidationError(
+            description=f"Factory with id {factory_id} has unknown ownership type"
+        )
     try:
         with transaction.atomic():
             # delete productions related to this factory
-            deleted_productions = Production.objects.filter(team=team, factory=factory).delete()
+            deleted_productions = Production.objects.filter(
+                team=team, factory=factory
+            ).delete()
 
             # delete ripple tasks related to that production
             deleted_ripple_tasks = RippleTask.objects.filter(
@@ -79,18 +91,24 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
             ).delete()
 
             if factory.ownership == Factory.OwnershipTypes.RENTED:
-                serialized_factory_data = FactorySerializer(factory, context={"team": team}).data
+                serialized_factory_data = FactorySerializer(
+                    factory, context={"team": team}
+                ).data
                 factory.delete()
                 return serialized_factory_data
 
             elif factory.ownership == Factory.OwnershipTypes.OWNED:
-                sale_amount = Decimal(factory.resale_value_percent * factory.build_cost)
+                sale_amount = Decimal(
+                    factory.resale_value_percent * factory.build_cost
+                )
                 loss_amount = Decimal(factory.build_cost - sale_amount)
                 factories_account = get_db_record_select_prefetch_or_404(
-                    FinancialAccount, code=FinancialAccount.AccountCodes.FACTORIES
+                    FinancialAccount,
+                    code=FinancialAccount.AccountCodes.FACTORIES,
                 )
                 loss_on_sale_of_assets_account = get_db_record_select_prefetch_or_404(
-                    FinancialAccount, code=FinancialAccount.AccountCodes.LOSS_ON_SALE_OF_ASSETS
+                    FinancialAccount,
+                    code=FinancialAccount.AccountCodes.LOSS_ON_SALE_OF_ASSETS,
                 )
                 loss_credit_transaction = Transaction.objects.create(
                     team=team,
@@ -133,10 +151,18 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
     except DatabaseError:
         raise common_exceptions.AtomicTransactionError("sell factory")
 
-    serialized_loss_credit_transaction = TransactionSerializer(loss_credit_transaction).data
-    serialized_loss_debit_transaction = TransactionSerializer(loss_debit_transaction).data
-    serialized_sale_credit_transaction = TransactionSerializer(sale_credit_transaction).data
-    serialized_sale_debit_transaction = TransactionSerializer(sale_debit_transaction).data
+    serialized_loss_credit_transaction = TransactionSerializer(
+        loss_credit_transaction
+    ).data
+    serialized_loss_debit_transaction = TransactionSerializer(
+        loss_debit_transaction
+    ).data
+    serialized_sale_credit_transaction = TransactionSerializer(
+        sale_credit_transaction
+    ).data
+    serialized_sale_debit_transaction = TransactionSerializer(
+        sale_debit_transaction
+    ).data
     response = {
         "deleted_productions": deleted_productions,
         "deleted_ripple_tasks": deleted_ripple_tasks,
@@ -154,8 +180,12 @@ def select_product(team: Team, decision: DecisionPool):
     factory_id = json_body["factory_id"]
     product_id = json_body["product_id"]
 
-    factory: Factory = get_db_record_select_prefetch_or_404(Factory, id=factory_id, team=team)
-    product: DynamicRD = get_db_record_select_prefetch_or_404(DynamicRD, id=product_id, team=team)
+    factory: Factory = get_db_record_select_prefetch_or_404(
+        Factory, id=factory_id, team=team
+    )
+    product: DynamicRD = get_db_record_select_prefetch_or_404(
+        DynamicRD, id=product_id, team=team
+    )
 
     try:
         try:
@@ -183,7 +213,10 @@ def select_product(team: Team, decision: DecisionPool):
             "product_id": product.pk,
         }
         ripple_task = RippleTask.objects.create(
-            team=team, run_at_quarter=current_quarter + 1, type=RippleTask.TaskTypes.PRODUCTION, json_body=json_body
+            team=team,
+            run_at_quarter=current_quarter + 1,
+            type=RippleTask.TaskTypes.PRODUCTION,
+            json_body=json_body,
         )
 
     except DatabaseError:
@@ -198,8 +231,12 @@ def set_activity_level(team: Team, decision: DecisionPool):
     factory_id = json_body["factory_id"]
     activity_level = json_body["activity_level"]
 
-    factory: Factory = get_db_record_select_prefetch_or_404(Factory, id=factory_id, team=team)
-    production: Production = get_db_record_select_prefetch_or_404(Production, team=team, factory=factory)
+    factory: Factory = get_db_record_select_prefetch_or_404(
+        Factory, id=factory_id, team=team
+    )
+    production: Production = get_db_record_select_prefetch_or_404(
+        Production, team=team, factory=factory
+    )
 
     production.activity_level = activity_level
     production.save()

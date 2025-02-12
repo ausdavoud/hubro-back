@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from finance.models import CashChange, FinancialAccount, Loan, Overdraft, Repayment, Transaction
+from finance.models import (
+    CashChange,
+    FinancialAccount,
+    Loan,
+    Overdraft,
+    Repayment,
+    Transaction,
+)
 
 
 class FinancialAccountAdmin(admin.ModelAdmin):
@@ -20,7 +27,13 @@ class TransactionAdmin(admin.ModelAdmin):
 
 
 class OverdraftAdmin(admin.ModelAdmin):
-    list_display = ["id", "team", "quarter", "beginning_overdraft", "ending_overdraft"]
+    list_display = [
+        "id",
+        "team",
+        "quarter",
+        "beginning_overdraft",
+        "ending_overdraft",
+    ]
 
 
 class CashChangeAdmin(admin.ModelAdmin):

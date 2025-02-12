@@ -15,7 +15,13 @@ class Command(BaseCommand):
     def _cerate_super_users(self, superusers):
         for superuser_dict in superusers:
             try:
-                superuser_obj = CustomUser.objects.create_superuser(**superuser_dict)
-                self.stdout.write(f"Created superuser {superuser_obj.email} as {superuser_dict['role']}")
+                superuser_obj = CustomUser.objects.create_superuser(
+                    **superuser_dict
+                )
+                self.stdout.write(
+                    f"Created superuser {superuser_obj.email} as {superuser_dict['role']}"
+                )
             except IntegrityError:
-                self.stderr.write(f"Superuser {superuser_dict['email']} already exists")
+                self.stderr.write(
+                    f"Superuser {superuser_dict['email']} already exists"
+                )

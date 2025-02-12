@@ -49,5 +49,7 @@ class RDPauseError(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self, detail):
-        detail = {"error": {"code": ErrorCodes.RD_PAUSE_ERROR, "description": detail}}
+        detail = {
+            "error": {"code": ErrorCodes.RD_PAUSE_ERROR, "description": detail}
+        }
         super().__init__(detail)

@@ -9,7 +9,9 @@ from rd.models import DynamicRD
 
 
 def get_serializer_or_400(serializer_class: serializers.BaseSerializer, data):
-    payload_serializer: serializers.BaseSerializer = serializer_class(data=data)
+    payload_serializer: serializers.BaseSerializer = serializer_class(
+        data=data
+    )
     try:
         payload_serializer.is_valid(raise_exception=True)
         return payload_serializer
@@ -24,7 +26,9 @@ def increment_rd_dev_time(dynamic_rd_object: DynamicRD):
     return dynamic_rd_object
 
 
-def delete_dynamic_rd_ripple_task_or_404(team: Team, dynamic_rd_object: DynamicRD):
+def delete_dynamic_rd_ripple_task_or_404(
+    team: Team, dynamic_rd_object: DynamicRD
+):
     """
     if the team has cancelled research at the same quarter it was started,
     (meaning time_spent_developing == 0) we should set back the start_at field
@@ -46,7 +50,10 @@ def delete_dynamic_rd_ripple_task_or_404(team: Team, dynamic_rd_object: DynamicR
 
 
 def get_db_record_select_prefetch_or_404(
-    model: Model, prefetch_related_tables: list[str | Prefetch] = [], select_related_tables: list[str] = [], **kwargs
+    model: Model,
+    prefetch_related_tables: list[str | Prefetch] = [],
+    select_related_tables: list[str] = [],
+    **kwargs,
 ) -> Model:
     try:
         return (

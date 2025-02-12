@@ -10,10 +10,17 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
 from common.views import exceptions as common_exceptions
-from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
+from common.views.services import (
+    get_db_record_select_prefetch_or_404,
+    get_serializer_or_400,
+)
 from people.models import CustomUser, Player, Team
 from rd.models import DynamicRD, RDCategories
-from rd.serializers import CreateBaseRDSerializer, CreateRDProductSerializer, DynamicRDSerializer
+from rd.serializers import (
+    CreateBaseRDSerializer,
+    CreateRDProductSerializer,
+    DynamicRDSerializer,
+)
 from rd.views import exceptions as rd_exceptions
 from rd.views.services import get_previous_rd_items
 
@@ -37,8 +44,12 @@ class RDView(ViewSet):
     @action(methods=["get"], detail=False)
     def get_rds(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player: Player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team: Team = get_db_record_select_prefetch_or_404(Team, prefetch_related_tables=["rd"], id=player.team_id)
+        player: Player = get_db_record_select_prefetch_or_404(
+            Player, user=user
+        )
+        team: Team = get_db_record_select_prefetch_or_404(
+            Team, prefetch_related_tables=["rd"], id=player.team_id
+        )
         current_quarter: int = team.state_variables.quarter
         dynamic_rd_objects: list[DynamicRD] | None = team.rd.all()
 
@@ -47,7 +58,10 @@ class RDView(ViewSet):
         serialized_rd = DynamicRDSerializer(
             dynamic_rd_objects,
             many=True,
-            context={"current_quarter": current_quarter, "previous_rd_items": previous_rd_items},
+            context={
+                "current_quarter": current_quarter,
+                "previous_rd_items": previous_rd_items,
+            },
         )
         # Data for decisions can easily be accessed via checking the state of the whole data
         response = {
@@ -83,7 +97,9 @@ class RDView(ViewSet):
         }
         ```
         """
-        base_rd_serializer = get_serializer_or_400(CreateBaseRDSerializer, data)
+        base_rd_serializer = get_serializer_or_400(
+            CreateBaseRDSerializer, data
+        )
         category = base_rd_serializer.validated_data.get("category", None)
         order = base_rd_serializer.validated_data.get("order", None)
 
@@ -105,15 +121,25 @@ class RDView(ViewSet):
 
         # simple check for being product or upgrade
         if self._is_product_rd(category, order):
-            product_rd_serializer = get_serializer_or_400(CreateRDProductSerializer, data)
+            product_rd_serializer = get_serializer_or_400(
+                CreateRDProductSerializer, data
+            )
             alias = product_rd_serializer.validated_data.get("alias", None)
-            icon_link = product_rd_serializer.validated_data.get("icon_link", None)
+            icon_link = product_rd_serializer.validated_data.get(
+                "icon_link", None
+            )
             engine = product_rd_serializer.validated_data.get("engine", None)
             chassis = product_rd_serializer.validated_data.get("chassis", None)
             strap = product_rd_serializer.validated_data.get("strap", None)
-            engine_color = product_rd_serializer.validated_data.get("engine_color", None)
-            chassis_color = product_rd_serializer.validated_data.get("chassis_color", None)
-            strap_color = product_rd_serializer.validated_data.get("strap_color", None)
+            engine_color = product_rd_serializer.validated_data.get(
+                "engine_color", None
+            )
+            chassis_color = product_rd_serializer.validated_data.get(
+                "chassis_color", None
+            )
+            strap_color = product_rd_serializer.validated_data.get(
+                "strap_color", None
+            )
 
         json_body = {
             key: value
@@ -134,7 +160,14 @@ class RDView(ViewSet):
 
         return json_body
 
-    def _get_decision(self, team: Team, current_quarter: int, endpoint: str, json_body: dict, contains):
+    def _get_decision(
+        self,
+        team: Team,
+        current_quarter: int,
+        endpoint: str,
+        json_body: dict,
+        contains,
+    ):
         """Return a decision object from the decision pool.\n
         It uses __contained_by JSON operator. Why?\n
         At /rd/start/, json body also has alias and icon_link, but at /rd/pause/ and /rd/resume/,
@@ -144,7 +177,11 @@ class RDView(ViewSet):
         That's why sometimes we need to check if the decision inside the decision pool
         is a subset of the json_body, and other times check if the json_body is a subset of the decision.
         """
-        kwargs = {"team": team, "made_at_quarter": current_quarter, "endpoint": endpoint}
+        kwargs = {
+            "team": team,
+            "made_at_quarter": current_quarter,
+            "endpoint": endpoint,
+        }
         if contains:
             kwargs["json_body__contains"] = json_body
         else:
@@ -153,7 +190,12 @@ class RDView(ViewSet):
         return DecisionPool.objects.filter(**kwargs)
 
     def _create_decision(
-        self, player: Player, team: Team, current_quarter: int, endpoint: str, json_body
+        self,
+        player: Player,
+        team: Team,
+        current_quarter: int,
+        endpoint: str,
+        json_body,
     ) -> DecisionPool:
         """Create a new decision in the DecisionPool."""
         decision, created = DecisionPool.objects.get_or_create(
@@ -166,7 +208,9 @@ class RDView(ViewSet):
 
         serialized_decision = DecisionPoolSerializer(decision)
         if not created:
-            raise common_exceptions.DuplicateDecisionError(context={"decision": serialized_decision.data})
+            raise common_exceptions.DuplicateDecisionError(
+                context={"decision": serialized_decision.data}
+            )
 
         return decision
 

@@ -20,15 +20,20 @@ class CustomUserManager(BaseUserManager):
             try:
                 player = Player.objects.create(user=user)
                 from common.views.views import create_new_simulation_data
+
                 create_new_simulation_data(player=player)
             except IntegrityError:
-                print(f"A `Player` instance is already assigned to {user.email}")
+                print(
+                    f"A `Player` instance is already assigned to {user.email}"
+                )
 
         elif user.role == CustomUser.UserRoles.INSTRUCTOR:
             try:
                 instructor = Instructor.objects.create(user=user)
             except IntegrityError:
-                print(f"An `Instructor` instance is already assigned to {user.email}")
+                print(
+                    f"An `Instructor` instance is already assigned to {user.email}"
+                )
 
         return user
 
@@ -51,7 +56,9 @@ class CustomUser(AbstractUser):
 
     username = None
     email = models.EmailField(max_length=100, unique=True)
-    role = models.CharField(max_length=2, choices=UserRoles.choices, blank=True, null=True)
+    role = models.CharField(
+        max_length=2, choices=UserRoles.choices, blank=True, null=True
+    )
 
     objects = CustomUserManager()
 
@@ -66,7 +73,9 @@ class CustomUser(AbstractUser):
 
 
 class Instructor(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="instructor")
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="instructor"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -77,7 +86,9 @@ class Instructor(models.Model):
 
 class SimulationClass(models.Model):
     name = models.CharField(max_length=50)
-    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE, null=True)
+    instructor = models.ForeignKey(
+        Instructor, on_delete=models.CASCADE, null=True
+    )
     is_single_player = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -110,8 +121,15 @@ class Team(models.Model):
         BOT = "BO", "Bot"
 
     name = models.CharField(max_length=50)
-    simulation_class = models.ForeignKey(SimulationClass, on_delete=models.SET_NULL, null=True, related_name='teams')
-    team_type = models.CharField(max_length=2, choices=TeamType.choices, default=TeamType.PLAYER)
+    simulation_class = models.ForeignKey(
+        SimulationClass,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="teams",
+    )
+    team_type = models.CharField(
+        max_length=2, choices=TeamType.choices, default=TeamType.PLAYER
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -121,8 +139,12 @@ class Team(models.Model):
 
 
 class Player(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="player")
-    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, related_name="players")
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="player"
+    )
+    team = models.ForeignKey(
+        Team, on_delete=models.SET_NULL, null=True, related_name="players"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

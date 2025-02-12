@@ -43,7 +43,9 @@ def create_transaction(
             )
             return debit_transaction, credit_transaction
     except DatabaseError:
-        raise common_exceptions.AtomicTransactionError(state="Error at making a financial transaction.")
+        raise common_exceptions.AtomicTransactionError(
+            state="Error at making a financial transaction."
+        )
 
 
 def new_loan(team: Team, decision: DecisionPool) -> Response:
@@ -60,9 +62,12 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
     payback_period = int(json_body["payback_period"])
 
     long_term_notes_payable_account = get_db_record_select_prefetch_or_404(
-        FinancialAccount, code=FinancialAccount.AccountCodes.LONG_TERM_NOTES_PAYABLE
+        FinancialAccount,
+        code=FinancialAccount.AccountCodes.LONG_TERM_NOTES_PAYABLE,
     )
-    cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountCodes.CASH)
+    cash_account = get_db_record_select_prefetch_or_404(
+        FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+    )
 
     try:
         interest = calculate_interest(
@@ -72,7 +77,9 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
             current_quarter=current_quarter,
         )
         payback_per_quarter = calculate_payback_per_quarter(
-            payback_period=payback_period, interest=interest, amount=amount_decimal
+            payback_period=payback_period,
+            interest=interest,
+            amount=amount_decimal,
         )
         total_payback = payback_per_quarter * payback_period
         with transaction.atomic():
@@ -114,7 +121,9 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
                 },
             )
     except DatabaseError:
-        raise common_exceptions.AtomicTransactionError(state="Error at making a loan object")
+        raise common_exceptions.AtomicTransactionError(
+            state="Error at making a loan object"
+        )
 
     serialized_loan = LoanSerializer(loan)
     serialized_credit_transaction = TransactionSerializer(credit_transaction)

@@ -10,7 +10,9 @@ class NewLoanSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs["payback_period"] not in [4, 8, 12, 16]:
-            raise serializers.ValidationError("Payback period must be 4, 8, 12 or 16")
+            raise serializers.ValidationError(
+                "Payback period must be 4, 8, 12 or 16"
+            )
         # if not 200_000_00 < attrs["amount"] < 2_000_000_00:  # Cents, not Dollars
         #     raise serializers.ValidationError("Amount must be between $200,000 and $1,000,000.")
 
@@ -19,9 +21,11 @@ class NewLoanSerializer(serializers.ModelSerializer):
 
 class LoanSerializer(serializers.ModelSerializer):
     is_new = serializers.BooleanField(default=False)
+
     class Meta:
         model = Loan
         fields = "__all__"
+
 
 class FinancialAcountSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
@@ -33,8 +37,10 @@ class FinancialAcountSerializer(serializers.ModelSerializer):
     def get_display_name(self, obj):
         return obj.get_code_display()
 
+
 class TransactionSerializer(serializers.ModelSerializer):
     financial_account = FinancialAcountSerializer()
+
     class Meta:
         model = Transaction
         fields = "__all__"
