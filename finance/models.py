@@ -1,10 +1,10 @@
 from django.db import models
 
-from people.models import Player
+from people.models import Team
 
 
 class FinancialAccount(models.Model):
-    class AccountNames(models.IntegerChoices):
+    class AccountCodes(models.IntegerChoices):
         DEPRECIATION_OF_FACTORIES = 6030, "Depreciation of factories"
         FACTORIES = 1121, "Factories"
         AMORTIZATION = 6040, "Amortization"
@@ -26,16 +26,17 @@ class FinancialAccount(models.Model):
         LONG_TERM_NOTES_PAYABLE = 3210, "Long term notes payable"
         RAW_MATERIAL_INVENTORY = 1710, "Raw material inventory"
         LOSS_ON_SALE_OF_ASSETS = 5520, "Loss on sale of assets"
+        PRODUCTS_BLUEPRINTS = 1320, "Products blueprints"
 
     class AccountTypes(models.TextChoices):
         DEBIT = "DE", "Debit"
         CREDIT = "CR", "Credit"
 
-    name = models.IntegerField(choices=AccountNames.choices)
+    code = models.IntegerField(choices=AccountCodes.choices)
     type = models.CharField(max_length=2, choices=AccountTypes.choices)
 
     def __str__(self):
-        return self.get_name_display()
+        return self.get_code_display()
 
 
 class Transaction(models.Model):
@@ -48,18 +49,19 @@ class Transaction(models.Model):
         CURRENT_PORTION_OF_LOANS = "Current portion of loans to be paid this year"
         NEW_LOANS = "New loans"
         LOAN_REPAYMENT = "Loan Repayment"
+        LOAN_INTEREST = "Loan interest"
         OVERDRAFT = "Overdraft"
         SALES = "Sales"
         STORAGE = "Storage"
         PROMOTION = "Promotion"
         MAINTENANCE = "Maintenance"
         INTEREST_ON_OVERDRAFT = "Interest on overdraft"
-        LOAN_INTEREST = "Loan interest"
         SOLD_FACTORIES = "Sold factories"
         LOSS_ON_SALE_OF_ASSETS = "Loss on sale of assets"
         EXTRAORDINARY_PR_EXPENSES = "Extraordinary PR expenses"
+        RESEARCH_PROJECTS = "Research projects"
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transactions")
     category = models.CharField(max_length=80, choices=Categories.choices)
     quarter = models.IntegerField()
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)
@@ -71,7 +73,7 @@ class Transaction(models.Model):
 
 
 class Overdraft(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     beginning_overdraft = models.DecimalField(max_digits=15, decimal_places=0)
     ending_overdraft = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
@@ -84,7 +86,7 @@ class Overdraft(models.Model):
 
 
 class CashChange(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     beginning_cash = models.DecimalField(max_digits=15, decimal_places=0)
     ending_cash = models.DecimalField(max_digits=15, decimal_places=0)
     quarter = models.IntegerField()
@@ -97,7 +99,7 @@ class CashChange(models.Model):
 
 
 class Loan(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=15, decimal_places=0)
     issued_quarter = models.IntegerField()
     interest = models.DecimalField(max_digits=5, decimal_places=2)
@@ -113,7 +115,7 @@ class Loan(models.Model):
 
 
 class Repayment(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     loan = models.ForeignKey(Loan, on_delete=models.CASCADE)
     interest_amount = models.DecimalField(max_digits=15, decimal_places=0)
     repayment_amount = models.DecimalField(max_digits=15, decimal_places=0)

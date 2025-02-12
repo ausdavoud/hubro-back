@@ -4,13 +4,13 @@ from finance.models import CashChange, FinancialAccount, Loan, Overdraft, Repaym
 
 
 class FinancialAccountAdmin(admin.ModelAdmin):
-    list_display = ["id", "name", "type"]
+    list_display = ["id", "code", "type"]
 
 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "player",
+        "team",
         "category",
         "quarter",
         "financial_account",
@@ -20,17 +20,17 @@ class TransactionAdmin(admin.ModelAdmin):
 
 
 class OverdraftAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "quarter", "beginning_overdraft", "ending_overdraft"]
+    list_display = ["id", "team", "quarter", "beginning_overdraft", "ending_overdraft"]
 
 
 class CashChangeAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "quarter", "beginning_cash", "ending_cash"]
+    list_display = ["id", "team", "quarter", "beginning_cash", "ending_cash"]
 
 
 class LoanAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "player",
+        "team",
         "issued_quarter",
         "amount",
         "payback_period",
@@ -40,7 +40,7 @@ class LoanAdmin(admin.ModelAdmin):
 
 
 class RepaymentAdmin(admin.ModelAdmin):
-    list_display = ["id", "player", "repayment_amount", "quarter", "loan"]
+    list_display = ["id", "team", "repayment_amount", "quarter", "loan"]
 
 
 admin.site.register(FinancialAccount, FinancialAccountAdmin)

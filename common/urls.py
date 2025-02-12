@@ -5,4 +5,5 @@ urlpatterns = [
     path("finish_quarter/", views.FinishQuarter.as_view(), name="finish_quarter"),
     path("start_new_simulation/", views.StartNewSimulation.as_view(), name="start_new_simulation"),
     path("set_company_info/", views.SetCompanyInfo.as_view(), name="set_company_info"),
+    path("get_state_variables/", views.StateVariableView.as_view(), name="get_state_variables"),
 ]

@@ -2,3 +2,7 @@
 db.sqlite3
 uv.lock
 db
+venv
+*.pyc
+.env
+**/*/000*.py

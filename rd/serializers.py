@@ -25,6 +25,9 @@ class DynamicRDSerializer(serializers.ModelSerializer):
             "time_spent_developing",
             "available_from_quarter",
             "supplier",
+            "unit_mat_cost_reduction",
+            "emission_reduction",
+            "emission_effect",
             "unit_mat_cost_effect",
             "alias",
             "icon_link",
@@ -32,18 +35,22 @@ class DynamicRDSerializer(serializers.ModelSerializer):
         ]
 
     def get_state(self, obj: DynamicRD):
-        # FIXME replace player with team
-        team = obj.player
+        team = obj.team
         json_body = {"category": obj.category, "order": obj.order}
         current_quarter = self.context.get("current_quarter")
         previous_rd_items = self.context.get("previous_rd_items")
-        if DecisionPool.objects.filter(player=team, json_body__contains=json_body, made_at_quarter=current_quarter).exists():
+        if DecisionPool.objects.filter(
+            team=team, json_body__contains=json_body, made_at_quarter=current_quarter
+        ).exists():
             return DynamicRD.RDStates.RESEARCHING
         return obj.get_state(current_quarter, previous_rd_items=previous_rd_items)
 
     fields_to_be_removed = [
         "available_from_quarter",
+        "unit_mat_cost_reduction",
         "unit_mat_cost_effect",
+        "emission_reduction",
+        "emission_effect",
         "alias",
         "icon_link",
     ]

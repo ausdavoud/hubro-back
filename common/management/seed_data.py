@@ -12,6 +12,16 @@ superusers = [
         "password": "hhhhhhhh",  # 8h
         "role": CustomUser.UserRoles.PLAYER,
     },
+    {
+        "email": "s@g.com",
+        "password": "ssssssss",  # 8s
+        "role": CustomUser.UserRoles.PLAYER,
+    },
+    {
+        "email": "dvin@gmail.com",
+        "password": "11111111",
+        "role": CustomUser.UserRoles.PLAYER,
+    },
 ]
 
 

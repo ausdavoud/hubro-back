@@ -1,10 +1,10 @@
-from django.db.models import Model
+from django.db.models import Model, Prefetch
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from common.models import RippleTask
 from common.views import exceptions as common_exceptions
-from people.models import Player
+from people.models import Team
 from rd.models import DynamicRD
 
 
@@ -24,18 +24,18 @@ def increment_rd_dev_time(dynamic_rd_object: DynamicRD):
     return dynamic_rd_object
 
 
-def delete_dynamic_rd_ripple_task_or_404(player: Player, dynamic_rd_object: DynamicRD):
+def delete_dynamic_rd_ripple_task_or_404(team: Team, dynamic_rd_object: DynamicRD):
     """
-    if the player has cancelled research at the same quarter it was started,
+    if the team has cancelled research at the same quarter it was started,
     (meaning time_spent_developing == 0) we should set back the start_at field
     to 0, to act like it's never been started at the first place. So that
-    the player can again, start the project with a possibly new alias and icon.
+    the team can again, start the project with a possibly new alias and icon.
     """
     if dynamic_rd_object.time_spent_developing == 0:
         dynamic_rd_object.started_at = 0
         dynamic_rd_object.save()
     json_body = {"id": dynamic_rd_object.id}
-    delete_response = player.ripple_tasks.filter(json_body=json_body).delete()
+    delete_response = team.ripple_tasks.filter(json_body=json_body).delete()
     delete_count, delete_details = delete_response
     if delete_count == 0:
         context = {"dynamic_rd_object": str(dynamic_rd_object)}
@@ -45,9 +45,15 @@ def delete_dynamic_rd_ripple_task_or_404(player: Player, dynamic_rd_object: Dyna
     return response
 
 
-def get_db_record_or_404(database_model: Model, **kwargs) -> Model:
+def get_db_record_select_prefetch_or_404(
+    model: Model, prefetch_related_tables: list[str | Prefetch] = [], select_related_tables: list[str] = [], **kwargs
+) -> Model:
     try:
-        return database_model.objects.get(**kwargs)
-    except database_model.DoesNotExist:
+        return (
+            model.objects.prefetch_related(*prefetch_related_tables)
+            .select_related(*select_related_tables)
+            .get(**kwargs)
+        )
+    except model.DoesNotExist:
         context = {"kwargs": kwargs}
-        raise common_exceptions.DatabaseRecordNotFound(database_model, context)
+        raise common_exceptions.DatabaseRecordNotFound(model, context)
