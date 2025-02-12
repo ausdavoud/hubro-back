@@ -31,7 +31,7 @@ SECRET_KEY = getenv("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["hubro.divaresorkh.ir"]
+ALLOWED_HOSTS = ["hubro.divaresorkh.ir", "localhost"]
 
 
 # Application definition
