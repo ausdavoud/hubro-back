@@ -1,4 +1,3 @@
-import random
 from decimal import Decimal
 
 from django.db import DatabaseError, transaction
@@ -6,33 +5,56 @@ from django.db.models import F, Prefetch
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool, RippleTask, StateVariable
-from common.serializers import CompanyInfoSerializer
+from common.serializers import CompanyInfoSerializer, StateVariableSerializer
 from common.views import exceptions as common_exceptions
 from common.views.exceptions import GameLogicError
-from common.views.services import get_db_record_or_404, get_serializer_or_400
-from contracts.models import ContractAssignment, ContractPriority
-from contracts.services import assign_contracts_to_teams, create_contracts, get_winner_teams, set_contracts_order
-from contracts.views import ContractView
+from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
+from contracts.models import ContractAssignment
+from contracts.views.services import assign_contracts_to_teams, create_contracts, get_winner_teams, set_contracts_order
+from contracts.views.views import ContractView
 from esg_reporting.views.services import enable_esg_reporting
 from esg_reporting.views.views import ESGReportingView
-from finance.models import CashChange, FinancialAccount, Loan, Overdraft, Repayment, Transaction
-from finance.views.services import new_loan
+from finance.models import FinancialAccount, Transaction
+from finance.views.services import create_transaction, new_loan
 from finance.views.views import FinanceView
 from people.models import CustomUser, Player, SimulationClass, Team
-from people.views.services import get_player_or_404, get_simulation_teams
-from production.models import Factory, Production, Storage
+from people.views.services import get_simulation_teams
+from production.models import Production, Storage
 from production.views.services import new_factory, select_product, set_activity_level
 from production.views.views import ProductionView
-from rd.models import DynamicRD
+from rd.models import DynamicRD, RDCategories
 from rd.views.services import create_dynamic_rd_items, pause_rd, resume_rd, start_rd
 from rd.views.views import RDView
+
+
+class IsInstructor(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.role == CustomUser.UserRoles.INSTRUCTOR
+
+
+@extend_schema_view(get=extend_schema(tags=["Quarter-Wise"]))
+class StateVariableView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    authentication_classes = [JWTAuthentication]
+    serializer_class = StateVariableSerializer
+
+    def get(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        state_variable = team.state_variables
+        serialized_state_variable = StateVariableSerializer(state_variable)
+        response = {"data": serialized_state_variable.data}
+        return Response(response, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
@@ -47,20 +69,21 @@ class SetCompanyInfo(APIView):
 
     def post(self, request: Request) -> Response:
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        if player.state_variables.quarter != 1:
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        if team.state_variables.quarter != 1:
             raise GameLogicError(description="You can only set company info in the first quarter.")
         json_body = self._get_company_info_json_body(request.data)
 
-        player.state_variables.company_name = json_body["company_name"]
-        player.state_variables.company_slogan = json_body["company_slogan"]
-        player.state_variables.company_icon = json_body["company_icon"]
-        player.state_variables.company_icon_bg = json_body["company_icon_bg"]
-        player.state_variables.company_icon_color = json_body["company_icon_color"]
-        player.state_variables.company_icon_font = json_body["company_icon_font"]
-        player.state_variables.save()
+        team.state_variables.company_name = json_body["company_name"]
+        team.state_variables.company_slogan = json_body["company_slogan"]
+        team.state_variables.company_icon = json_body["company_icon"]
+        team.state_variables.company_icon_bg = json_body["company_icon_bg"]
+        team.state_variables.company_icon_color = json_body["company_icon_color"]
+        team.state_variables.company_icon_font = json_body["company_icon_font"]
+        team.state_variables.save()
 
-        response = CompanyInfoSerializer(player.state_variables).data
+        response = CompanyInfoSerializer(team.state_variables).data
         return Response(response, status=status.HTTP_200_OK)
 
     def _get_company_info_json_body(self, post_data: dict) -> dict:
@@ -81,7 +104,8 @@ class StartNewSimulation(APIView):
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
-        player = get_player_or_404(user, select_related_tables=["team"])
+        player = get_db_record_select_prefetch_or_404(Player, select_related_tables=["team"], user=user)
+
         team_mode = request.data.get("team_mode", False)
 
         delete_previous_simulation_data(player=player)
@@ -91,46 +115,36 @@ class StartNewSimulation(APIView):
 
 
 def delete_previous_simulation_data(player: Player):
-    # implementing this outside APIView, since it's used at other modules
-
-    DynamicRD.objects.filter(player=player).delete()
-    Storage.objects.filter(player=player).delete()
-    Production.objects.filter(player=player).delete()
-    Factory.objects.filter(player=player).delete()
-    if player.team and player.team.simulation_class:
-        player.team.simulation_class.delete()
-        # Contracts and Team will be deleted automatically
-        # since it's on_delete cascade
-    Transaction.objects.filter(player=player).delete()
-    Repayment.objects.filter(player=player).delete()
-    Overdraft.objects.filter(player=player).delete()
-    Loan.objects.filter(player=player).delete()
-    CashChange.objects.filter(player=player).delete()
-    ContractPriority.objects.filter(player=player).delete()
-    ContractAssignment.objects.filter(player=player).delete()
-    StateVariable.objects.filter(player=player).delete()
-    RippleTask.objects.filter(player=player).delete()
-    DecisionPool.objects.filter(player=player).delete()
+    team = player.team
+    # Delete old data
+    if team:
+        if team.simulation_class:
+            team.simulation_class.teams.filter(team_type=Team.TeamType.BOT).delete()
+            team.simulation_class.delete()
+        team.delete()
 
 
 def create_new_simulation_data(player: Player):
-    # implementing this outside APIView, since it's used at other modules
-
     simulation_class = SimulationClass.objects.create(name=f"{player}'s Simulation Class")
     # 1. Create a Team for the single user
     player_team = Team(name=f"{player}'s Team", simulation_class=simulation_class)
-    bot_teams = [Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class) for i in range(4)]
+    bot_teams = [
+        Team(name=f"{player}'s Bot {i+1}", simulation_class=simulation_class, team_type=Team.TeamType.BOT)
+        for i in range(4)
+    ]
     teams_to_create = [player_team] + bot_teams
     teams = Team.objects.bulk_create(teams_to_create)
+    team = teams[0]
     player.team = teams[0]
     player.save()
 
     # 2. Create Contracts
     create_contracts(simulation_class=simulation_class)
     # 4. Create Dynamic RD Items
-    create_dynamic_rd_items(player=player)
+    create_dynamic_rd_items(team=team)
     # 5. Create State Variables
-    state_variables = StateVariable.objects.create(player=player)
+    state_variables = [StateVariable(team=team) for team in teams]
+    StateVariable.objects.bulk_create(state_variables)
 
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
@@ -147,30 +161,41 @@ class FinishQuarter(APIView):
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
-        player = get_player_or_404(user)
-        current_quarter = player.state_variables.quarter
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        current_quarter = player.team.state_variables.quarter
         prefetch_decision_pool = Prefetch(
             "decision_pool", queryset=DecisionPool.objects.filter(made_at_quarter=current_quarter)
         )
-        player = get_player_or_404(user, [prefetch_decision_pool])
+        team = get_db_record_select_prefetch_or_404(
+            Team, prefetch_related_tables=[prefetch_decision_pool], id=player.team.id
+        )
 
-        # Process Player's decisions
-        decision_states = [self._process_decision(player, decision=decision) for decision in player.decision_pool.all()]
+        # Check if it is the last quarter
+        if team.state_variables.quarter == team.state_variables.simulation_duration:
+            response = {
+                "data": {
+                    "message": "Simulation is over!",
+                    "current_quarter": team.state_variables.quarter,
+                }
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        # Process Team's decisions
+        decisions = DecisionPool.objects.filter(team=team, made_at_quarter=current_quarter)
+        decision_states = [self._process_decision(team=team, decision=decision) for decision in decisions]
 
         # calculate each production's produced quantity
-        productions: list[Production] = player.productions.filter(quarter=current_quarter)
-        print(f"A total of {len(productions)} at quarter {current_quarter} was found.")
+        productions: list[Production] = team.productions.filter(quarter=current_quarter)
         for production in productions:
             base = production.factory.base
             factor = production.activity_level / 100
             production.produced_quantity = base * (3 - factor) * factor**2 / 2
             # FIXME: Use bulk_update for fewer queries
             production.save()
-            print(f"Factory base is {base}, factor is {factor}, produced quantity is {production.produced_quantity}")
         # add produced units to storage
         for production in productions:
             storage, _ = Storage.objects.get_or_create(
-                player=player,
+                team=team,
                 product=production.product,
             )
             # finished_good_inventory = production.produced_quantity * production.product.final_cost
@@ -179,7 +204,7 @@ class FinishQuarter(APIView):
             storage.save()
 
         # feed contracts from storage
-        assigned_contracts: list[ContractAssignment] = player.contracts.filter(
+        assigned_contracts: list[ContractAssignment] = team.contracts.filter(
             contract__closure_quarter=current_quarter - 1
         )
         for assigned_contract in assigned_contracts:
@@ -189,13 +214,13 @@ class FinishQuarter(APIView):
             ):
                 continue
 
-            dynamic_rd_obj = get_db_record_or_404(
+            dynamic_rd_obj = get_db_record_select_prefetch_or_404(
                 DynamicRD,
-                player=player,
+                team=team,
                 category=assigned_contract.contract.deliverable_product,
                 order=1,
             )
-            storage: Storage = Storage.objects.filter(player=player, product=dynamic_rd_obj).first()
+            storage: Storage = Storage.objects.filter(team=team, product=dynamic_rd_obj).first()
             if not storage or storage.quantity < assigned_contract.contract.quantity:
                 assigned_contract.status = ContractAssignment.Statuses.EXPIRED
                 assigned_contract.save()
@@ -210,60 +235,60 @@ class FinishQuarter(APIView):
         # they got expired, didn't they?
 
         # Do ripple tasks
-        self._process_ripple_tasks(player=player, current_quarter=current_quarter)
+        self._process_ripple_tasks(team=team, current_quarter=current_quarter)
 
-        # self._receive_fulfilled_contracts_money(player=player, current_quarter=current_quarter)
+        # self._receive_fulfilled_contracts_money(team=team, current_quarter=current_quarter)
 
-        self._increment_quarter(player)
+        self._increment_quarter(team=team)
 
-        response = self._generate_response(player=player)
+        response = self._generate_response(team=team)
         return Response(response, status=status.HTTP_200_OK)
 
-    def _process_decision(self, player: Player, decision: DecisionPool):
+    def _process_decision(self, team: Team, decision: DecisionPool):
         try:
             match decision.endpoint:
                 case RDView.ENDPOINTS.START_RD:
-                    return decision.endpoint, start_rd(player=player, decision=decision)
+                    return decision.endpoint, start_rd(team=team, decision=decision)
                 # create pause, resume, new loan, new factory, select_product, set_activity_level and set_contracts_order
                 case RDView.ENDPOINTS.PAUSE_RD:
-                    return decision.endpoint, pause_rd(player=player, decision=decision)
+                    return decision.endpoint, pause_rd(team=team, decision=decision)
                 case RDView.ENDPOINTS.RESUME_RD:
-                    return decision.endpoint, resume_rd(player=player, decision=decision)
+                    return decision.endpoint, resume_rd(team=team, decision=decision)
                 case FinanceView.ENDPOINTS.NEW_LOAN:
-                    return decision.endpoint, new_loan(player=player, decision=decision)
+                    return decision.endpoint, new_loan(team=team, decision=decision)
                 case ProductionView.ENDPOINTS.NEW_FACTORY:
-                    return decision.endpoint, new_factory(player=player, decision=decision)
+                    return decision.endpoint, new_factory(team=team, decision=decision)
                 case ProductionView.ENDPOINTS.SELECT_PRODUCT:
-                    return decision.endpoint, select_product(player=player, decision=decision)
+                    return decision.endpoint, select_product(team=team, decision=decision)
                 case ProductionView.ENDPOINTS.SET_ACTIVITY_LEVEL:
-                    return decision.endpoint, set_activity_level(player=player, decision=decision)
+                    return decision.endpoint, set_activity_level(team=team, decision=decision)
                 case ContractView.ENDPOINTS.SET_CONTRACTS_ORDER:
                     # FIXME: We need bots or teams for get_winner_teams
                     # A better response is needed
-                    response = set_contracts_order(player=player, decision=decision)
-                    bots = get_simulation_teams(team=player.team)
+                    response = set_contracts_order(team=team, decision=decision)
+                    simulation_teams = get_simulation_teams(team=team)
                     # replace first random with bot's esg index and second random with bot's marketing budget
                     winners = get_winner_teams(
                         [
                             (
-                                player,
-                                player.state_variables.esg_index,
-                                Decimal(player.state_variables.marketing_budget),
-                            ),
-                            *[(bot, random.randrange(0, 2), random.randrange(5000, 10_000)) for bot in bots],
+                                team,
+                                team.state_variables.esg_index,
+                                Decimal(team.state_variables.marketing_budget),
+                            )
+                            for team in simulation_teams
                         ]
                     )
                     assignment_response = assign_contracts_to_teams(winners, current_quarter=decision.made_at_quarter)
                     print(assignment_response)
                     return decision.endpoint, response
                 case ESGReportingView.ENDPOINTS.ENABLE_ESG_REPORTING:
-                    return decision.endpoint, enable_esg_reporting(player=player)
+                    return decision.endpoint, enable_esg_reporting(team=team)
 
         except APIException as e:
             return decision.endpoint, str(e)
 
-    def _process_ripple_tasks(self, player: Player, current_quarter: int):
-        ripple_tasks: list[RippleTask] | None = RippleTask.objects.filter(player=player, run_at_quarter=current_quarter)
+    def _process_ripple_tasks(self, team: Team, current_quarter: int):
+        ripple_tasks: list[RippleTask] | None = RippleTask.objects.filter(team=team, run_at_quarter=current_quarter)
         dynamic_rd_objects_to_update = []
         tasks_to_update: list[RippleTask] = []
         tasks_to_delete: list[RippleTask] = []
@@ -277,10 +302,26 @@ class FinishQuarter(APIView):
                 )
             if ripple_task.type == RippleTask.TaskTypes.ESG_REPORTING:
                 self._pay_esg_reporting_fee(
-                    player=player,
+                    team=team,
                     current_quarter=current_quarter,
                     ripple_task=ripple_task,
                     ripple_tasks_to_update=tasks_to_update,
+                )
+            if ripple_task.type == RippleTask.TaskTypes.LOAN_REPAYMENT:
+                self._loan_repayment(
+                    ripple_task=ripple_task,
+                    team=team,
+                    current_quarter=current_quarter,
+                    ripple_tasks_to_update=tasks_to_update,
+                    ripple_tasks_to_delete=tasks_to_delete,
+                )
+            if ripple_task.type == RippleTask.TaskTypes.LOAN_INTEREST:
+                self._loan_interest(
+                    ripple_task=ripple_task,
+                    team=team,
+                    current_quarter=current_quarter,
+                    ripple_tasks_to_update=tasks_to_update,
+                    ripple_tasks_to_delete=tasks_to_delete,
                 )
 
         if dynamic_rd_objects_to_update:
@@ -297,8 +338,27 @@ class FinishQuarter(APIView):
         ripple_tasks_to_delete: list[RippleTask],
         dynamic_rd_objects_to_update: list[DynamicRD],
     ):
-        dynamic_rd_object = get_db_record_or_404(DynamicRD, id=ripple_task.json_body["dynamic_rd_id"])
+        team = ripple_task.team
+        dynamic_rd_object: DynamicRD = get_db_record_select_prefetch_or_404(
+            DynamicRD,
+            id=ripple_task.json_body["dynamic_rd_id"],
+        )
         time_spent_developing = dynamic_rd_object.time_spent_developing
+        if time_spent_developing == 0:
+            products_blueprints_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, code=FinancialAccount.AccountCodes.PRODUCTS_BLUEPRINTS
+            )
+            cash_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+            )
+            pay_dynamic_rd_cost = create_transaction(
+                team=team,
+                quarter=ripple_task.run_at_quarter,
+                amount=dynamic_rd_object.development_cost,
+                category=Transaction.Categories.RESEARCH_PROJECTS,
+                debit_account=products_blueprints_account,
+                credit_account=cash_account,
+            )
         dynamic_rd_object.time_spent_developing = F("time_spent_developing") + 1
         dynamic_rd_objects_to_update.append(dynamic_rd_object)
 
@@ -312,11 +372,30 @@ class FinishQuarter(APIView):
             ripple_task.run_at_quarter = F("run_at_quarter") + 1
             ripple_tasks_to_update.append(ripple_task)
         else:
+            # If research is done, delete the task
+
+            # if dynamic rd object is of type Production, we should update emission_effect of all products
+            if dynamic_rd_object.category == RDCategories.PRODUCTION:
+                DynamicRD.objects.filter(
+                    team=team,
+                    type=DynamicRD.RDTypes.PRODUCT,
+                ).update(
+                    emission_effect=F("emission_effect") + dynamic_rd_object.emission_reduction,
+                )
+            # if it's not production but it's an upgrade, upgrade the mat_cost_effect of its product
+            elif dynamic_rd_object.type == DynamicRD.RDTypes.UPGRADE:
+                DynamicRD.objects.filter(
+                    team=team,
+                    category=dynamic_rd_object.category,
+                    order=1,
+                ).update(
+                    unit_mat_cost_effect=F("unit_mat_cost_effect") + dynamic_rd_object.unit_mat_cost_reduction,
+                )
             ripple_tasks_to_delete.append(ripple_task)
 
     def _pay_esg_reporting_fee(
         self,
-        player: Player,
+        team: Team,
         current_quarter: int,
         ripple_task: RippleTask,
         ripple_tasks_to_update: list[RippleTask],
@@ -326,17 +405,18 @@ class FinishQuarter(APIView):
                 amount = ripple_task.json_body["amount"]
                 # Transaction
                 # finding cash account
-                cash_account = get_db_record_or_404(
+                cash_account = get_db_record_select_prefetch_or_404(
                     FinancialAccount,
-                    name=FinancialAccount.AccountNames.CASH,
+                    code=FinancialAccount.AccountCodes.CASH,
                 )
                 # finding marketing account
-                promotion_account = get_db_record_or_404(
+                promotion_account = get_db_record_select_prefetch_or_404(
                     FinancialAccount,
-                    name=FinancialAccount.AccountNames.PROMOTION,
+                    code=FinancialAccount.AccountCodes.PROMOTION,
                 )
+
                 credit_transaction = Transaction.objects.create(
-                    player=player,
+                    team=team,
                     category=Transaction.Categories.EXTRAORDINARY_PR_EXPENSES,
                     quarter=current_quarter,
                     debit_amount=0,
@@ -344,7 +424,7 @@ class FinishQuarter(APIView):
                     financial_account=cash_account,
                 )
                 debit_transaction = Transaction.objects.create(
-                    player=player,
+                    team=team,
                     category=Transaction.Categories.EXTRAORDINARY_PR_EXPENSES,
                     quarter=current_quarter,
                     debit_amount=amount,
@@ -362,18 +442,71 @@ class FinishQuarter(APIView):
         except DatabaseError:
             raise common_exceptions.AtomicTransactionError("Ripple task: ESG reporting")
 
-    def _increment_quarter(self, player: Player) -> None:
-        player.state_variables.quarter = F("quarter") + 1
-        player.state_variables.save()
-        player.state_variables.refresh_from_db()
+    def _increment_quarter(self, team: Team) -> None:
+        team.state_variables.quarter = F("quarter") + 1
+        team.state_variables.save()
+        team.state_variables.refresh_from_db()
 
-    def _generate_response(self, player: Player):
-        if player.state_variables.quarter == player.state_variables.simulation_duration:
+    def _loan_repayment(
+        self,
+        ripple_task: RippleTask,
+        team: Team,
+        current_quarter: int,
+        ripple_tasks_to_update: list[RippleTask],
+        ripple_tasks_to_delete: list[RippleTask],
+    ) -> None:
+        current_portion_of_loans_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount, code=FinancialAccount.AccountCodes.CURRENT_PORTION_OF_LOANS_PAYABLE
+        )
+        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountCodes.CASH)
+        amount = ripple_task.json_body["amount"]
+        create_transaction(
+            team=team,
+            quarter=current_quarter,
+            amount=amount,
+            category=Transaction.Categories.LOAN_REPAYMENT,
+            debit_account=current_portion_of_loans_account,
+            credit_account=cash_account,
+        )
+        ripple_task.json_body["quarters_paid"] += 1
+        if ripple_task.json_body["quarters_paid"] == ripple_task.json_body["quarters_to_pay"]:
+            ripple_tasks_to_delete.append(ripple_task)
+        ripple_tasks_to_update.append(ripple_task)
+
+    def _loan_interest(
+        self,
+        ripple_task: RippleTask,
+        team: Team,
+        current_quarter: int,
+        ripple_tasks_to_update: list[RippleTask],
+        ripple_tasks_to_delete: list[RippleTask],
+    ) -> None:
+        interest_expenses_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount, code=FinancialAccount.AccountCodes.INTEREST_EXPENSES
+        )
+        cash_account = get_db_record_select_prefetch_or_404(FinancialAccount, code=FinancialAccount.AccountCodes.CASH)
+        amount = ripple_task.json_body["amount"]
+        create_transaction(
+            team=team,
+            quarter=current_quarter,
+            amount=amount,
+            category=Transaction.Categories.LOAN_INTEREST,
+            debit_account=interest_expenses_account,
+            credit_account=cash_account,
+        )
+        ripple_task.json_body["quarters_paid"] += 1
+        if ripple_task.json_body["quarters_paid"] == ripple_task.json_body["quarters_to_pay"]:
+            ripple_tasks_to_delete.append(ripple_task)
+        ripple_tasks_to_update
+
+    def _generate_response(self, team: Team):
+        if team.state_variables.quarter == team.state_variables.simulation_duration:
             response = {
                 "data": {
-                    "message": "simulation finished",
-                    "current_quarter": player.state_variables.quarter,
+                    "message": "Simulation is over!",
+                    "current_quarter": team.state_variables.quarter,
                 }
             }
-        response = {"data": {"current_quarter": player.state_variables.quarter}}
+            return response
+        response = {"data": {"current_quarter": team.state_variables.quarter}}
         return response
