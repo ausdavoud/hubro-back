@@ -14,8 +14,12 @@ class ContractIDSerializer(serializers.Serializer):
 
 
 class ContractsOrderSerializer(serializers.Serializer):
-    marketing_budget = serializers.DecimalField(max_digits=15, decimal_places=0)
-    contract_ids = serializers.ListField(child=serializers.IntegerField(), default=list)
+    marketing_budget = serializers.DecimalField(
+        max_digits=15, decimal_places=0
+    )
+    contract_ids = serializers.ListField(
+        child=serializers.IntegerField(), default=list
+    )
 
 
 class ContractPrioritySerializer(serializers.ModelSerializer):

@@ -25,10 +25,16 @@ class Command(BaseCommand):
                     "emission": emission,
                 }
                 try:
-                    supplier_obj, created = Supplier.objects.get_or_create(**supplier_dict)
+                    supplier_obj, created = Supplier.objects.get_or_create(
+                        **supplier_dict
+                    )
                 except Supplier.MultipleObjectsReturned:
                     continue
                 if created:
-                    self.stdout.write(f"Created supplier {supplier_obj.name} for {supplier_obj.rd_category}")
+                    self.stdout.write(
+                        f"Created supplier {supplier_obj.name} for {supplier_obj.rd_category}"
+                    )
                     continue
-                self.stderr.write(f"Found previously added supplier with name: {supplier_obj.name}")
+                self.stderr.write(
+                    f"Found previously added supplier with name: {supplier_obj.name}"
+                )

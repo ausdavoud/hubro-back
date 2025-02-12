@@ -46,7 +46,9 @@ class Transaction(models.Model):
         MATERIALS_USED_IN_PRODUCTION = "Materials used in production"
         COST_OF_SOLD_PRODUCTS = "Cost of sold products"
         WAGES_FOR_PRODUCTION = "Wages for production workers"
-        CURRENT_PORTION_OF_LOANS = "Current portion of loans to be paid this year"
+        CURRENT_PORTION_OF_LOANS = (
+            "Current portion of loans to be paid this year"
+        )
         NEW_LOANS = "New loans"
         LOAN_REPAYMENT = "Loan Repayment"
         LOAN_INTEREST = "Loan interest"
@@ -61,12 +63,16 @@ class Transaction(models.Model):
         EXTRAORDINARY_PR_EXPENSES = "Extraordinary PR expenses"
         RESEARCH_PROJECTS = "Research projects"
 
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transactions")
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, related_name="transactions"
+    )
     category = models.CharField(max_length=80, choices=Categories.choices)
     quarter = models.IntegerField()
     debit_amount = models.DecimalField(max_digits=15, decimal_places=0)
     credit_amount = models.DecimalField(max_digits=15, decimal_places=0)
-    financial_account = models.ForeignKey(FinancialAccount, on_delete=models.CASCADE)
+    financial_account = models.ForeignKey(
+        FinancialAccount, on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return self.category

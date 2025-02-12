@@ -2,12 +2,22 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"),
-    path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    path(
+        "swagger/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger",
+    ),
+    path(
+        "redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"
+    ),
     path("admin/", admin.site.urls),
     # app urls
     path("auth/", include("people.urls"), name="people"),
@@ -16,11 +26,10 @@ urlpatterns = [
     path("finance/", include("finance.urls"), name="finance"),
     path("production/", include("production.urls"), name="production"),
     path("contracts/", include("contracts.urls"), name="contracts"),
-    path("esg_reporting/", include("esg_reporting.urls"), name="esg_reporting"),
+    path(
+        "esg_reporting/", include("esg_reporting.urls"), name="esg_reporting"
+    ),
     path("suppliers/", include("suppliers.urls"), name="suppliers"),
-        
-        
-    
 ]
 
 if settings.DEBUG:

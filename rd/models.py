@@ -77,16 +77,26 @@ class DynamicRD(models.Model):
     # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     # below is for upgrade type only
-    unit_mat_cost_reduction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    unit_mat_cost_reduction = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
     # below is for production type only
-    emission_reduction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    emission_reduction = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
     # below is for product type only, namely the sum of all reductions for a product
-    unit_mat_cost_effect = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    emission_effect = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    unit_mat_cost_effect = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
+    emission_effect = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0
+    )
 
     alias = models.CharField(max_length=100, blank=True)
     icon_link = models.CharField(max_length=300, blank=True)
-    engine = models.IntegerField(choices=Engines.choices, null=True, blank=True)
+    engine = models.IntegerField(
+        choices=Engines.choices, null=True, blank=True
+    )
     chassis = models.IntegerField(choices=Chassis, null=True, blank=True)
     strap = models.IntegerField(choices=Straps, null=True, blank=True)
     engine_color = models.IntegerField(choices=Colors, null=True, blank=True)
@@ -108,11 +118,17 @@ class DynamicRD(models.Model):
 
     @property
     def is_completed(self):
-        return self.time_spent_developing == self.development_duration and self.started_at > 0
+        return (
+            self.time_spent_developing == self.development_duration
+            and self.started_at > 0
+        )
 
     @property
     def is_researching(self):
-        return self.time_spent_developing < self.development_duration and self.started_at > 0
+        return (
+            self.time_spent_developing < self.development_duration
+            and self.started_at > 0
+        )
 
     def get_state(self, current_quarter: int, previous_rd_items):
         """
@@ -154,7 +170,8 @@ class DynamicRD(models.Model):
             return DynamicRD.RDStates.LOCKED
         return (
             DynamicRD.RDStates.AVAILABLE
-            if previous_item.time_spent_developing >= previous_item.development_duration
+            if previous_item.time_spent_developing
+            >= previous_item.development_duration
             else DynamicRD.RDStates.LOCKED
         )
 

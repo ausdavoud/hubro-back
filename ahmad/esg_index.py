@@ -14,12 +14,20 @@ def calculate_esg_index(production, material: str) -> float:
 
     for prod in production:
         max_production_emissions = prod["amount"] * 0.5
-        max_material_emissions = prod["amount"] * MATERIALS["standard"].get("emissions")
+        max_material_emissions = prod["amount"] * MATERIALS["standard"].get(
+            "emissions"
+        )
         max_emissions += max_production_emissions + max_material_emissions
 
-        current_production_emissions = prod["amount"] * prod["emission_per_unit"]
-        current_material_emissions = prod["amount"] * MATERIALS[material].get("emissions")
-        current_emissions += current_production_emissions + current_material_emissions
+        current_production_emissions = (
+            prod["amount"] * prod["emission_per_unit"]
+        )
+        current_material_emissions = prod["amount"] * MATERIALS[material].get(
+            "emissions"
+        )
+        current_emissions += (
+            current_production_emissions + current_material_emissions
+        )
 
     emission_reduction = max_emissions - current_emissions
     return round((emission_reduction / max_emissions) * 100, 2)

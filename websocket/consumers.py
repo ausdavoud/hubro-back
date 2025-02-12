@@ -48,7 +48,9 @@ class ChatConsumer(WebsocketConsumer):
             self.close()
             return
 
-        is_user_room_member = self.scope["user"].player.team == self.room_object
+        is_user_room_member = (
+            self.scope["user"].player.team == self.room_object
+        )
         print(self.scope["user"].player.team)
         if not is_user_room_member:
             async_to_sync(
@@ -67,13 +69,17 @@ class ChatConsumer(WebsocketConsumer):
             return
 
         if room_exists and is_user_room_member:
-            async_to_sync(self.channel_layer.group_add)(self.room_name, self.channel_name)
+            async_to_sync(self.channel_layer.group_add)(
+                self.room_name, self.channel_name
+            )
             response = {"message": f'Welcome to the chat {self.scope["user"]}'}
             self.send(text_data=json.dumps({"response": response}))
 
     def disconnect(self, code):
         # return super().disconnect(code)
-        async_to_sync(self.channel_layer.group_discard)(self.room_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            self.room_name, self.channel_name
+        )
 
     def receive(self, text_data=None):
         text_data_json = json.loads(text_data)
@@ -87,7 +93,9 @@ class ChatConsumer(WebsocketConsumer):
                 response = update_factory(self, data)
             case _:
                 response = {"message": action}
-        async_to_sync(self.channel_layer.group_send)(self.room_name, {"type": "chat.message", "response": response})
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_name, {"type": "chat.message", "response": response}
+        )
 
     def chat_message(self, event):
         response = event["response"]

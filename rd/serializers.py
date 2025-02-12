@@ -40,10 +40,14 @@ class DynamicRDSerializer(serializers.ModelSerializer):
         current_quarter = self.context.get("current_quarter")
         previous_rd_items = self.context.get("previous_rd_items")
         if DecisionPool.objects.filter(
-            team=team, json_body__contains=json_body, made_at_quarter=current_quarter
+            team=team,
+            json_body__contains=json_body,
+            made_at_quarter=current_quarter,
         ).exists():
             return DynamicRD.RDStates.RESEARCHING
-        return obj.get_state(current_quarter, previous_rd_items=previous_rd_items)
+        return obj.get_state(
+            current_quarter, previous_rd_items=previous_rd_items
+        )
 
     fields_to_be_removed = [
         "available_from_quarter",
@@ -83,30 +87,42 @@ class CreateRDProductSerializer(CreateBaseRDSerializer):
 
     def validate_engine(self, value):
         if not 0 <= value <= 2:
-            raise common_exceptions.ValidationError("Invalid engine index. Must be from 0 to 2.")
+            raise common_exceptions.ValidationError(
+                "Invalid engine index. Must be from 0 to 2."
+            )
         return value
 
     def validate_chassis(self, value):
         if not 0 <= value <= 2:
-            raise common_exceptions.ValidationError("Invalid chassis index. Must be from 0 to 2.")
+            raise common_exceptions.ValidationError(
+                "Invalid chassis index. Must be from 0 to 2."
+            )
         return value
 
     def validate_strap(self, value):
         if not 0 <= value <= 2:
-            raise common_exceptions.ValidationError("Invalid strap index. Must be from 0 to 2.")
+            raise common_exceptions.ValidationError(
+                "Invalid strap index. Must be from 0 to 2."
+            )
         return value
 
     def validate_engine_color(self, value):
         if not 0 <= value <= 14:
-            raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
+            raise common_exceptions.ValidationError(
+                "Invalid color index. Must be from 0 to 14."
+            )
         return value
 
     def validate_chassis_color(self, value):
         if not 0 <= value <= 14:
-            raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
+            raise common_exceptions.ValidationError(
+                "Invalid color index. Must be from 0 to 14."
+            )
         return value
 
     def validate_strap_color(self, value):
         if not 0 <= value <= 14:
-            raise common_exceptions.ValidationError("Invalid color index. Must be from 0 to 14.")
+            raise common_exceptions.ValidationError(
+                "Invalid color index. Must be from 0 to 14."
+            )
         return value

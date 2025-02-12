@@ -9,17 +9,27 @@ from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.views.exceptions import GameLogicError
-from common.views.services import get_db_record_select_prefetch_or_404, get_serializer_or_400
+from common.views.services import (
+    get_db_record_select_prefetch_or_404,
+    get_serializer_or_400,
+)
 from people.models import Player, Team
 from rd.models import DynamicRD
-from suppliers.exceptions import ForbiddenSupplierAssignmentError, InvalidCategoryError
+from suppliers.exceptions import (
+    ForbiddenSupplierAssignmentError,
+    InvalidCategoryError,
+)
 from suppliers.models import Supplier
 from suppliers.serializers import SetSupplierSerializer, SupplierSerializer
 
 
 @extend_schema_view(
-    get_suppliers=extend_schema(tags=["Suppliers"], responses=SupplierSerializer),
-    set_supplier=extend_schema(tags=["Suppliers"], responses=int, request=SetSupplierSerializer),
+    get_suppliers=extend_schema(
+        tags=["Suppliers"], responses=SupplierSerializer
+    ),
+    set_supplier=extend_schema(
+        tags=["Suppliers"], responses=int, request=SetSupplierSerializer
+    ),
 )
 class SuppliersView(ViewSet):
     permission_classes = [IsAuthenticated]
@@ -36,10 +46,14 @@ class SuppliersView(ViewSet):
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
 
-        completed_dynamic_rd_objs_categories = self._get_completed_dynamic_rd_objs_categories(team=team)
+        completed_dynamic_rd_objs_categories = (
+            self._get_completed_dynamic_rd_objs_categories(team=team)
+        )
 
         # get suppliers whose rd_category is in the categories of the completed_dynamic_rd_objs
-        suppliers = Supplier.objects.filter(rd_category__in=completed_dynamic_rd_objs_categories)
+        suppliers = Supplier.objects.filter(
+            rd_category__in=completed_dynamic_rd_objs_categories
+        )
 
         serialized_suppliers = SupplierSerializer(suppliers, many=True)
         response = {
@@ -53,26 +67,34 @@ class SuppliersView(ViewSet):
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
         json_body = self._get_supplier_json_body(request.data)
-        completed_categories = self._get_completed_dynamic_rd_objs_categories(team=team)
+        completed_categories = self._get_completed_dynamic_rd_objs_categories(
+            team=team
+        )
 
         category = json_body["rd_category"]
         supplier_id = json_body["supplier_id"]
 
-        supplier: Supplier = get_db_record_select_prefetch_or_404(Supplier, id=supplier_id)
+        supplier: Supplier = get_db_record_select_prefetch_or_404(
+            Supplier, id=supplier_id
+        )
 
         if supplier.rd_category not in completed_categories:
             raise ForbiddenSupplierAssignmentError(category=category)
 
         if supplier.rd_category != category:
-            raise InvalidCategoryError(supplier_id=supplier_id, category=category)
+            raise InvalidCategoryError(
+                supplier_id=supplier_id, category=category
+            )
 
-        updated_rds = DynamicRD.objects.filter(team=team, type=DynamicRD.RDTypes.PRODUCT, category=category).update(
-            supplier=supplier
-        )
+        updated_rds = DynamicRD.objects.filter(
+            team=team, type=DynamicRD.RDTypes.PRODUCT, category=category
+        ).update(supplier=supplier)
         serialized_supplier_data = SupplierSerializer(supplier).data
 
         if updated_rds != 1:
-            raise GameLogicError(f"Expected to update 1 DynamicRD object, but updated {updated_rds} instead")
+            raise GameLogicError(
+                f"Expected to update 1 DynamicRD object, but updated {updated_rds} instead"
+            )
         response = {"new_supplier": serialized_supplier_data}
         return Response(response, status=status.HTTP_200_OK)
 

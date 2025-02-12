@@ -1,6 +1,11 @@
 # Create your views here.
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema, extend_schema_view
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,7 +17,11 @@ from rest_framework_simplejwt.views import (
 )
 
 from people.models import CustomUser
-from people.serializers import TokenObtainPairResponseSerializer, TokenRefreshResponseSerializer, UserRegisterSerializer
+from people.serializers import (
+    TokenObtainPairResponseSerializer,
+    TokenRefreshResponseSerializer,
+    UserRegisterSerializer,
+)
 from people.views import exceptions as people_exceptions
 
 

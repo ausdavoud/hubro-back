@@ -13,7 +13,10 @@ class DatabaseRecordNotFound(APIException):
             "error": {
                 "code": ErrorCodes.DATABASES_RECORD_NOT_FOUND_CODE,
                 "description": "Database object not found",
-                "context": {"database_model_name": model._meta.model_name, **context},
+                "context": {
+                    "database_model_name": model._meta.model_name,
+                    **context,
+                },
             }
         }
         super().__init__(detail)

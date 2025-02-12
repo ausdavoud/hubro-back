@@ -31,7 +31,7 @@ SECRET_KEY = getenv("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["hubro.divaresorkh.ir", "localhost"]
+ALLOWED_HOSTS = ["hubro.divaresorkh.ir", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -179,15 +179,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5173",
-    "https://hubro.divaresorkh.ir"
+    "https://hubro.divaresorkh.ir",
 ]
 
 CORS_ALLOWED_CREDENTIALS = True
 
 # Rest Framework
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     # "COERCE_DECIMAL_TO_STRING": False,
 }
@@ -204,7 +208,9 @@ SIMPLE_JWT = {
 
 # Channels
 ASGI_APPLICATION = "config.asgi.application"
-CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+CHANNEL_LAYERS = {
+    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
+}
 
 # Swagger
 SPECTACULAR_SETTINGS = {

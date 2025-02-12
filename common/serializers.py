@@ -28,35 +28,45 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
 
     def validate_company_icon_bg(self, value):
         if not 0 <= value <= 5:
-            raise serializers.ValidationError("Icon background must be between 0 and 5.")
+            raise serializers.ValidationError(
+                "Icon background must be between 0 and 5."
+            )
         return value
 
     def validate_company_icon(self, value):
         if not 0 <= value <= 5:
-            raise serializers.ValidationError("Icon icon must be between 0 and 5.")
+            raise serializers.ValidationError(
+                "Icon icon must be between 0 and 5."
+            )
         return value
 
     def validate_company_icon_color(self, value):
         if not 0 <= value <= 5:
-            raise serializers.ValidationError("Icon color must be between 0 and 5.")
+            raise serializers.ValidationError(
+                "Icon color must be between 0 and 5."
+            )
         return value
 
     def validate_company_icon_font(self, value):
         if not 0 <= value <= 5:
-            raise serializers.ValidationError("Icon font must be between 0 and 5.")
+            raise serializers.ValidationError(
+                "Icon font must be between 0 and 5."
+            )
         return value
 
 
 class StateVariableSerializer(serializers.ModelSerializer):
     simulation_name = serializers.SerializerMethodField()
     beginning_cash = serializers.SerializerMethodField()
+
     class Meta:
         model = StateVariable
         fields = "__all__"
 
     def get_simulation_name(self, obj: StateVariable):
         return obj.team.simulation_class.name
-    
+
     def get_beginning_cash(self, obj: StateVariable):
         from finance.views.views import _get_cash_flow
+
         return _get_cash_flow(obj.team, obj.quarter)[obj.quarter]

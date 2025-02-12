@@ -9,13 +9,21 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool
 from common.serializers import DecisionPoolSerializer
-from common.views.exceptions import DatabaseRecordNotFound, DuplicateDecisionError, ValidationError
+from common.views.exceptions import (
+    DatabaseRecordNotFound,
+    DuplicateDecisionError,
+    ValidationError,
+)
 from common.views.services import get_db_record_select_prefetch_or_404
 from people.models import Player, Team
 
 
 @extend_schema_view(
-    enable_esg_reporting=extend_schema(tags=["ESG Reporting"], request=None, responses={200: DecisionPoolSerializer}),
+    enable_esg_reporting=extend_schema(
+        tags=["ESG Reporting"],
+        request=None,
+        responses={200: DecisionPoolSerializer},
+    ),
     disable_esg_reporting=extend_schema(tags=["ESG Reporting"], request=None),
 )
 class ESGReportingView(ViewSet):
@@ -43,9 +51,13 @@ class ESGReportingView(ViewSet):
         response = {"decision": serialized_decision}
         return Response(response, status=status.HTTP_200_OK)
 
-    def _create_esg_reporting_decision(self, player: Player, team: Team, current_quarter) -> None:
+    def _create_esg_reporting_decision(
+        self, player: Player, team: Team, current_quarter
+    ) -> None:
         if current_quarter != 3:
-            raise ValidationError("You can only enable ESG reporting at quarter 3.")
+            raise ValidationError(
+                "You can only enable ESG reporting at quarter 3."
+            )
 
         decision, created = DecisionPool.objects.get_or_create(
             team=team,
@@ -55,7 +67,9 @@ class ESGReportingView(ViewSet):
             defaults={"player": player},
         )
         if not created:
-            raise DuplicateDecisionError(context={"duplication at": "esg_reporting"})
+            raise DuplicateDecisionError(
+                context={"duplication at": "esg_reporting"}
+            )
 
         serialized_decision = DecisionPoolSerializer(decision).data
         return serialized_decision
@@ -66,13 +80,19 @@ class ESGReportingView(ViewSet):
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
         current_quarter = team.state_variables.quarter
-        serialized_deleted_decision = self._delete_esg_reporting_decision(team, current_quarter=current_quarter)
+        serialized_deleted_decision = self._delete_esg_reporting_decision(
+            team, current_quarter=current_quarter
+        )
         response = {"deleted_decision": serialized_deleted_decision}
         return Response(response, status=status.HTTP_200_OK)
 
-    def _delete_esg_reporting_decision(self, team: Team, current_quarter) -> None:
+    def _delete_esg_reporting_decision(
+        self, team: Team, current_quarter
+    ) -> None:
         if current_quarter != 3:
-            raise ValidationError("You can only disable ESG reporting at quarter 3.")
+            raise ValidationError(
+                "You can only disable ESG reporting at quarter 3."
+            )
         decision = DecisionPool.objects.filter(
             team=team,
             made_at_quarter=current_quarter,
@@ -82,4 +102,6 @@ class ESGReportingView(ViewSet):
         if decision:
             decision.delete()
             return serialized_decision
-        raise DatabaseRecordNotFound(DecisionPool, {"msg": "Have you started esg reporting at all?"})
+        raise DatabaseRecordNotFound(
+            DecisionPool, {"msg": "Have you started esg reporting at all?"}
+        )

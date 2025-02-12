@@ -32,7 +32,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, clean_data):
         user = CustomUser.objects.create_user(
-            email=clean_data["email"], password=clean_data["password"], role=clean_data["role"]
+            email=clean_data["email"],
+            password=clean_data["password"],
+            role=clean_data["role"],
         )
         return user
 

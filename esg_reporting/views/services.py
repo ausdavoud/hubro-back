@@ -25,6 +25,8 @@ def enable_esg_reporting(team: Team):
             )
             team.state_variables.save()
     except DatabaseError:
-        raise common_exceptions.AtomicTransactionError(state="Error at making a loan object")
+        raise common_exceptions.AtomicTransactionError(
+            state="Error at making a loan object"
+        )
 
     return Response("ESG reporting enabled.", status=status.HTTP_200_OK)
