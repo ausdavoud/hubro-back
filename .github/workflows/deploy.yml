@@ -17,4 +17,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: /home/${{ secrets.SSH_USER }}/hubro/hubro-back.sh
+          script: /home/${{ secrets.SSH_USER }}/hubro/deploy-back.sh
