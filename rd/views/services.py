@@ -21,9 +21,9 @@ def create_dynamic_rd_items(team: Team):
             supplier_rd_category = supplier_tuple[0]
             supplier_name = supplier_tuple[1]
 
-        supplier = Supplier.objects.get(
+        supplier: Supplier = Supplier.objects.filter(
             rd_category=supplier_rd_category, name=supplier_name
-        )
+        ).first()
         dynamic_rd_item = DynamicRD(
             team=team,
             category=static["category"],
@@ -39,6 +39,7 @@ def create_dynamic_rd_items(team: Team):
             emission_effect=static.get("emission_effect", 0),
             unit_mat_cost_reduction=static.get("unit_mat_cost_reduction", 0),
             emission_reduction=static.get("emission_reduction", 0),
+            base_material_cost=supplier.price if supplier else 0,
             supplier=supplier if supplier else None,
         )
         dynamic_rd_items.append(dynamic_rd_item)

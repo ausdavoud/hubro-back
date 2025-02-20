@@ -16,36 +16,51 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="cashchange",
             name="team",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="people.team"
+            ),
         ),
         migrations.AddField(
             model_name="loan",
             name="team",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="people.team"
+            ),
         ),
         migrations.AddField(
             model_name="overdraft",
             name="team",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="people.team"
+            ),
         ),
         migrations.AddField(
             model_name="repayment",
             name="loan",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="finance.loan"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="finance.loan"
+            ),
         ),
         migrations.AddField(
             model_name="repayment",
             name="team",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="people.team"
+            ),
         ),
         migrations.AddField(
             model_name="transaction",
             name="financial_account",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="finance.financialaccount"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="finance.financialaccount",
+            ),
         ),
         migrations.AddField(
             model_name="transaction",
             name="team",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="people.team"
+            ),
         ),
     ]

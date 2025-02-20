@@ -12,9 +12,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CashChange",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("beginning_cash", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("ending_cash", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "beginning_cash",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "ending_cash",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("quarter", models.IntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
@@ -23,7 +37,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="FinancialAccount",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "name",
                     models.IntegerField(
@@ -49,19 +71,45 @@ class Migration(migrations.Migration):
                         ]
                     ),
                 ),
-                ("type", models.CharField(choices=[("DE", "Debit"), ("CR", "Credit")], max_length=2)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[("DE", "Debit"), ("CR", "Credit")],
+                        max_length=2,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
             name="Loan",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("amount", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "amount",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("issued_quarter", models.IntegerField()),
-                ("interest", models.DecimalField(decimal_places=2, max_digits=5)),
+                (
+                    "interest",
+                    models.DecimalField(decimal_places=2, max_digits=5),
+                ),
                 ("payback_period", models.IntegerField()),
-                ("total_payback", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("payback_per_quarter", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "total_payback",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "payback_per_quarter",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
@@ -69,9 +117,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Overdraft",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("beginning_overdraft", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("ending_overdraft", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "beginning_overdraft",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "ending_overdraft",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("quarter", models.IntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
@@ -80,9 +142,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Repayment",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("interest_amount", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("repayment_amount", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "interest_amount",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "repayment_amount",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("left", models.DecimalField(decimal_places=0, max_digits=15)),
                 ("quarter", models.IntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -92,17 +168,40 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Transaction",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "category",
                     models.CharField(
                         choices=[
-                            ("Depreciation of factories", "Depreciation Of Factories"),
-                            ("Amortization of projects", "Amortization Of Projects"),
-                            ("Materials used in production", "Materials Used In Production"),
+                            (
+                                "Depreciation of factories",
+                                "Depreciation Of Factories",
+                            ),
+                            (
+                                "Amortization of projects",
+                                "Amortization Of Projects",
+                            ),
+                            (
+                                "Materials used in production",
+                                "Materials Used In Production",
+                            ),
                             ("Cost of sold products", "Cost Of Sold Products"),
-                            ("Wages for production workers", "Wages For Production"),
-                            ("Current portion of loans to be paid this year", "Current Portion Of Loans"),
+                            (
+                                "Wages for production workers",
+                                "Wages For Production",
+                            ),
+                            (
+                                "Current portion of loans to be paid this year",
+                                "Current Portion Of Loans",
+                            ),
                             ("New loans", "New Loans"),
                             ("Loan Repayment", "Loan Repayment"),
                             ("Overdraft", "Overdraft"),
@@ -113,15 +212,27 @@ class Migration(migrations.Migration):
                             ("Interest on overdraft", "Interest On Overdraft"),
                             ("Loan interest", "Loan Interest"),
                             ("Sold factories", "Sold Factories"),
-                            ("Loss on sale of assets", "Loss On Sale Of Assets"),
-                            ("Extraordinary PR expenses", "Extraordinary Pr Expenses"),
+                            (
+                                "Loss on sale of assets",
+                                "Loss On Sale Of Assets",
+                            ),
+                            (
+                                "Extraordinary PR expenses",
+                                "Extraordinary Pr Expenses",
+                            ),
                         ],
                         max_length=80,
                     ),
                 ),
                 ("quarter", models.IntegerField()),
-                ("debit_amount", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("credit_amount", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "debit_amount",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "credit_amount",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
             ],
         ),
     ]

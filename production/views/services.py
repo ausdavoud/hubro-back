@@ -7,6 +7,7 @@ from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_select_prefetch_or_404
 from finance.models import FinancialAccount, Transaction
 from finance.serializer import TransactionSerializer
+from finance.views.services import create_transaction
 from people.models import Team
 from production.models import Factory, Production
 from production.serializers import FactorySerializer, ProductionSerializer
@@ -60,6 +61,48 @@ def new_factory(team: Team, decision: DecisionPool):
         built_at_quarter=built_at_quarter,
         **factories[ownership],
     )
+
+    # pay factory built cost
+    factories_account = get_db_record_select_prefetch_or_404(
+        FinancialAccount, code=FinancialAccount.AccountCodes.FACTORIES
+    )
+    cash_account = get_db_record_select_prefetch_or_404(
+        FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+    )
+    create_transaction(
+        team=team,
+        quarter=built_at_quarter,
+        credit_account=cash_account,
+        debit_account=factories_account,
+        amount=factory.build_cost,
+        category=Transaction.Categories.NEW_FACTORY,
+    )
+
+    # Add ripple task for depreciation costs
+    if ownership == Factory.OwnershipTypes.OWNED:
+        depreciation_ripple_task = RippleTask.objects.create(
+            team=team,
+            run_at_quarter=built_at_quarter,
+            type=RippleTask.TaskTypes.FACTORY_DEPRECIATION,
+            json_body={
+                "factory_id": factory.pk,
+                "depreciation_cost": factory.build_cost
+                / Decimal(factory.depreciation_time),
+                "depreciation_duration": factory.depreciation_time,
+                "started_at": built_at_quarter,
+                "quarters_paid": 0,
+            },
+        )
+    # Add ripple task for maintenance cost
+    maintenance_cost_ripple_task = RippleTask.objects.create(
+        team=team,
+        run_at_quarter=built_at_quarter,
+        type=RippleTask.TaskTypes.FACTORY_MAINTENANCE,
+        json_body={
+            "factory_id": factory.pk,
+            "maintenance_cost": factory.maintenance_cost_per_quarter,
+        },
+    )
     serialized_factory = FactorySerializer(factory, context={"team": team})
     return {"factory": serialized_factory.data}
 
@@ -83,6 +126,16 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
                 team=team, factory=factory
             ).delete()
 
+            # Find the depreciation paid, to be subtracted from the sale amount
+            depreciation_ripple_task = RippleTask.objects.filter(
+                team=team,
+                type=RippleTask.TaskTypes.FACTORY_DEPRECIATION,
+                json_body__factory_id=factory_id,
+            ).first()
+            total_depreciation_paid = depreciation_ripple_task.json_body[
+                "depreciation_cost"
+            ] * Decimal(depreciation_ripple_task.json_body["quarters_paid"])
+
             # delete ripple tasks related to that production
             deleted_ripple_tasks = RippleTask.objects.filter(
                 team=team,
@@ -98,10 +151,13 @@ def sell_factory(team: Team, factory_id: int, current_quarter: int):
                 return serialized_factory_data
 
             elif factory.ownership == Factory.OwnershipTypes.OWNED:
-                sale_amount = Decimal(
-                    factory.resale_value_percent * factory.build_cost
+                factory_current_value = (
+                    factory.build_cost - total_depreciation_paid
                 )
-                loss_amount = Decimal(factory.build_cost - sale_amount)
+                sale_amount = Decimal(
+                    factory.resale_value_percent * factory_current_value / 100
+                )
+                loss_amount = Decimal(factory_current_value - sale_amount)
                 factories_account = get_db_record_select_prefetch_or_404(
                     FinancialAccount,
                     code=FinancialAccount.AccountCodes.FACTORIES,

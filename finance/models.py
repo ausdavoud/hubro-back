@@ -62,6 +62,7 @@ class Transaction(models.Model):
         LOSS_ON_SALE_OF_ASSETS = "Loss on sale of assets"
         EXTRAORDINARY_PR_EXPENSES = "Extraordinary PR expenses"
         RESEARCH_PROJECTS = "Research projects"
+        NEW_FACTORY = "New factory"
 
     team = models.ForeignKey(
         Team, on_delete=models.CASCADE, related_name="transactions"

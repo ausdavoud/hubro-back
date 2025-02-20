@@ -17,28 +17,36 @@ class Migration(migrations.Migration):
             model_name="decisionpool",
             name="player",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="decision_pool", to="people.player"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="decision_pool",
+                to="people.player",
             ),
         ),
         migrations.AddField(
             model_name="decisionpool",
             name="team",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="decision_pool", to="people.team"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="decision_pool",
+                to="people.team",
             ),
         ),
         migrations.AddField(
             model_name="rippletask",
             name="team",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="ripple_tasks", to="people.team"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="ripple_tasks",
+                to="people.team",
             ),
         ),
         migrations.AddField(
             model_name="statevariable",
             name="team",
             field=models.OneToOneField(
-                on_delete=django.db.models.deletion.CASCADE, related_name="state_variables", to="people.team"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="state_variables",
+                to="people.team",
             ),
         ),
     ]

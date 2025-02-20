@@ -16,27 +16,71 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Factory",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("built_at_quarter", models.IntegerField()),
                 ("name", models.CharField(blank=True, max_length=20)),
-                ("ownership", models.CharField(choices=[("OW", "Owned"), ("RN", "Rented")], max_length=2)),
+                (
+                    "ownership",
+                    models.CharField(
+                        choices=[("OW", "Owned"), ("RN", "Rented")],
+                        max_length=2,
+                    ),
+                ),
                 ("output_per_quarter", models.IntegerField()),
-                ("build_cost", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "build_cost",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("setup_time", models.IntegerField()),
-                ("outsourcing_fee_per_unit", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("labor_cost_per_unit", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("maintenance_cost_per_quarter", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("resale_value_percent", models.DecimalField(decimal_places=2, max_digits=5)),
-                ("emissions_per_unit", models.DecimalField(decimal_places=2, max_digits=5)),
+                (
+                    "outsourcing_fee_per_unit",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "labor_cost_per_unit",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "maintenance_cost_per_quarter",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "resale_value_percent",
+                    models.DecimalField(decimal_places=2, max_digits=5),
+                ),
+                (
+                    "emissions_per_unit",
+                    models.DecimalField(decimal_places=2, max_digits=5),
+                ),
                 ("depreciation_time", models.IntegerField()),
-                ("fixed_cost", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "fixed_cost",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("workers", models.IntegerField()),
-                ("hours", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "hours",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("wage", models.DecimalField(decimal_places=2, max_digits=5)),
                 ("base", models.IntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("team", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team")),
+                (
+                    "team",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="people.team",
+                    ),
+                ),
             ],
             options={
                 "verbose_name_plural": "Factories",
@@ -45,19 +89,49 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Production",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("quarter", models.IntegerField()),
-                ("activity_level", models.DecimalField(decimal_places=2, default=100, max_digits=5)),
+                (
+                    "activity_level",
+                    models.DecimalField(
+                        decimal_places=2, default=100, max_digits=5
+                    ),
+                ),
                 ("produced_quantity", models.IntegerField()),
-                ("labor_cost", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "labor_cost",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("factory", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="production.factory")),
-                ("product", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="rd.dynamicrd")),
+                (
+                    "factory",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="production.factory",
+                    ),
+                ),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="rd.dynamicrd",
+                    ),
+                ),
                 (
                     "team",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="productions", to="people.team"
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="productions",
+                        to="people.team",
                     ),
                 ),
             ],
@@ -65,21 +139,39 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Storage",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("quantity", models.IntegerField(default=0)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("product", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="rd.dynamicrd")),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="rd.dynamicrd",
+                    ),
+                ),
                 (
                     "team",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="storages", to="people.team"
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="storages",
+                        to="people.team",
                     ),
                 ),
             ],
         ),
         migrations.AddConstraint(
             model_name="factory",
-            constraint=models.UniqueConstraint(fields=("team", "name"), name="unique_factory_name_per_team"),
+            constraint=models.UniqueConstraint(
+                fields=("team", "name"), name="unique_factory_name_per_team"
+            ),
         ),
     ]
