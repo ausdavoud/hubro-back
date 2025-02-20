@@ -63,6 +63,8 @@ class RippleTask(models.Model):
         ESG_REPORTING = "esg_reporting", "ESG Reporting"
         LOAN_REPAYMENT = "loan_repayment", "Loan Repayment"
         LOAN_INTEREST = "loan_interest", "Loan Interest"
+        FACTORY_DEPRECIATION = "factory_depreciation", "Factory Depreciation"
+        FACTORY_MAINTENANCE = "factory_maintenance", "Factory Maintenance"
 
     team = models.ForeignKey(
         Team, on_delete=models.CASCADE, related_name="ripple_tasks"

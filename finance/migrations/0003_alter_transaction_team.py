@@ -15,7 +15,9 @@ class Migration(migrations.Migration):
             model_name="transaction",
             name="team",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="transactions", to="people.team"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="transactions",
+                to="people.team",
             ),
         ),
     ]

@@ -75,6 +75,9 @@ class DynamicRD(models.Model):
     time_spent_developing = models.IntegerField(default=0)
 
     # 2 out of 3 are always null based on being 1. Product 2. Upgrade 3. Production
+    base_material_cost = models.DecimalField(
+        max_digits=15, decimal_places=0, default=0
+    )
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     # below is for upgrade type only
     unit_mat_cost_reduction = models.DecimalField(
