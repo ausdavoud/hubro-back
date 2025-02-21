@@ -99,7 +99,6 @@ def get_winner_teams(
 
     Returns teams ordered by their esg and marketing budget.
     """
-    print(teams_info)
     teams_info.sort(
         key=lambda x: Decimal(0.1) * x[1] + Decimal(0.9) * x[2], reverse=True
     )

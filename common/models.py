@@ -65,6 +65,11 @@ class RippleTask(models.Model):
         LOAN_INTEREST = "loan_interest", "Loan Interest"
         FACTORY_DEPRECIATION = "factory_depreciation", "Factory Depreciation"
         FACTORY_MAINTENANCE = "factory_maintenance", "Factory Maintenance"
+        PAY_RD_COST = "pay_rd_cost", "Pay R&D Project Cost"
+        AMORTIZATION_OF_PROJECTS = (
+            "amortization_of_projects",
+            "Amortization of Projects",
+        )
 
     team = models.ForeignKey(
         Team, on_delete=models.CASCADE, related_name="ripple_tasks"

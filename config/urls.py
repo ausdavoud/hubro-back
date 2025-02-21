@@ -30,6 +30,7 @@ urlpatterns = [
         "esg_reporting/", include("esg_reporting.urls"), name="esg_reporting"
     ),
     path("suppliers/", include("suppliers.urls"), name="suppliers"),
+    path("reports/", include("reports.urls"), name="reports"),
 ]
 
 if settings.DEBUG:
