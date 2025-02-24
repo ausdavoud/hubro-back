@@ -114,7 +114,7 @@ class CashFlowReportView(APIView):
                 endpoint=ContractView.ENDPOINTS.SET_CONTRACTS_ORDER,
             )
             marketing_budget = sum(
-                decision.json_body["marketing_budget"]
+                float(decision.json_body["marketing_budget"])
                 for decision in marketing_budget
             )
             operating_activities += marketing_budget
