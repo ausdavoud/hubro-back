@@ -631,6 +631,7 @@ class FinishQuarter(APIView):
         ripple_tasks_to_update
 
     def _factory_depreciation(
+        self,
         ripple_task: RippleTask,
         team: Team,
         current_quarter: int,
@@ -672,6 +673,7 @@ class FinishQuarter(APIView):
             ripple_tasks_to_update.append(ripple_task)
 
     def _factory_maintenance_cost(
+        self,
         ripple_task: RippleTask,
         team: Team,
         current_quarter: int,
