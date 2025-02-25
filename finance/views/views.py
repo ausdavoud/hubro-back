@@ -215,7 +215,6 @@ class TransactionView(ViewSet):
         grouped_transactions = defaultdict(lambda: defaultdict(list))
         for quarter, transactions in transactions.items():
             for transaction in transactions:
-                print(transaction)
                 grouped_transactions[quarter][transaction["category"]].append(
                     transaction
                 )

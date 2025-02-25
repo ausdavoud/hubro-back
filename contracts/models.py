@@ -1,6 +1,7 @@
 from django.db import models
 
 from people.models import SimulationClass, Team
+from rd.models import RDCategories
 
 
 class Contract(models.Model):
@@ -22,7 +23,9 @@ class Contract(models.Model):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=15, decimal_places=0)
     total_price = models.DecimalField(max_digits=15, decimal_places=0)
-    deliverable_product = models.CharField(max_length=100)
+    deliverable_product = models.CharField(
+        choices=RDCategories.choices, max_length=100
+    )
     minimum_esg_index = models.IntegerField()
     priority = models.IntegerField()
     status = models.CharField(
