@@ -13,44 +13,45 @@ from production.models import Factory, Production
 from production.serializers import FactorySerializer, ProductionSerializer
 from rd.models import DynamicRD
 
+factories = {
+    "OW": {
+        "ownership": Factory.OwnershipTypes.OWNED,
+        "output_per_quarter": 1000,
+        "build_cost": 100_000_00,
+        "setup_time": 1,
+        "outsourcing_fee_per_unit": 0,
+        "labor_cost_per_unit": 58_00,
+        "maintenance_cost_per_quarter": 20_000_00,
+        "resale_value_percent": 70,
+        "emissions_per_unit": 0.5,
+        "depreciation_time": 20,
+        "fixed_cost": 0,
+        "workers": 0,
+        "hours": 0,
+        "wage": 0,
+        "base": 1000,
+    },
+    "RN": {
+        "ownership": Factory.OwnershipTypes.RENTED,
+        "output_per_quarter": 1000,
+        "build_cost": 30_000_00,
+        "setup_time": 1,
+        "outsourcing_fee_per_unit": 58_00,
+        "labor_cost_per_unit": 0,
+        "maintenance_cost_per_quarter": 15_000_00,
+        "resale_value_percent": 0,
+        "emissions_per_unit": 0.4,
+        "depreciation_time": 0,
+        "fixed_cost": 0,
+        "workers": 0,
+        "hours": 0,
+        "wage": 0,
+        "base": 1000,
+    },
+}
+
 
 def new_factory(team: Team, decision: DecisionPool):
-    factories = {
-        "OW": {
-            "ownership": Factory.OwnershipTypes.OWNED,
-            "output_per_quarter": 1000,
-            "build_cost": 100_000_00,
-            "setup_time": 1,
-            "outsourcing_fee_per_unit": 0,
-            "labor_cost_per_unit": 58_00,
-            "maintenance_cost_per_quarter": 20_000_00,
-            "resale_value_percent": 70,
-            "emissions_per_unit": 0.5,
-            "depreciation_time": 20,
-            "fixed_cost": 0,
-            "workers": 0,
-            "hours": 0,
-            "wage": 0,
-            "base": 1000,
-        },
-        "RN": {
-            "ownership": Factory.OwnershipTypes.RENTED,
-            "output_per_quarter": 1000,
-            "build_cost": 30_000_00,
-            "setup_time": 1,
-            "outsourcing_fee_per_unit": 58_00,
-            "labor_cost_per_unit": 0,
-            "maintenance_cost_per_quarter": 15_000_00,
-            "resale_value_percent": 0,
-            "emissions_per_unit": 0.4,
-            "depreciation_time": 0,
-            "fixed_cost": 0,
-            "workers": 0,
-            "hours": 0,
-            "wage": 0,
-            "base": 1000,
-        },
-    }
     # Technically, the factory is built at the next quarter of the decision
     built_at_quarter = decision.made_at_quarter + 1
     ownership = decision.json_body["ownership"]
@@ -86,8 +87,9 @@ def new_factory(team: Team, decision: DecisionPool):
             type=RippleTask.TaskTypes.FACTORY_DEPRECIATION,
             json_body={
                 "factory_id": factory.pk,
-                "depreciation_cost": factory.build_cost
-                / Decimal(factory.depreciation_time),
+                "depreciation_cost": str(
+                    factory.build_cost / Decimal(factory.depreciation_time)
+                ),
                 "depreciation_duration": factory.depreciation_time,
                 "started_at": built_at_quarter,
                 "quarters_paid": 0,

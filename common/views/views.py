@@ -361,7 +361,6 @@ class FinishQuarter(APIView):
                     assignment_response = assign_contracts_to_teams(
                         winners, current_quarter=decision.made_at_quarter
                     )
-                    print(assignment_response)
                     return decision.endpoint, response
                 case ESGReportingView.ENDPOINTS.ENABLE_ESG_REPORTING:
                     return decision.endpoint, enable_esg_reporting(team=team)
@@ -425,6 +424,27 @@ class FinishQuarter(APIView):
                     ripple_tasks_to_delete=tasks_to_delete,
                 )
 
+            if ripple_task.type == RippleTask.TaskTypes.PAY_RD_COST:
+                self._pay_rd_cost(
+                    ripple_task=ripple_task,
+                    team=team,
+                    current_quarter=current_quarter,
+                    ripple_tasks_to_update=tasks_to_update,
+                    ripple_tasks_to_delete=tasks_to_delete,
+                )
+
+            if (
+                ripple_task.type
+                == RippleTask.TaskTypes.AMORTIZATION_OF_PROJECTS
+            ):
+                self._pay_product_amortization(
+                    ripple_task=ripple_task,
+                    team=team,
+                    current_quarter=current_quarter,
+                    ripple_tasks_to_update=tasks_to_update,
+                    ripple_tasks_to_delete=tasks_to_delete,
+                )
+
         if dynamic_rd_objects_to_update:
             DynamicRD.objects.bulk_update(
                 dynamic_rd_objects_to_update, ["time_spent_developing"]
@@ -449,23 +469,6 @@ class FinishQuarter(APIView):
             id=ripple_task.json_body["dynamic_rd_id"],
         )
         time_spent_developing = dynamic_rd_object.time_spent_developing
-        if time_spent_developing == 0:
-            products_blueprints_account = get_db_record_select_prefetch_or_404(
-                FinancialAccount,
-                code=FinancialAccount.AccountCodes.PRODUCTS_BLUEPRINTS,
-            )
-            cash_account = get_db_record_select_prefetch_or_404(
-                FinancialAccount, code=FinancialAccount.AccountCodes.CASH
-            )
-            pay_dynamic_rd_cost = create_transaction(
-                team=team,
-                quarter=ripple_task.run_at_quarter,
-                amount=dynamic_rd_object.development_cost
-                / Decimal(dynamic_rd_object.development_duration),
-                category=Transaction.Categories.RESEARCH_PROJECTS,
-                debit_account=products_blueprints_account,
-                credit_account=cash_account,
-            )
         dynamic_rd_object.time_spent_developing = (
             F("time_spent_developing") + 1
         )
@@ -628,6 +631,7 @@ class FinishQuarter(APIView):
         ripple_tasks_to_update
 
     def _factory_depreciation(
+        self,
         ripple_task: RippleTask,
         team: Team,
         current_quarter: int,
@@ -657,13 +661,19 @@ class FinishQuarter(APIView):
             ripple_task.json_body["depreciation_duration"]
             == ripple_task.json_body["quarters_paid"]
         ):
-            ripple_tasks_to_delete.append(ripple_task)
+            pass
+            # commented this section because depreciation happens
+            # only for the first 20 quarters, and if we delete the
+            # ripple task, we can't keep track of the depreciation
+            # in the next quarters (21, 22, ...)
+            # ripple_tasks_to_delete.append(ripple_task)
         else:
             ripple_task.json_body["quarters_paid"] += 1
             ripple_task.run_at_quarter += 1
             ripple_tasks_to_update.append(ripple_task)
 
     def _factory_maintenance_cost(
+        self,
         ripple_task: RippleTask,
         team: Team,
         current_quarter: int,
@@ -688,6 +698,75 @@ class FinishQuarter(APIView):
         )
         ripple_task.run_at_quarter += 1
         ripple_tasks_to_update.append(ripple_task)
+
+    def _pay_rd_cost(
+        self,
+        ripple_task: RippleTask,
+        team: Team,
+        current_quarter: int,
+        ripple_tasks_to_update: list[RippleTask],
+        ripple_tasks_to_delete: list[RippleTask],
+    ):
+        products_blueprints_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount,
+            code=FinancialAccount.AccountCodes.PRODUCTS_BLUEPRINTS,
+        )
+        cash_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+        )
+        pay_dynamic_rd_cost = create_transaction(
+            team=team,
+            quarter=ripple_task.run_at_quarter,
+            amount=ripple_task.json_body["amount"],
+            category=Transaction.Categories.RESEARCH_PROJECTS,
+            debit_account=products_blueprints_account,
+            credit_account=cash_account,
+        )
+        if (
+            ripple_task.json_body["quarters_paid"] + 1
+            == ripple_task.json_body["development_duration"]
+        ):
+            ripple_tasks_to_delete.append(ripple_task)
+        else:
+            ripple_task.run_at_quarter += 1
+            ripple_task.json_body["quarters_paid"] += 1
+            ripple_tasks_to_update.append(ripple_task)
+
+    def _pay_product_amortization(
+        self,
+        ripple_task: RippleTask,
+        team: Team,
+        current_quarter: int,
+        ripple_tasks_to_update: list[RippleTask],
+        ripple_tasks_to_delete: list[RippleTask],
+    ):
+        products_blueprint_financial_account = (
+            get_db_record_select_prefetch_or_404(
+                FinancialAccount,
+                code=FinancialAccount.AccountCodes.PRODUCTS_BLUEPRINTS,
+            )
+        )
+        amortization_financial_account = get_db_record_select_prefetch_or_404(
+            FinancialAccount,
+            code=FinancialAccount.AccountCodes.AMORTIZATION,
+        )
+        create_transaction(
+            team=team,
+            quarter=current_quarter,
+            amount=ripple_task.json_body["amount"],
+            category=Transaction.Categories.AMORTIZATION_OF_PROJECTS,
+            credit_account=products_blueprint_financial_account,
+            debit_account=amortization_financial_account,
+        )
+        if (
+            ripple_task.json_body["quarters_paid"] + 1
+            == ripple_task.json_body["amortization_length"]
+        ):
+            ripple_tasks_to_delete.append(ripple_task)
+        else:
+            ripple_task.run_at_quarter += 1
+            ripple_task.json_body["quarters_paid"] += 1
+            ripple_tasks_to_update.append(ripple_task)
 
     def _generate_response(self, team: Team):
         if (

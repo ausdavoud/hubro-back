@@ -22,3 +22,6 @@ class ErrorCodes:
     # Suppliers: 03
     INVALID_CATEGORY = "0301"
     FORBIDDEN_SUPPLIER_ASSIGNMENT = "0302"
+
+    # Reports: 04
+    INVALID_QUARTER = "0401"
