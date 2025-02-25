@@ -9,7 +9,7 @@ from drf_spectacular.views import (
 )
 
 
-API_V = '/api/v1'
+API_V = 'api/v1'
 
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
