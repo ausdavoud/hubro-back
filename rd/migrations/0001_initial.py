@@ -16,7 +16,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="DynamicRD",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "category",
                     models.CharField(
@@ -31,37 +39,90 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("order", models.PositiveSmallIntegerField()),
-                ("type", models.CharField(choices=[("PR", "Product"), ("UP", "UPGRADE")], max_length=2)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[("PR", "Product"), ("UP", "UPGRADE")],
+                        max_length=2,
+                    ),
+                ),
                 ("title", models.CharField(max_length=50)),
                 ("description", models.TextField()),
-                ("depreciation_time", models.IntegerField(blank=True, null=True)),
-                ("development_cost", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "depreciation_time",
+                    models.IntegerField(blank=True, null=True),
+                ),
+                (
+                    "development_cost",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("development_duration", models.IntegerField()),
-                ("available_from_quarter", models.IntegerField(blank=True, null=True)),
+                (
+                    "available_from_quarter",
+                    models.IntegerField(blank=True, null=True),
+                ),
                 ("started_at", models.IntegerField(default=0)),
                 ("time_spent_developing", models.IntegerField(default=0)),
-                ("unit_mat_cost_reduction", models.DecimalField(decimal_places=2, default=0, max_digits=5)),
-                ("emission_reduction", models.DecimalField(decimal_places=2, default=0, max_digits=5)),
-                ("unit_mat_cost_effect", models.DecimalField(decimal_places=2, default=0, max_digits=5)),
-                ("emission_effect", models.DecimalField(decimal_places=2, default=0, max_digits=5)),
+                (
+                    "unit_mat_cost_reduction",
+                    models.DecimalField(
+                        decimal_places=2, default=0, max_digits=5
+                    ),
+                ),
+                (
+                    "emission_reduction",
+                    models.DecimalField(
+                        decimal_places=2, default=0, max_digits=5
+                    ),
+                ),
+                (
+                    "unit_mat_cost_effect",
+                    models.DecimalField(
+                        decimal_places=2, default=0, max_digits=5
+                    ),
+                ),
+                (
+                    "emission_effect",
+                    models.DecimalField(
+                        decimal_places=2, default=0, max_digits=5
+                    ),
+                ),
                 ("alias", models.CharField(blank=True, max_length=100)),
                 ("icon_link", models.CharField(blank=True, max_length=300)),
                 (
                     "engine",
                     models.IntegerField(
-                        blank=True, choices=[(0, "Engine 1"), (1, "Engine 2"), (2, "Engine 3")], null=True
+                        blank=True,
+                        choices=[
+                            (0, "Engine 1"),
+                            (1, "Engine 2"),
+                            (2, "Engine 3"),
+                        ],
+                        null=True,
                     ),
                 ),
                 (
                     "chassis",
                     models.IntegerField(
-                        blank=True, choices=[(0, "Chassis 1"), (1, "Chassis 2"), (2, "Chassis 3")], null=True
+                        blank=True,
+                        choices=[
+                            (0, "Chassis 1"),
+                            (1, "Chassis 2"),
+                            (2, "Chassis 3"),
+                        ],
+                        null=True,
                     ),
                 ),
                 (
                     "strap",
                     models.IntegerField(
-                        blank=True, choices=[(0, "Strap 1"), (1, "Strap 2"), (2, "Strap 3")], null=True
+                        blank=True,
+                        choices=[
+                            (0, "Strap 1"),
+                            (1, "Strap 2"),
+                            (2, "Strap 3"),
+                        ],
+                        null=True,
                     ),
                 ),
                 (
@@ -138,10 +199,20 @@ class Migration(migrations.Migration):
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("supplier", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="suppliers.supplier")),
+                (
+                    "supplier",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="suppliers.supplier",
+                    ),
+                ),
                 (
                     "team",
-                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="rd", to="people.team"),
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="rd",
+                        to="people.team",
+                    ),
                 ),
             ],
             options={

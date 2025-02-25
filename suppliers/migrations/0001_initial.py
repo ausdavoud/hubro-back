@@ -12,7 +12,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Supplier",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "rd_category",
                     models.CharField(
@@ -29,7 +37,12 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
-                        choices=[("standard", "Standard"), ("eco", "Eco"), ("gaia", "Gaia")], max_length=10
+                        choices=[
+                            ("standard", "Standard"),
+                            ("eco", "Eco"),
+                            ("gaia", "Gaia"),
+                        ],
+                        max_length=10,
                     ),
                 ),
                 ("price", models.IntegerField()),

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db.models import F
 
 from common.management.data_fixtures import STATIC_RD
@@ -21,9 +22,9 @@ def create_dynamic_rd_items(team: Team):
             supplier_rd_category = supplier_tuple[0]
             supplier_name = supplier_tuple[1]
 
-        supplier = Supplier.objects.get(
+        supplier: Supplier = Supplier.objects.filter(
             rd_category=supplier_rd_category, name=supplier_name
-        )
+        ).first()
         dynamic_rd_item = DynamicRD(
             team=team,
             category=static["category"],
@@ -39,6 +40,7 @@ def create_dynamic_rd_items(team: Team):
             emission_effect=static.get("emission_effect", 0),
             unit_mat_cost_reduction=static.get("unit_mat_cost_reduction", 0),
             emission_reduction=static.get("emission_reduction", 0),
+            base_material_cost=supplier.price if supplier else 0,
             supplier=supplier if supplier else None,
         )
         dynamic_rd_items.append(dynamic_rd_item)
@@ -75,7 +77,7 @@ def get_dynamic_rd_or_404(team: Team, category: str, order: int):
         raise common_exceptions.DatabaseRecordNotFound("DynamicRD", context)
 
 
-def start_rd_development(
+def update_rd_state(
     team: Team, dynamic_rd_object: DynamicRD
 ) -> DynamicRDSerializer:
     # Check if the dynamic object is available for development,
@@ -92,11 +94,38 @@ def start_rd_development(
 
     # Create ripple task to increase dev time at the end of the quarter
     json_body = {"dynamic_rd_id": dynamic_rd_object.pk}
-    ripple_task = RippleTask.objects.create(
+    inc_dev_time_ripple_task = RippleTask.objects.create(
         team=team,
         run_at_quarter=current_quarter,
         type=RippleTask.TaskTypes.INCREMENT_RD_DEV_TIME,
         json_body=json_body,
+    )
+    pay_rd_cost_ripple_task = RippleTask.objects.create(
+        team=team,
+        run_at_quarter=current_quarter,
+        type=RippleTask.TaskTypes.PAY_RD_COST,
+        json_body={
+            "amount": str(
+                dynamic_rd_object.development_cost
+                / Decimal(dynamic_rd_object.development_duration)
+            ),
+            "development_duration": dynamic_rd_object.development_duration,
+            "quarters_paid": 0,
+        },
+    )
+    amortization_length = 12
+    pay_amortization_ripple_task = RippleTask.objects.create(
+        team=team,
+        run_at_quarter=current_quarter + 1,
+        type=RippleTask.TaskTypes.AMORTIZATION_OF_PROJECTS,
+        json_body={
+            "amount": str(
+                dynamic_rd_object.development_cost
+                / Decimal(amortization_length)
+            ),
+            "amortization_length": amortization_length,
+            "quarters_paid": 0,
+        },
     )
 
     serialized_model = DynamicRDSerializer(dynamic_rd_object)
@@ -143,7 +172,7 @@ def start_rd(team: Team, decision: DecisionPool):
     if state != DynamicRD.RDStates.AVAILABLE:
         raise rd_exceptions.RDStateError(state)
 
-    serialized_dynamic_rd_object = start_rd_development(
+    serialized_dynamic_rd_object = update_rd_state(
         team, dynamic_rd_object=dynamic_rd_object
     )
 

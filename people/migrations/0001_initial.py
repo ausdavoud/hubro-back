@@ -17,9 +17,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CustomUser",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("password", models.CharField(max_length=128, verbose_name="password")),
-                ("last_login", models.DateTimeField(blank=True, null=True, verbose_name="last login")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "password",
+                    models.CharField(max_length=128, verbose_name="password"),
+                ),
+                (
+                    "last_login",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="last login"
+                    ),
+                ),
                 (
                     "is_superuser",
                     models.BooleanField(
@@ -28,8 +44,18 @@ class Migration(migrations.Migration):
                         verbose_name="superuser status",
                     ),
                 ),
-                ("first_name", models.CharField(blank=True, max_length=150, verbose_name="first name")),
-                ("last_name", models.CharField(blank=True, max_length=150, verbose_name="last name")),
+                (
+                    "first_name",
+                    models.CharField(
+                        blank=True, max_length=150, verbose_name="first name"
+                    ),
+                ),
+                (
+                    "last_name",
+                    models.CharField(
+                        blank=True, max_length=150, verbose_name="last name"
+                    ),
+                ),
                 (
                     "is_staff",
                     models.BooleanField(
@@ -46,12 +72,21 @@ class Migration(migrations.Migration):
                         verbose_name="active",
                     ),
                 ),
-                ("date_joined", models.DateTimeField(default=django.utils.timezone.now, verbose_name="date joined")),
+                (
+                    "date_joined",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now,
+                        verbose_name="date joined",
+                    ),
+                ),
                 ("email", models.EmailField(max_length=100, unique=True)),
                 (
                     "role",
                     models.CharField(
-                        blank=True, choices=[("PL", "Player"), ("IN", "Instructor")], max_length=2, null=True
+                        blank=True,
+                        choices=[("PL", "Player"), ("IN", "Instructor")],
+                        max_length=2,
+                        null=True,
                     ),
                 ),
                 (
@@ -81,7 +116,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Instructor",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
@@ -97,14 +140,26 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="SimulationClass",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=50)),
                 ("is_single_player", models.BooleanField(default=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "instructor",
-                    models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to="people.instructor"),
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="people.instructor",
+                    ),
                 ),
             ],
             options={
@@ -114,15 +169,32 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Team",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=50)),
-                ("team_type", models.CharField(choices=[("PL", "Player"), ("BO", "Bot")], default="PL", max_length=2)),
+                (
+                    "team_type",
+                    models.CharField(
+                        choices=[("PL", "Player"), ("BO", "Bot")],
+                        default="PL",
+                        max_length=2,
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "simulation_class",
                     models.ForeignKey(
-                        null=True, on_delete=django.db.models.deletion.SET_NULL, to="people.simulationclass"
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="people.simulationclass",
                     ),
                 ),
             ],
@@ -130,13 +202,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Player",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "user",
                     models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="player", to=settings.AUTH_USER_MODEL
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="player",
+                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
                 (
@@ -154,7 +236,9 @@ class Migration(migrations.Migration):
             model_name="simulationclass",
             constraint=models.CheckConstraint(
                 condition=models.Q(
-                    models.Q(("is_single_player", True), _negated=True), ("instructor", None), _connector="OR"
+                    models.Q(("is_single_player", True), _negated=True),
+                    ("instructor", None),
+                    _connector="OR",
                 ),
                 name="check_instructor_not_null_if_team_mode",
             ),
