@@ -50,7 +50,7 @@ class RDView(ViewSet):
         team: Team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=["rd"], id=player.team_id
         )
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
         dynamic_rd_objects: list[DynamicRD] | None = team.rd.all()
 
         previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
@@ -242,7 +242,7 @@ class RDView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
         json_body = self._get_json_body(request.data, is_start_rd=True)
 
         # Pause -> Start
@@ -306,7 +306,7 @@ class RDView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         json_body = self._get_json_body(request.data)
 
         # Start -> Pause
@@ -371,7 +371,7 @@ class RDView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         json_body = self._get_json_body(request.data)
 
         # Start -> Resume

@@ -19,12 +19,12 @@ class Command(BaseCommand):
         player_a = Player.objects.get(user__email="a@g.com")
         player_m = Player.objects.get(user__email="m@g.com")
         # move users to quarter 8 (green is available from q8)
-        player_h.state_variables.quarter = 8
-        player_a.state_variables.quarter = 8
-        player_m.state_variables.quarter = 8
-        player_h.state_variables.save()
-        player_a.state_variables.save()
-        player_m.state_variables.save()
+        player_h.simulation_class.current_quarter = 8
+        player_a.simulation_class.current_quarter = 8
+        player_m.simulation_class.current_quarter = 8
+        player_h.simulation_class.save()
+        player_a.simulation_class.save()
+        player_m.simulation_class.save()
 
         # unlock r&d for them
         # user h
@@ -88,9 +88,9 @@ class Command(BaseCommand):
         green_jetpack.save()
 
         # move to quarter 11 to get r&d done
-        player_h.state_variables.quarter = 11
-        player_a.state_variables.quarter = 11
-        player_m.state_variables.quarter = 11
+        player_h.simulation_class.current_quarter = 11
+        player_a.simulation_class.current_quarter = 11
+        player_m.simulation_class.current_quarter = 11
 
         # set marketing budget
         player_h.state_variables.marketing_budget = 100000

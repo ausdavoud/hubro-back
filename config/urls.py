@@ -9,7 +9,7 @@ from drf_spectacular.views import (
 )
 
 
-API_V = 'api/v1'
+API_V = "api/v1"
 
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -31,12 +31,22 @@ urlpatterns = [
                 path("common/", include("common.urls"), name="common"),
                 path("rd/", include("rd.urls"), name="rd"),
                 path("finance/", include("finance.urls"), name="finance"),
-                path("production/", include("production.urls"), name="production"),
-                path("contracts/", include("contracts.urls"), name="contracts"),
                 path(
-                    "esg_reporting/", include("esg_reporting.urls"), name="esg_reporting"
+                    "production/",
+                    include("production.urls"),
+                    name="production",
                 ),
-                path("suppliers/", include("suppliers.urls"), name="suppliers"),
+                path(
+                    "contracts/", include("contracts.urls"), name="contracts"
+                ),
+                path(
+                    "esg_reporting/",
+                    include("esg_reporting.urls"),
+                    name="esg_reporting",
+                ),
+                path(
+                    "suppliers/", include("suppliers.urls"), name="suppliers"
+                ),
                 path("reports/", include("reports.urls"), name="reports"),
             ]
         ),

@@ -1,3 +1,6 @@
+import random
+import string
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.db.models import CheckConstraint, Q
@@ -19,9 +22,11 @@ class CustomUserManager(BaseUserManager):
         if user.role == CustomUser.UserRoles.PLAYER:
             try:
                 player = Player.objects.create(user=user)
-                from common.views.views import create_new_simulation_data
+                # from common.views.views import (
+                #     create_single_player_simulation_data,
+                # )
 
-                create_new_simulation_data(player=player)
+                # create_single_player_simulation_data(player=player)
             except IntegrityError:
                 print(
                     f"A `Player` instance is already assigned to {user.email}"
@@ -85,11 +90,26 @@ class Instructor(models.Model):
 
 
 class SimulationClass(models.Model):
+    class SimulationModes(models.TextChoices):
+        SINGLE_PLAYER = "SP", "Single Player"
+        MULTI_PLAYER = "MP", "MultiPlayer"
+
+    code = models.CharField(max_length=10, unique=True, null=True)
     name = models.CharField(max_length=50)
     instructor = models.ForeignKey(
-        Instructor, on_delete=models.CASCADE, null=True
+        Instructor,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="simulation_classes",
     )
-    is_single_player = models.BooleanField(default=True)
+    mode = models.CharField(
+        max_length=2,
+        choices=SimulationModes.choices,
+        default=SimulationModes.SINGLE_PLAYER,
+    )
+
+    current_quarter = models.IntegerField(default=1)
+    simulation_duration = models.IntegerField(default=4)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -97,7 +117,7 @@ class SimulationClass(models.Model):
     class Meta:
         """
         if
-        is_single_player is True (it's single mode)
+        mode is SP (it's single player mode)
         =>
         instructor can be null
         p => q is equivalent to ~p | q
@@ -105,7 +125,7 @@ class SimulationClass(models.Model):
 
         constraints = [
             CheckConstraint(
-                check=~Q(is_single_player=True) | Q(instructor=None),
+                check=~Q(mode="SP") | Q(instructor=None),
                 name="check_instructor_not_null_if_team_mode",
             )
         ]
@@ -113,6 +133,19 @@ class SimulationClass(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = self.generate_unique_code()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_unique_code(length=5):
+        characters = string.ascii_letters + string.digits
+        code = "".join(random.choices(characters, k=length))
+        while SimulationClass.objects.filter(code=code).exists():
+            code = "".join(random.choices(characters, k=length))
+        return code
 
 
 class Team(models.Model):
@@ -123,7 +156,7 @@ class Team(models.Model):
     name = models.CharField(max_length=50)
     simulation_class = models.ForeignKey(
         SimulationClass,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         related_name="teams",
     )
@@ -151,3 +184,17 @@ class Player(models.Model):
 
     def __str__(self):
         return self.user.email
+
+
+class SimulationClassQueue(models.Model):
+    simulation_class = models.ForeignKey(
+        SimulationClass, on_delete=models.CASCADE, related_name="queues"
+    )
+    # Before the creation of simulations, a player has no team.
+    # Team is created upon simulation creation
+    player = models.ForeignKey(
+        Player, on_delete=models.CASCADE, related_name="queues"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

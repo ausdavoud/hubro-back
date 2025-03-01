@@ -44,7 +44,7 @@ class ESGReportingView(ViewSet):
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         serialized_decision = self._create_esg_reporting_decision(
             player=player, team=team, current_quarter=current_quarter
         )
@@ -79,7 +79,7 @@ class ESGReportingView(ViewSet):
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         serialized_deleted_decision = self._delete_esg_reporting_decision(
             team, current_quarter=current_quarter
         )

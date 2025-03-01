@@ -12,9 +12,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from common.models import DecisionPool, RippleTask, StateVariable
-from common.serializers import CompanyInfoSerializer, StateVariableSerializer
+from common.serializers import (
+    CompanyInfoSerializer,
+    SimulationCodeSerializer,
+    StateVariableSerializer,
+)
 from common.views import exceptions as common_exceptions
-from common.views.exceptions import GameLogicError
+from common.views.exceptions import GameLogicError, SerializerError
 from common.views.services import (
     get_db_record_select_prefetch_or_404,
     get_serializer_or_400,
@@ -32,7 +36,15 @@ from esg_reporting.views.views import ESGReportingView
 from finance.models import FinancialAccount, Transaction
 from finance.views.services import create_transaction, new_loan
 from finance.views.views import FinanceView
-from people.models import CustomUser, Player, SimulationClass, Team
+from people.models import (
+    CustomUser,
+    Instructor,
+    Player,
+    SimulationClass,
+    SimulationClassQueue,
+    Team,
+)
+from people.serializers import SimulationClassSerializer
 from people.views.services import get_simulation_teams
 from production.models import Production, Storage
 from production.views.services import (
@@ -91,7 +103,7 @@ class SetCompanyInfo(APIView):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        if team.state_variables.quarter != 1:
+        if team.simulation_class.current_quarter != 1:
             raise GameLogicError(
                 description="You can only set company info in the first quarter."
             )
@@ -117,7 +129,9 @@ class SetCompanyInfo(APIView):
         return serialized_data.validated_data
 
 
-@extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
+@extend_schema_view(
+    post=extend_schema(tags=["Quarter-Wise"], request=SimulationCodeSerializer)
+)
 class StartNewSimulation(APIView):
     permission_classes = [
         IsAuthenticated,
@@ -130,33 +144,64 @@ class StartNewSimulation(APIView):
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
-        player = get_db_record_select_prefetch_or_404(
-            Player, select_related_tables=["team"], user=user
-        )
-
-        team_mode = request.data.get("team_mode", False)
-
-        delete_previous_simulation_data(player=player)
-        create_new_simulation_data(player=player)
+        if user.role == CustomUser.UserRoles.PLAYER:
+            player = get_db_record_select_prefetch_or_404(
+                Player, select_related_tables=["team"], user=user
+            )
+            delete_player_previous_simulation_data(player=player)
+            simulation_class = create_single_player_simulation_data(
+                player=player
+            )
+        elif user.role == CustomUser.UserRoles.INSTRUCTOR:
+            instructor = get_db_record_select_prefetch_or_404(
+                Instructor, user=user
+            )
+            simulation_unique_id = request.data.get("simulation_code", None)
+            if not simulation_unique_id:
+                raise SerializerError("Please enter a simulation code.")
+            simulation_class = get_db_record_select_prefetch_or_404(
+                SimulationClass,
+                code=simulation_unique_id,
+                instructor=instructor,
+            )
+            queue_entries: list[SimulationClassQueue] = (
+                simulation_class.queues.select_related("player").all()
+            )
+            players_in_queue = [entry.player for entry in queue_entries]
+            create_multiplayer_simulation_data(
+                simulation_class=simulation_class, players=players_in_queue
+            )
 
         return Response(
-            "Welcome to the new simulation!", status=status.HTTP_200_OK
+            {
+                "data": {
+                    "message": "Welcome to the new simulation!",
+                    "simulation_code": simulation_class.code,
+                }
+            },
+            status=status.HTTP_200_OK,
         )
 
 
-def delete_previous_simulation_data(player: Player):
+def delete_player_previous_simulation_data(player: Player):
     team = player.team
     # Delete old data
     if team:
         if team.simulation_class:
-            team.simulation_class.teams.filter(
-                team_type=Team.TeamType.BOT
-            ).delete()
+            # team.simulation_class.teams.filter(
+            #     team_type=Team.TeamType.BOT
+            # ).delete()
             team.simulation_class.delete()
         team.delete()
 
 
-def create_new_simulation_data(player: Player):
+def delete_instructor_previous_simulation_data(instructor: Instructor):
+    simulation_classes = instructor.simulation_classes.all()
+    for simulation_class in simulation_classes:
+        simulation_class.delete()
+
+
+def create_single_player_simulation_data(player: Player):
     simulation_class = SimulationClass.objects.create(
         name=f"{player}'s Simulation Class"
     )
@@ -186,6 +231,134 @@ def create_new_simulation_data(player: Player):
     state_variables = [StateVariable(team=team) for team in teams]
     StateVariable.objects.bulk_create(state_variables)
 
+    return simulation_class
+
+
+def create_multiplayer_simulation_data(
+    simulation_class: SimulationClass, players: list[Player]
+):
+    teams_to_create = [
+        Team(name=f"{player}'s Team", simulation_class=simulation_class)
+        for player in players
+    ]
+    if len(players) < 5:
+        bot_teams = [
+            Team(
+                name=f"{simulation_class}'s Bot {i+1}",
+                simulation_class=simulation_class,
+                team_type=Team.TeamType.BOT,
+            )
+            for i in range(5 - len(players))
+        ]
+        teams_to_create += bot_teams
+    teams = Team.objects.bulk_create(teams_to_create)
+
+    for player, team in zip(players, teams):
+        player.team = team
+    Player.objects.bulk_update(players, ["team"])
+
+    state_variables = [StateVariable(team=team) for team in teams]
+    StateVariable.objects.bulk_create(state_variables)
+
+    for team in teams:
+        if team.team_type == Team.TeamType.BOT:
+            continue
+        create_dynamic_rd_items(team=team)
+
+    create_contracts(simulation_class=simulation_class)
+
+
+@extend_schema_view(
+    post=extend_schema(
+        tags=["Quarter-Wise"], responses=SimulationCodeSerializer
+    )
+)
+class CreateNewSimulation(APIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    serializer_class = None
+
+    def post(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        instructor = get_db_record_select_prefetch_or_404(
+            Instructor, user=user
+        )
+        delete_instructor_previous_simulation_data(instructor=instructor)
+        name = request.data.get("name", None)
+        simulation_class = SimulationClass.objects.create(
+            name=name or f"{instructor}'s Simulation Class",
+            instructor=instructor,
+            mode=SimulationClass.SimulationModes.MULTI_PLAYER,
+        )
+        response = {"data": {"simulation_code": simulation_class.code}}
+        return Response(response, status=status.HTTP_201_CREATED)
+
+
+@extend_schema_view(
+    post=extend_schema(tags=["Quarter-Wise"], request=SimulationCodeSerializer)
+)
+class JoinSimulationQueue(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    serializer_class = None
+
+    def post(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        sim_code = request.data.get("simulation_code", None)
+        simulation_class = get_db_record_select_prefetch_or_404(
+            SimulationClass, code=sim_code
+        )
+        SimulationClassQueue.objects.create(
+            simulation_class=simulation_class, player=player
+        )
+        response = {"data": "You have been added to the queue."}
+        return Response(response, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=["Quarter-Wise"], responses=SimulationClassSerializer
+    )
+)
+class GetSimulationInfo(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    serializer_class = None
+
+    def get(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        if user.role == CustomUser.UserRoles.PLAYER:
+            player = get_db_record_select_prefetch_or_404(Player, user=user)
+            if not player.team:
+                response = {
+                    "error": "You do not have any ongoing simulation yet."
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            simulation_class = player.team.simulation_class
+        elif user.role == CustomUser.UserRoles.INSTRUCTOR:
+            instructor = get_db_record_select_prefetch_or_404(
+                Instructor, user=user
+            )
+            if not instructor.simulation_classes.last():
+                response = {
+                    "error": "You do not have any ongoing simulation yet."
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            simulation_class = instructor.simulation_classes.last()
+        serialized_simulation_class = SimulationClassSerializer(
+            simulation_class
+        )
+
+        response = {"data": serialized_simulation_class.data}
+        return Response(response, status=status.HTTP_200_OK)
+
 
 @extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
 class FinishQuarter(APIView):
@@ -201,8 +374,18 @@ class FinishQuarter(APIView):
     def post(self, request: Request) -> Response:
         # Get player
         user: CustomUser = request.user
-        player = get_db_record_select_prefetch_or_404(Player, user=user)
-        current_quarter = player.team.state_variables.quarter
+        if user.role == CustomUser.UserRoles.PLAYER:
+            player: Player = get_db_record_select_prefetch_or_404(
+                Player, user=user
+            )
+            if (
+                player.team.simulation_class.mode
+                == SimulationClass.SimulationModes.MULTI_PLAYER
+            ):
+                response = {"error": "Only instructor can finish the quarter."}
+                return Response(response, status=status.HTTP_403_FORBIDDEN)
+
+        current_quarter = player.team.simulation_class.current_quarter
         prefetch_decision_pool = Prefetch(
             "decision_pool",
             queryset=DecisionPool.objects.filter(
@@ -217,13 +400,13 @@ class FinishQuarter(APIView):
 
         # Check if it is the last quarter
         if (
-            team.state_variables.quarter
-            == team.state_variables.simulation_duration
+            team.simulation_class.current_quarter
+            == team.simulation_class.simulation_duration
         ):
             response = {
                 "data": {
                     "message": "Simulation is over!",
-                    "current_quarter": team.state_variables.quarter,
+                    "current_quarter": team.simulation_class.current_quarter,
                 }
             }
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
@@ -562,9 +745,9 @@ class FinishQuarter(APIView):
             )
 
     def _increment_quarter(self, team: Team) -> None:
-        team.state_variables.quarter = F("quarter") + 1
-        team.state_variables.save()
-        team.state_variables.refresh_from_db()
+        team.simulation_class.current_quarter = F("current_quarter") + 1
+        team.simulation_class.save()
+        team.simulation_class.refresh_from_db()
 
     def _loan_repayment(
         self,
@@ -770,15 +953,17 @@ class FinishQuarter(APIView):
 
     def _generate_response(self, team: Team):
         if (
-            team.state_variables.quarter
-            == team.state_variables.simulation_duration
+            team.simulation_class.current_quarter
+            == team.simulation_class.simulation_duration
         ):
             response = {
                 "data": {
                     "message": "Simulation is over!",
-                    "current_quarter": team.state_variables.quarter,
+                    "current_quarter": team.simulation_class.current_quarter,
                 }
             }
             return response
-        response = {"data": {"current_quarter": team.state_variables.quarter}}
+        response = {
+            "data": {"current_quarter": team.simulation_class.current_quarter}
+        }
         return response

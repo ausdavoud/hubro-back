@@ -17,10 +17,13 @@ from production.views.services import factories
 from production.views.views import ProductionView
 from rd.models import DynamicRD
 from rd.views.views import RDView
+from reports.serializers import CashFlowReportSerializer
 from reports.views.exceptions import InvalidQuarter
 
 
-@extend_schema_view(get=extend_schema(tags=["Reports"]))
+@extend_schema_view(
+    get=extend_schema(tags=["Reports"], responses=CashFlowReportSerializer)
+)
 class CashFlowReportView(APIView):
     permission_classes = [
         IsAuthenticated,
@@ -60,7 +63,7 @@ class CashFlowReportView(APIView):
         team: Team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=["rd"], id=player.team_id
         )
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
         if quarter > current_quarter or quarter < 1:
             raise InvalidQuarter()
 
@@ -90,7 +93,8 @@ class CashFlowReportView(APIView):
                 "financing": financing_activities,
             }
         }
-        return Response(response, status=status.HTTP_200_OK)
+        serialized_response = CashFlowReportSerializer(response)
+        return Response(serialized_response.data, status=status.HTTP_200_OK)
 
     def _operating_activities(
         self, team: Team, requested_quarter: int, current_quarter: int

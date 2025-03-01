@@ -54,7 +54,7 @@ def new_loan(team: Team, decision: DecisionPool) -> Response:
     json_body = decision.json_body
     current_quarter = decision.made_at_quarter
     fixed_interest = team.state_variables.fixed_interest
-    simulation_duration = team.state_variables.simulation_duration
+    simulation_duration = team.simulation_class.simulation_duration
     esg_index = team.state_variables.esg_index
 
     amount_str = json_body["amount"]

@@ -34,7 +34,7 @@ class DynamicRDAdmin(admin.ModelAdmin):
         # based on their players, then for each set of dynamic objects related to
         # a user, SELECT player along with its prefetched state variables and
         # use the player's current quarter as run_at_quarter field
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
 
         ripple_tasks = []
         for dynamic_rd_object in dynamic_rd_objects:

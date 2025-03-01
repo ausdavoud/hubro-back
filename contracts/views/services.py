@@ -55,7 +55,7 @@ def set_contracts_order(team: Team, decision: DecisionPool) -> None:
     json_body = decision.json_body
     marketing_budget = json_body["marketing_budget"]
     contract_ids = json_body["contract_ids"]
-    current_quarter = team.state_variables.quarter
+    current_quarter = team.simulation_class.current_quarter
     team_esg_index = team.state_variables.esg_index
     simulation_class = team.simulation_class
 

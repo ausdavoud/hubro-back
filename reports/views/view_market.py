@@ -16,9 +16,12 @@ from people.models import CustomUser, Player, Team
 from production.models import Factory, Storage
 from production.views.views import ProductionView
 from rd.models import DynamicRD
+from reports.serializers import MarketReportSerializer
 
 
-@extend_schema_view(get=extend_schema(tags=["Reports"]))
+@extend_schema_view(
+    get=extend_schema(tags=["Reports"], responses=MarketReportSerializer)
+)
 class MarketReportView(APIView):
     permission_classes = [
         IsAuthenticated,
@@ -58,7 +61,7 @@ class MarketReportView(APIView):
         team: Team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=["rd"], id=player.team_id
         )
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
 
         # At current quarter, we produce products for contracts which have been
         # closed the previous quarter. So it must have been assigned to us
@@ -76,7 +79,6 @@ class MarketReportView(APIView):
         )
         deliverable_products = list(set(deliverable_products))
         productions = defaultdict(float)
-        print("FuUuuuúuuuuuuuuck")
 
         for deliverable_product in deliverable_products:
             # find rd object
@@ -125,7 +127,6 @@ class MarketReportView(APIView):
         # find contracts
         # > assigned_contracts (fetched above)
         # order by priority
-        print(productions)
 
         priority_qs = ContractPriority.objects.filter(
             team=team,
@@ -149,7 +150,6 @@ class MarketReportView(APIView):
             desired = contract.quantity
             storage = productions[deliverable_product]
             if storage >= desired:
-                print(storage)
                 productions[deliverable_product] -= desired
                 fulfillments[contract.pk] = {
                     "product": deliverable_product,
@@ -157,7 +157,6 @@ class MarketReportView(APIView):
                     "desired": desired,
                 }
                 storage -= desired
-                print(fulfillments)
             else:
                 fulfillments[contract.pk] = {
                     "product": deliverable_product,
@@ -165,5 +164,7 @@ class MarketReportView(APIView):
                     "desired": desired,
                 }
                 productions[deliverable_product] = 0
-
-        return Response({"data": fulfillments}, status=status.HTTP_200_OK)
+        response = {"data": fulfillments}
+        serialized_response = MarketReportSerializer(data=response)
+        serialized_response.is_valid(raise_exception=True)
+        return Response(serialized_response.data, status=status.HTTP_200_OK)

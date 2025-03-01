@@ -49,7 +49,7 @@ class FinanceView(ViewSet):
             Player, user=user, prefetch_related_tables=["decision_pool"]
         )
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         loans = Loan.objects.filter(team=team)
         serialized_loans = LoanSerializer(loans, many=True)
         decisions = team.decision_pool.filter(
@@ -135,7 +135,7 @@ class FinanceView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
         json_body = self._get_json_body(request.data)
 
         decision = self._create_decision(
@@ -154,7 +154,7 @@ class FinanceView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
 
         serialized_deleted_decision = self._delete_loan_decision(
             team=team, current_quarter=current_quarter
@@ -231,15 +231,15 @@ class TransactionView(ViewSet):
         team: Team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=["transactions"], id=player.team_id
         )
-        cash_flow = _get_cash_flow(
-            team=team, current_quarter=team.state_variables.quarter
+        cash_flow = _get_cash_income_outcome(
+            team=team, current_quarter=team.simulation_class.current_quarter
         )
 
         response = {"data": {"cash": cash_flow}}
         return Response(response, status=status.HTTP_200_OK)
 
 
-def _get_cash_flow(team: Team, current_quarter: int):
+def _get_cash_income_outcome(team: Team, current_quarter: int):
     """
     If user asks for beginning cash of quarter 2, we need to check the
     cash flow that happened at the end of quarter 1"""

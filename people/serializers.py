@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from people.models import CustomUser
+from people.models import (
+    CustomUser,
+    Instructor,
+    SimulationClass,
+    SimulationClassQueue,
+    Team,
+)
 
 
 class TokenObtainPairResponseSerializer(serializers.Serializer):
@@ -43,3 +49,38 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["email", "first_name"]
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ("name", "simulation_class", "team_type")
+
+
+class UserGeneralInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ["email", "first_name", "last_name"]
+
+
+class InstructorSerializer(serializers.ModelSerializer):
+    user = UserGeneralInfoSerializer()
+
+    class Meta:
+        model = Instructor
+        fields = ("user",)
+
+
+class SimulationClassSerializer(serializers.ModelSerializer):
+    teams = TeamSerializer(many=True)
+    instructor = InstructorSerializer()
+
+    class Meta:
+        model = SimulationClass
+        fields = ("code", "name", "instructor", "mode", "teams")
+
+
+class SimulationClassQueueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SimulationClassQueue
+        fields = ("simulation_class", "team")

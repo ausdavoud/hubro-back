@@ -21,8 +21,6 @@ class StateVariableAdmin(admin.ModelAdmin):
         "team",
         "esg_index",
         "fixed_interest",
-        "quarter",
-        "simulation_duration",
         "max_loan_repayment_duration",
     ]
 

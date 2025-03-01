@@ -15,9 +15,15 @@ from people.models import CustomUser, Player, Team
 from production.models import Factory, Storage
 from production.views.views import ProductionView
 from rd.models import DynamicRD
+from reports.serializers import (
+    ProductionReportErrorSerializer,
+    ProductionReportSerializer,
+)
 
 
-@extend_schema_view(get=extend_schema(tags=["Reports"]))
+@extend_schema_view(
+    get=extend_schema(tags=["Reports"], responses=ProductionReportSerializer)
+)
 class ProductionReportView(APIView):
     permission_classes = [
         IsAuthenticated,
@@ -44,7 +50,7 @@ class ProductionReportView(APIView):
         team: Team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=["rd"], id=player.team_id
         )
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
 
         factory: Factory = get_db_record_select_prefetch_or_404(
             Factory, id=factory_id, team=team
@@ -62,7 +68,12 @@ class ProductionReportView(APIView):
                 },
                 "error": "No product was selected for this factory",
             }
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            serialized_response = ProductionReportErrorSerializer(
+                data=response
+            )
+            return Response(
+                serialized_response.data, status=status.HTTP_400_BAD_REQUEST
+            )
 
         selected_rd_product: DynamicRD = get_db_record_select_prefetch_or_404(
             DynamicRD,
@@ -189,4 +200,5 @@ class ProductionReportView(APIView):
                 "total_demand": total_demand,
             }
         }
-        return Response(response, status=status.HTTP_200_OK)
+        serialized_response = ProductionReportSerializer(data=response)
+        return Response(serialized_response.data, status=status.HTTP_200_OK)

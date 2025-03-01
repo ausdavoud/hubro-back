@@ -83,7 +83,7 @@ def update_rd_state(
     # Check if the dynamic object is available for development,
     # since only available R&D items can be developed
     dynamic_rd_objects: list[DynamicRD] | None = team.rd.all()
-    current_quarter = team.state_variables.quarter
+    current_quarter = team.simulation_class.current_quarter
     previous_rd_items = get_previous_rd_items(dynamic_rd_objects)
     state = dynamic_rd_object.get_state(current_quarter, previous_rd_items)
     if state != DynamicRD.RDStates.AVAILABLE:

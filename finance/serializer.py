@@ -34,7 +34,7 @@ class FinancialAcountSerializer(serializers.ModelSerializer):
         model = FinancialAccount
         fields = "__all__"
 
-    def get_display_name(self, obj):
+    def get_display_name(self, obj) -> str:
         return obj.get_code_display()
 
 

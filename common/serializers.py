@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 from rest_framework import serializers
+
 from common.models import DecisionPool, RippleTask, StateVariable
 
 
@@ -63,10 +66,14 @@ class StateVariableSerializer(serializers.ModelSerializer):
         model = StateVariable
         fields = "__all__"
 
-    def get_simulation_name(self, obj: StateVariable):
+    def get_simulation_name(self, obj: StateVariable) -> str:
         return obj.team.simulation_class.name
 
-    def get_beginning_cash(self, obj: StateVariable):
-        from finance.views.views import _get_cash_flow
+    def get_beginning_cash(self, obj: StateVariable) -> Decimal:
+        from finance.views.views import _get_cash_income_outcome
 
-        return _get_cash_flow(obj.team, obj.quarter)[obj.quarter]
+        return _get_cash_income_outcome(obj.team, obj.quarter)[obj.quarter]
+
+
+class SimulationCodeSerializer(serializers.Serializer):
+    simulation_code = serializers.CharField()

@@ -35,8 +35,6 @@ class StateVariable(models.Model):
     fixed_interest = models.DecimalField(
         max_digits=5, decimal_places=2, default=2
     )
-    quarter = models.IntegerField(default=1)
-    simulation_duration = models.IntegerField(default=4)
     max_loan_repayment_duration = models.IntegerField(default=16)
 
     company_name = models.CharField(max_length=20, null=True)

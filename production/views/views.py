@@ -25,7 +25,6 @@ from production.serializers import (
     SellFactorySerializer,
     SetActivityLevelSerializer,
 )
-from rd.serializers import DynamicRDSerializer
 
 
 @extend_schema_view(
@@ -39,9 +38,6 @@ from rd.serializers import DynamicRDSerializer
     ),
     cancel_sell_factory=extend_schema(
         tags=["Production"], request=SellFactorySerializer
-    ),
-    get_selected_product=extend_schema(
-        tags=["Production"], responses=DynamicRDSerializer
     ),
     select_product=extend_schema(
         tags=["Production"], request=SelectProductSerializer
@@ -77,7 +73,7 @@ class ProductionView(ViewSet):
         )
         decisions = team.decision_pool.filter(
             endpoint=ProductionView.ENDPOINTS.NEW_FACTORY,
-            made_at_quarter=team.state_variables.quarter,
+            made_at_quarter=team.simulation_class.current_quarter,
         )
         serialized_decisions = DecisionPoolSerializer(decisions, many=True)
 
@@ -101,7 +97,7 @@ class ProductionView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
         json_body = self._get_new_factory_json_body(request.data)
         json_body["factory_name"] = generate_unique_factory_name(team=team)
 
@@ -150,7 +146,7 @@ class ProductionView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
 
         serialized_deleted_decision = self._delete_new_factory_decision(
             team=team, current_quarter=current_quarter
@@ -190,7 +186,7 @@ class ProductionView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
 
         json_body = self._get_sell_factory_json_body(request.data)
 
@@ -239,7 +235,7 @@ class ProductionView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
 
         json_body = self._get_sell_factory_json_body(request.data)
 
@@ -282,7 +278,7 @@ class ProductionView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
 
         json_body = self._get_select_product_json_body(request.data)
 
@@ -335,7 +331,7 @@ class ProductionView(ViewSet):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
 
         json_body = self._get_activity_level_json_body(request.data)
 

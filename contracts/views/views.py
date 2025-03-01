@@ -20,7 +20,7 @@ from contracts.serializers import (
     ContractSerializer,
     ContractsOrderSerializer,
 )
-from people.models import Player
+from people.models import Player, Team
 from rd.views.services import get_available_rd_dynamics_at_next_quarter
 
 
@@ -60,8 +60,8 @@ class ContractView(ViewSet):
     def get_contracts(self, request: Request):
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
-        team = player.team
-        current_quarter = team.state_variables.quarter
+        team: Team = player.team
+        current_quarter = team.simulation_class.current_quarter
         esg_index = team.state_variables.esg_index
 
         """
@@ -117,7 +117,7 @@ class ContractView(ViewSet):
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         json_body = self._get_contracts_order_json_body(request.data)
 
         decision = self._make_contracts_order_decision(
@@ -167,7 +167,7 @@ class ContractView(ViewSet):
         user = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         team = player.team
-        current_quarter = team.state_variables.quarter
+        current_quarter = team.simulation_class.current_quarter
         decision = get_db_record_select_prefetch_or_404(
             DecisionPool,
             player=player,

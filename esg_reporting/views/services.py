@@ -9,7 +9,7 @@ from people.models import Team
 
 
 def enable_esg_reporting(team: Team):
-    if team.state_variables.quarter < 3:
+    if team.simulation_class.current_quarter < 3:
         raise ValidationError("Cannot enable ESG reporting before quarter 3.")
     if team.state_variables.esg_reporting_enabled:
         raise ValidationError("ESG reporting is already enabled.")
@@ -19,7 +19,7 @@ def enable_esg_reporting(team: Team):
             json_body = {"amount": 8_000_00}
             RippleTask.objects.create(
                 team=team,
-                run_at_quarter=team.state_variables.quarter,
+                run_at_quarter=team.simulation_class.current_quarter,
                 type=RippleTask.TaskTypes.ESG_REPORTING,
                 json_body=json_body,
             )
