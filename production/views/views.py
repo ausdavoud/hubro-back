@@ -46,9 +46,6 @@ from rd.serializers import DynamicRDSerializer
     select_product=extend_schema(
         tags=["Production"], request=SelectProductSerializer
     ),
-    get_activity_level=extend_schema(
-        tags=["Production"], responses=SetActivityLevelSerializer
-    ),
     set_activity_level=extend_schema(
         tags=["Production"], request=SetActivityLevelSerializer
     ),
@@ -91,9 +88,11 @@ class ProductionView(ViewSet):
             del factory["json_body"]["factory_name"]
             factory["json_body"]["is_new"] = True
             serialized_json_body.append(factory["json_body"])
-        serialized_factories = serialized_json_body + serialized_factories.data
+        serialized_factories_decisions = (
+            serialized_json_body + serialized_factories.data
+        )
         response = {
-            "data": serialized_factories,
+            "data": serialized_factories_decisions,
         }
         return Response(response, status=status.HTTP_200_OK)
 

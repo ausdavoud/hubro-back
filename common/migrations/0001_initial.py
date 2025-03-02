@@ -12,7 +12,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="DecisionPool",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("made_at_quarter", models.IntegerField()),
                 ("endpoint", models.CharField(max_length=100)),
                 ("json_body", models.JSONField()),
@@ -23,13 +31,24 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="RippleTask",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("run_at_quarter", models.IntegerField()),
                 (
                     "type",
                     models.CharField(
                         choices=[
-                            ("inc_rd_dev_time", "Increment R&D Project Development Time"),
+                            (
+                                "inc_rd_dev_time",
+                                "Increment R&D Project Development Time",
+                            ),
                             ("production", "Production"),
                             ("esg_reporting", "ESG Reporting"),
                         ],
@@ -44,14 +63,35 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="StateVariable",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("esg_index", models.IntegerField(default=0)),
                 ("esg_reporting_enabled", models.BooleanField(default=False)),
-                ("marketing_budget", models.DecimalField(decimal_places=0, default=0, max_digits=15)),
-                ("fixed_interest", models.DecimalField(decimal_places=2, default=2, max_digits=5)),
+                (
+                    "marketing_budget",
+                    models.DecimalField(
+                        decimal_places=0, default=0, max_digits=15
+                    ),
+                ),
+                (
+                    "fixed_interest",
+                    models.DecimalField(
+                        decimal_places=2, default=2, max_digits=5
+                    ),
+                ),
                 ("quarter", models.IntegerField(default=1)),
                 ("simulation_duration", models.IntegerField(default=20)),
-                ("max_loan_repayment_duration", models.IntegerField(default=16)),
+                (
+                    "max_loan_repayment_duration",
+                    models.IntegerField(default=16),
+                ),
                 ("company_name", models.CharField(max_length=20, null=True)),
                 ("company_slogan", models.CharField(max_length=40, null=True)),
                 ("company_icon", models.IntegerField(default=0)),

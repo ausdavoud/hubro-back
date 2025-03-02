@@ -24,6 +24,7 @@ class DynamicRDSerializer(serializers.ModelSerializer):
             "started_at",
             "time_spent_developing",
             "available_from_quarter",
+            "base_material_cost",
             "supplier",
             "unit_mat_cost_reduction",
             "emission_reduction",
@@ -39,6 +40,8 @@ class DynamicRDSerializer(serializers.ModelSerializer):
         json_body = {"category": obj.category, "order": obj.order}
         current_quarter = self.context.get("current_quarter")
         previous_rd_items = self.context.get("previous_rd_items")
+        if not current_quarter and not previous_rd_items:
+            return None
         if DecisionPool.objects.filter(
             team=team,
             json_body__contains=json_body,

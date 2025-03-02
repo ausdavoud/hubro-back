@@ -12,16 +12,37 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Contract",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("closure_quarter", models.IntegerField()),
                 ("payment_quarter", models.IntegerField()),
                 ("quantity", models.IntegerField()),
-                ("unit_price", models.DecimalField(decimal_places=0, max_digits=15)),
-                ("total_price", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "unit_price",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
+                (
+                    "total_price",
+                    models.DecimalField(decimal_places=0, max_digits=15),
+                ),
                 ("deliverable_product", models.CharField(max_length=100)),
                 ("minimum_esg_index", models.IntegerField()),
                 ("priority", models.IntegerField()),
-                ("status", models.CharField(choices=[("P", "Pending"), ("A", "Assigned")], default="P", max_length=1)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("P", "Pending"), ("A", "Assigned")],
+                        default="P",
+                        max_length=1,
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
@@ -29,10 +50,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ContractAssignment",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "status",
-                    models.CharField(choices=[("WG", "Waiting"), ("FF", "Fulfilled"), ("EX", "Expired")], max_length=2),
+                    models.CharField(
+                        choices=[
+                            ("WG", "Waiting"),
+                            ("FF", "Fulfilled"),
+                            ("EX", "Expired"),
+                        ],
+                        max_length=2,
+                    ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
@@ -41,7 +77,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ContractPriority",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("quarter", models.IntegerField()),
                 ("priority", models.IntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),

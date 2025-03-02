@@ -8,7 +8,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-API_V = '/api/v1'
+
+API_V = 'api/v1'
 
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -21,6 +22,7 @@ urlpatterns = [
         "redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"
     ),
     path("admin/", admin.site.urls),
+    # app urls
     path(
         f"{API_V}/",
         include(
@@ -35,11 +37,10 @@ urlpatterns = [
                     "esg_reporting/", include("esg_reporting.urls"), name="esg_reporting"
                 ),
                 path("suppliers/", include("suppliers.urls"), name="suppliers"),
+                path("reports/", include("reports.urls"), name="reports"),
             ]
         ),
     ),
-
-    
 ]
 
 if settings.DEBUG:

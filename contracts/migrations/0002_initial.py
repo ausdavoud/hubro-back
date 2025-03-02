@@ -17,29 +17,41 @@ class Migration(migrations.Migration):
             model_name="contract",
             name="simulation_class",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="contracts", to="people.simulationclass"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="contracts",
+                to="people.simulationclass",
             ),
         ),
         migrations.AddField(
             model_name="contractassignment",
             name="contract",
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to="contracts.contract"),
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="contracts.contract",
+            ),
         ),
         migrations.AddField(
             model_name="contractassignment",
             name="team",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="contracts", to="people.team"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="contracts",
+                to="people.team",
             ),
         ),
         migrations.AddField(
             model_name="contractpriority",
             name="contract",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="contracts.contract"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="contracts.contract",
+            ),
         ),
         migrations.AddField(
             model_name="contractpriority",
             name="team",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="people.team"),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="people.team"
+            ),
         ),
     ]
