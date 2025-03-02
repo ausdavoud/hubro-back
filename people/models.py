@@ -150,7 +150,7 @@ class SimulationClass(models.Model):
 
 class Team(models.Model):
     class TeamType(models.TextChoices):
-        PLAYER = "PL", "Player"
+        HUMAN = "HU", "Human"
         BOT = "BO", "Bot"
 
     name = models.CharField(max_length=50)
@@ -161,7 +161,7 @@ class Team(models.Model):
         related_name="teams",
     )
     team_type = models.CharField(
-        max_length=2, choices=TeamType.choices, default=TeamType.PLAYER
+        max_length=2, choices=TeamType.choices, default=TeamType.HUMAN
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

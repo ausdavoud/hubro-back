@@ -45,7 +45,6 @@ from people.models import (
     Team,
 )
 from people.serializers import SimulationClassSerializer
-from people.views.services import get_simulation_teams
 from production.models import Production, Storage
 from production.views.services import (
     new_factory,
@@ -313,6 +312,7 @@ class JoinSimulationQueue(APIView):
         simulation_class = get_db_record_select_prefetch_or_404(
             SimulationClass, code=sim_code
         )
+        delete_player_previous_simulation_data(player=player)
         SimulationClassQueue.objects.create(
             simulation_class=simulation_class, player=player
         )
@@ -360,7 +360,9 @@ class GetSimulationInfo(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-@extend_schema_view(post=extend_schema(tags=["Quarter-Wise"]))
+@extend_schema_view(
+    post=extend_schema(tags=["Quarter-Wise"], request=SimulationCodeSerializer)
+)
 class FinishQuarter(APIView):
     permission_classes = [
         IsAuthenticated,
@@ -378,114 +380,89 @@ class FinishQuarter(APIView):
             player: Player = get_db_record_select_prefetch_or_404(
                 Player, user=user
             )
+            player_team = player.team
+            if not player_team:
+                response = {
+                    "error": "You do not have any ongoing simulation yet."
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            simulation_class = player_team.simulation_class
+            simulation_teams = [player_team]
             if (
-                player.team.simulation_class.mode
+                simulation_class.mode
                 == SimulationClass.SimulationModes.MULTI_PLAYER
             ):
                 response = {"error": "Only instructor can finish the quarter."}
                 return Response(response, status=status.HTTP_403_FORBIDDEN)
+        if user.role == CustomUser.UserRoles.INSTRUCTOR:
+            instructor = get_db_record_select_prefetch_or_404(
+                Instructor, user=user
+            )
+            simulation_code = request.data.get("simulation_code", None)
+            simulation_class = get_db_record_select_prefetch_or_404(
+                SimulationClass, code=simulation_code, instructor=instructor
+            )
+            simulation_teams = Team.objects.filter(
+                simulation_class=simulation_class,
+                team_type=Team.TeamType.HUMAN,
+            )
+            simulation_teams = list(simulation_teams)
+            if not simulation_teams:
+                response = {"error": "No teams found in the simulation class."}
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        current_quarter = player.team.simulation_class.current_quarter
-        prefetch_decision_pool = Prefetch(
-            "decision_pool",
-            queryset=DecisionPool.objects.filter(
-                made_at_quarter=current_quarter
-            ),
-        )
-        team = get_db_record_select_prefetch_or_404(
-            Team,
-            prefetch_related_tables=[prefetch_decision_pool],
-            id=player.team.id,
-        )
-
+        # Processing the finish quarter request
+        current_quarter = simulation_class.current_quarter
         # Check if it is the last quarter
         if (
-            team.simulation_class.current_quarter
-            == team.simulation_class.simulation_duration
+            simulation_class.current_quarter
+            == simulation_class.simulation_duration
         ):
             response = {
                 "data": {
                     "message": "Simulation is over!",
-                    "current_quarter": team.simulation_class.current_quarter,
+                    "current_quarter": simulation_class.current_quarter,
                 }
             }
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        # Process Team's decisions
-        decisions = DecisionPool.objects.filter(
-            team=team, made_at_quarter=current_quarter
-        )
-        decision_states = [
-            self._process_decision(team=team, decision=decision)
-            for decision in decisions
-        ]
-
-        # calculate each production's produced quantity
-        productions: list[Production] = team.productions.filter(
-            quarter=current_quarter
-        )
-        for production in productions:
-            base = production.factory.base
-            factor = production.activity_level / 100
-            production.produced_quantity = base * (3 - factor) * factor**2 / 2
-            # FIXME: Use bulk_update for fewer queries
-            production.save()
-        # add produced units to storage
-        for production in productions:
-            storage, _ = Storage.objects.get_or_create(
-                team=team,
-                product=production.product,
+        teams_with_prefetch = Team.objects.filter(
+            id__in=[team.id for team in simulation_teams]
+        ).prefetch_related(
+            Prefetch(
+                "decision_pool",
+                queryset=DecisionPool.objects.filter(
+                    made_at_quarter=current_quarter
+                ),
+                to_attr="current_quarter_decisions",
             )
-            # finished_good_inventory = production.produced_quantity * production.product.final_cost
-            storage.quantity = F("quantity") + production.produced_quantity
-            # storage.finished_good_inventory = F("finished_good_inventory") + finished_good_inventory
-            storage.save()
-
-        # feed contracts from storage
-        assigned_contracts: list[ContractAssignment] = team.contracts.filter(
-            contract__closure_quarter=current_quarter - 1
         )
-        for assigned_contract in assigned_contracts:
-            if (
-                assigned_contract.status
-                == ContractAssignment.Statuses.FULFILLED
-                or assigned_contract.status
-                == ContractAssignment.Statuses.EXPIRED
-            ):
-                continue
+        for team in teams_with_prefetch:
+            decision_states = [
+                self._process_decision(team=team, decision=decision)
+                for decision in team.current_quarter_decisions
+            ]
 
-            dynamic_rd_obj = get_db_record_select_prefetch_or_404(
-                DynamicRD,
-                team=team,
-                category=assigned_contract.contract.deliverable_product,
-                order=1,
+            self._move_produced_units_to_storage(
+                team=team, current_quarter=current_quarter
             )
-            storage: Storage = Storage.objects.filter(
-                team=team, product=dynamic_rd_obj
-            ).first()
-            if (
-                not storage
-                or storage.quantity < assigned_contract.contract.quantity
-            ):
-                assigned_contract.status = ContractAssignment.Statuses.EXPIRED
-                assigned_contract.save()
-                continue
 
-            storage.quantity = (
-                F("quantity") - assigned_contract.contract.quantity
+            self._feed_storage_to_contracts(
+                team=team, current_quarter=current_quarter
             )
-            storage.save()
-            assigned_contract.status = ContractAssignment.Statuses.FULFILLED
-            assigned_contract.save()
 
-        # expire non-fulfilled contracts
-        # they got expired, didn't they?
+            # expire non-fulfilled contracts
+            # they got expired, didn't they?
 
-        # Do ripple tasks
-        self._process_ripple_tasks(team=team, current_quarter=current_quarter)
+            # Do ripple tasks
+            self._process_ripple_tasks(
+                team=team, current_quarter=current_quarter
+            )
+            # self._receive_fulfilled_contracts_money(team=team, current_quarter=current_quarter)
 
-        # self._receive_fulfilled_contracts_money(team=team, current_quarter=current_quarter)
-
+        self._contract_assignment_chores(
+            simulation_teams=simulation_teams, current_quarter=current_quarter
+        )
         self._increment_quarter(team=team)
 
         response = self._generate_response(team=team)
@@ -524,32 +501,93 @@ class FinishQuarter(APIView):
                         team=team, decision=decision
                     )
                 case ContractView.ENDPOINTS.SET_CONTRACTS_ORDER:
-                    # FIXME: We need bots or teams for get_winner_teams
-                    # A better response is needed
-                    response = set_contracts_order(
+                    return decision.endpoint, set_contracts_order(
                         team=team, decision=decision
                     )
-                    simulation_teams = get_simulation_teams(team=team)
-                    # replace first random with bot's esg index and second random with bot's marketing budget
-                    winners = get_winner_teams(
-                        [
-                            (
-                                team,
-                                team.state_variables.esg_index,
-                                Decimal(team.state_variables.marketing_budget),
-                            )
-                            for team in simulation_teams
-                        ]
-                    )
-                    assignment_response = assign_contracts_to_teams(
-                        winners, current_quarter=decision.made_at_quarter
-                    )
-                    return decision.endpoint, response
                 case ESGReportingView.ENDPOINTS.ENABLE_ESG_REPORTING:
                     return decision.endpoint, enable_esg_reporting(team=team)
 
         except APIException as e:
             return decision.endpoint, str(e)
+
+    @staticmethod
+    def _contract_assignment_chores(
+        simulation_teams: list[Team], current_quarter: int
+    ):
+        winners = get_winner_teams(
+            [
+                (
+                    team,
+                    team.state_variables.esg_index,
+                    Decimal(team.state_variables.marketing_budget),
+                )
+                for team in simulation_teams
+            ]
+        )
+        assignment_response = assign_contracts_to_teams(
+            winners, current_quarter=current_quarter
+        )
+        return assignment_response
+
+    @staticmethod
+    def _move_produced_units_to_storage(team: Team, current_quarter: int):
+        # calculate each production's produced quantity
+        productions: list[Production] = team.productions.filter(
+            quarter=current_quarter
+        )
+        for production in productions:
+            base = production.factory.base
+            factor = production.activity_level / 100
+            production.produced_quantity = base * (3 - factor) * factor**2 / 2
+            # FIXME: Use bulk_update for fewer queries
+            production.save()
+        # add produced units to storage
+        for production in productions:
+            storage, _ = Storage.objects.get_or_create(
+                team=team,
+                product=production.product,
+            )
+            storage.quantity = F("quantity") + production.produced_quantity
+            storage.save()
+
+    @staticmethod
+    def _feed_storage_to_contracts(team: Team, current_quarter: int):
+        # feed contracts from storage
+        assigned_contracts: list[ContractAssignment] = team.contracts.filter(
+            contract__closure_quarter=current_quarter - 1
+        )
+        for assigned_contract in assigned_contracts:
+            if (
+                assigned_contract.status
+                == ContractAssignment.Statuses.FULFILLED
+                or assigned_contract.status
+                == ContractAssignment.Statuses.EXPIRED
+            ):
+                continue
+
+            dynamic_rd_obj = get_db_record_select_prefetch_or_404(
+                DynamicRD,
+                team=team,
+                category=assigned_contract.contract.deliverable_product,
+                order=1,
+            )
+            storage: Storage = Storage.objects.filter(
+                team=team, product=dynamic_rd_obj
+            ).first()
+            if (
+                not storage
+                or storage.quantity < assigned_contract.contract.quantity
+            ):
+                assigned_contract.status = ContractAssignment.Statuses.EXPIRED
+                assigned_contract.save()
+                continue
+
+            storage.quantity = (
+                F("quantity") - assigned_contract.contract.quantity
+            )
+            storage.save()
+            assigned_contract.status = ContractAssignment.Statuses.FULFILLED
+            assigned_contract.save()
 
     def _process_ripple_tasks(self, team: Team, current_quarter: int):
         ripple_tasks: list[RippleTask] | None = RippleTask.objects.filter(
