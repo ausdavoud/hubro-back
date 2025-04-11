@@ -72,7 +72,7 @@ class StateVariableSerializer(serializers.ModelSerializer):
     def get_beginning_cash(self, obj: StateVariable) -> Decimal:
         from finance.views.views import _get_cash_income_outcome
 
-        return _get_cash_income_outcome(obj.team, obj.quarter)[obj.quarter]
+        return _get_cash_income_outcome(obj.team, obj.team.simulation_class.current_quarter)[obj.team.simulation_class.current_quarter]
 
 
 class SimulationCodeSerializer(serializers.Serializer):
