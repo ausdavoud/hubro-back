@@ -44,7 +44,10 @@ from people.models import (
     SimulationClassQueue,
     Team,
 )
-from people.serializers import SimulationClassSerializer
+from people.serializers import (
+    SimulationClassQueueSerializer,
+    SimulationClassSerializer,
+)
 from production.models import Production, Storage
 from production.views.services import (
     new_factory,
@@ -317,6 +320,43 @@ class JoinSimulationQueue(APIView):
             simulation_class=simulation_class, player=player
         )
         response = {"data": "You have been added to the queue."}
+        return Response(response, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(
+    get=extend_schema(tags=["Quarter-Wise"], request=SimulationCodeSerializer)
+)
+class GetSimulationQueue(APIView):
+    def get(self, request: Request, simulation_code: str) -> Response:
+        user: CustomUser = request.user
+        simulation_class: SimulationClass = (
+            get_db_record_select_prefetch_or_404(
+                SimulationClass, code=simulation_code
+            )
+        )
+        if user.role == CustomUser.UserRoles.INSTRUCTOR:
+            if not simulation_class.instructor:
+                raise common_exceptions.DatabaseRecordNotFound(
+                    SimulationClass, context={}
+                )
+
+        elif user.role == CustomUser.UserRoles.PLAYER:
+            if not SimulationClassQueue.objects.filter(
+                simulation_class=simulation_class, player=user.player
+            ).exists():
+                raise common_exceptions.DatabaseRecordNotFound(
+                    SimulationClassQueue, context={}
+                )
+
+        queue = list(
+            SimulationClassQueue.objects.filter(
+                simulation_class=simulation_class
+            ).values_list("player__user__email", flat=True)
+        )
+        print(queue)
+        response = {"data": queue}
+        serialized_queue = SimulationClassQueueSerializer(response)
+        response = serialized_queue.data
         return Response(response, status=status.HTTP_200_OK)
 
 

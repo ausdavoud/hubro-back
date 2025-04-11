@@ -17,6 +17,11 @@ urlpatterns = [
         name="join_simulation_queue",
     ),
     path(
+        "get_simulation_queue/<str:simulation_code>",
+        views.GetSimulationQueue.as_view(),
+        name="get_simulation_queue",
+    ),
+    path(
         "start_new_simulation/",
         views.StartNewSimulation.as_view(),
         name="start_new_simulation",
