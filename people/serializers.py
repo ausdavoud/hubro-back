@@ -80,7 +80,5 @@ class SimulationClassSerializer(serializers.ModelSerializer):
         fields = ("code", "name", "instructor", "mode", "teams")
 
 
-class SimulationClassQueueSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SimulationClassQueue
-        fields = ("simulation_class", "team")
+class SimulationClassQueueSerializer(serializers.Serializer):
+    data = serializers.ListField(child=serializers.EmailField())
