@@ -4,7 +4,6 @@ from people.models import (
     CustomUser,
     Instructor,
     SimulationClass,
-    SimulationClassQueue,
     Team,
 )
 
@@ -60,7 +59,7 @@ class TeamSerializer(serializers.ModelSerializer):
 class UserGeneralInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ["email", "first_name", "last_name"]
+        fields = ["role", "email", "first_name", "last_name"]
 
 
 class InstructorSerializer(serializers.ModelSerializer):
@@ -77,7 +76,15 @@ class SimulationClassSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SimulationClass
-        fields = ("code", "name", "instructor", "mode", "teams", "current_quarter")
+        fields = (
+            "code",
+            "name",
+            "instructor",
+            "mode",
+            "teams",
+            "current_quarter",
+            "state",
+        )
 
 
 class SimulationClassQueueSerializer(serializers.Serializer):

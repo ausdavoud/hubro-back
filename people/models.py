@@ -94,6 +94,11 @@ class SimulationClass(models.Model):
         SINGLE_PLAYER = "SP", "Single Player"
         MULTI_PLAYER = "MP", "MultiPlayer"
 
+    class SimulationStates(models.TextChoices):
+        PENDING = "PE", "Pending"
+        RUNNING = "RU", "Running"
+        COMPLETED = "CO", "Completed"
+
     code = models.CharField(max_length=10, unique=True, null=True)
     name = models.CharField(max_length=50)
     instructor = models.ForeignKey(
@@ -106,6 +111,11 @@ class SimulationClass(models.Model):
         max_length=2,
         choices=SimulationModes.choices,
         default=SimulationModes.SINGLE_PLAYER,
+    )
+    state = models.CharField(
+        max_length=2,
+        choices=SimulationStates.choices,
+        default=SimulationStates.PENDING,
     )
 
     current_quarter = models.IntegerField(default=1)

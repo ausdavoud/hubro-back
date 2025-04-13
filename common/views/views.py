@@ -154,6 +154,9 @@ class StartNewSimulation(APIView):
             simulation_class = create_single_player_simulation_data(
                 player=player
             )
+            simulation_class.state = SimulationClass.SimulationStates.RUNNING
+            simulation_class.save()
+
         elif user.role == CustomUser.UserRoles.INSTRUCTOR:
             instructor = get_db_record_select_prefetch_or_404(
                 Instructor, user=user
@@ -161,10 +164,12 @@ class StartNewSimulation(APIView):
             simulation_unique_id = request.data.get("simulation_code", None)
             if not simulation_unique_id:
                 raise SerializerError("Please enter a simulation code.")
-            simulation_class = get_db_record_select_prefetch_or_404(
-                SimulationClass,
-                code=simulation_unique_id,
-                instructor=instructor,
+            simulation_class: SimulationClass = (
+                get_db_record_select_prefetch_or_404(
+                    SimulationClass,
+                    code=simulation_unique_id,
+                    instructor=instructor,
+                )
             )
             queue_entries: list[SimulationClassQueue] = (
                 simulation_class.queues.select_related("player").all()
@@ -173,6 +178,8 @@ class StartNewSimulation(APIView):
             create_multiplayer_simulation_data(
                 simulation_class=simulation_class, players=players_in_queue
             )
+            simulation_class.state = SimulationClass.SimulationStates.RUNNING
+            simulation_class.save()
 
         return Response(
             {
@@ -308,6 +315,7 @@ class JoinSimulationQueue(APIView):
     ]
     serializer_class = None
 
+    @transaction.atomic
     def post(self, request: Request) -> Response:
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
@@ -315,11 +323,25 @@ class JoinSimulationQueue(APIView):
         simulation_class = get_db_record_select_prefetch_or_404(
             SimulationClass, code=sim_code
         )
+        if (
+            SimulationClassQueue.objects.filter(
+                simulation_class=simulation_class
+            ).count()
+            == 5
+        ):
+            response = {"error": "Simulation is already full"}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
         delete_player_previous_simulation_data(player=player)
-        SimulationClassQueue.objects.create(
+        queue, created = SimulationClassQueue.objects.get_or_create(
             simulation_class=simulation_class, player=player
         )
-        response = {"data": "You have been added to the queue."}
+        response = {
+            "data": "You have been added to the queue."
+            if created
+            else "You have already been added to the queue!"
+        }
+
         return Response(response, status=status.HTTP_200_OK)
 
 
