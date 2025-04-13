@@ -20,6 +20,7 @@ from people.models import CustomUser
 from people.serializers import (
     TokenObtainPairResponseSerializer,
     TokenRefreshResponseSerializer,
+    UserGeneralInfoSerializer,
     UserRegisterSerializer,
 )
 from people.views import exceptions as people_exceptions
@@ -103,3 +104,21 @@ class DecoratedTokenObtainPairView(TokenObtainPairView):
 class DecoratedTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=["Quarter-Wise"],
+        responses={status.HTTP_200_OK: UserGeneralInfoSerializer},
+    )
+)
+class WhoAmI(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+    serializer_class = UserGeneralInfoSerializer
+
+    def get(self, request: Request):
+        user: CustomUser = request.user
+        serializer = UserGeneralInfoSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

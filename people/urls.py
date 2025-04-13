@@ -9,4 +9,5 @@ urlpatterns = [
         views.DecoratedTokenRefreshView.as_view(),
         name="refresh",
     ),
+    path("who-am-i/", views.WhoAmI.as_view(), name="who-am-i"),
 ]
