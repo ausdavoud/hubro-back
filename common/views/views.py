@@ -175,6 +175,12 @@ class StartNewSimulation(APIView):
                 simulation_class.queues.select_related("player").all()
             )
             players_in_queue = [entry.player for entry in queue_entries]
+            if not players_in_queue:
+                response = {
+                    "error": "No teams found in the simulation class."
+                    " You cannot start an empty simulation!"
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
             create_multiplayer_simulation_data(
                 simulation_class=simulation_class, players=players_in_queue
             )
