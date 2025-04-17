@@ -326,7 +326,7 @@ class JoinSimulationQueue(APIView):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         sim_code = request.data.get("simulation_code", None)
-        simulation_class = get_db_record_select_prefetch_or_404(
+        simulation_class: SimulationClass = get_db_record_select_prefetch_or_404(
             SimulationClass, code=sim_code
         )
         if (
@@ -338,6 +338,13 @@ class JoinSimulationQueue(APIView):
             response = {"error": "Simulation is already full"}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
+        if (
+            simulation_class.state != SimulationClass.SimulationStates.PENDING
+        ):
+            response = {
+                "error": "Simulation is not accepting new players."
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
         delete_player_previous_simulation_data(player=player)
         queue, created = SimulationClassQueue.objects.get_or_create(
             simulation_class=simulation_class, player=player
