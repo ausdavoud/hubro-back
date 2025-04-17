@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches:
+      - dev-multiplayer
       - main
 
 jobs:
@@ -17,4 +18,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: /home/${{ secrets.SSH_USER }}/hubro/deploy-back.sh
+          script: ${{ secrets.SCRIPT_PATH }}

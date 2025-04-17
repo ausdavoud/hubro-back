@@ -5,4 +5,5 @@ db
 venv
 *.pyc
 .env
-# **/*/000*.py
+**/*/000*.py
+run.sh
