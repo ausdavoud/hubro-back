@@ -113,13 +113,32 @@ def assign_contracts_to_teams(
     """
 
     contract_assignment_objs = []
-    updated_contracts = []
     team_loads = {
         product_category: {team: 0 for team in teams}
         for product_category in RDCategories.values
     }
     # Teams choose contracts
     for team in teams:
+        if team.team_type == Team.TeamType.BOT:
+            next_available_contract = (
+                Contract.objects.filter(
+                    status=Contract.Statuses.PENDING,
+                    closure_quarter=current_quarter,
+                )
+                .order_by("?")
+                .last()
+            )
+            contract_assignment = ContractAssignment(
+                team=team,
+                contract=next_available_contract,
+                status=ContractAssignment.Statuses.WAITING,
+            )
+            next_available_contract.status = Contract.Statuses.ASSIGNED
+            next_available_contract.save()
+            contract_assignment_objs.append(contract_assignment)
+            team_loads[next_available_contract.deliverable_product][team] += 1
+            continue
+
         contract_priorities = (
             ContractPriority.objects.filter(team=team, quarter=current_quarter)
             .order_by("priority")
@@ -149,14 +168,12 @@ def assign_contracts_to_teams(
                 status=ContractAssignment.Statuses.WAITING,
             )
             contract_priority.contract.status = Contract.Statuses.ASSIGNED
+            contract_priority.contract.save()
             contract_assignment_objs.append(contract_assignment)
-            updated_contracts.append(contract_priority.contract)
             team_loads[contract_priority.contract.deliverable_product][
                 team
             ] += 1
             break
-
-    Contract.objects.bulk_update(updated_contracts, ["status"])
 
     # Remaining contracts choose teams
     remaining_contracts = Contract.objects.filter(
@@ -173,8 +190,7 @@ def assign_contracts_to_teams(
                 ).is_completed
             )
             and team.state_variables.marketing_budget >= 5000
-            and team.state_variables.esg_index
-            >= contract_priority.contract.minimum_esg_index
+            and team.state_variables.esg_index >= contract.minimum_esg_index
         ]
 
         if not eligible_teams:
@@ -203,22 +219,13 @@ def assign_contracts_to_teams(
             status=ContractAssignment.Statuses.WAITING,
         )
         contract.status = Contract.Statuses.ASSIGNED
+        contract.save()
         contract_assignment_objs.append(contract_assignment)
-        updated_contracts.append(contract)
         team_loads[contract.deliverable_product][team] += 1
 
-    try:
-        with transaction.atomic():
-            contract_assignments = ContractAssignment.objects.bulk_create(
-                contract_assignment_objs
-            )
-            Contract.objects.bulk_update(updated_contracts, ["status"])
-
-    except DatabaseError:
-        raise common_exceptions.AtomicTransactionError(
-            state="Error at making a loan object"
-        )
-
+    contract_assignments = ContractAssignment.objects.bulk_create(
+        contract_assignment_objs
+    )
     serialized_contract_assignment = ContractAssignmentSerializer(
         contract_assignments, many=True
     )

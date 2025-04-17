@@ -71,9 +71,10 @@ class ProductionReportView(APIView):
             serialized_response = ProductionReportErrorSerializer(
                 data=response
             )
-            return Response(
-                serialized_response.data, status=status.HTTP_400_BAD_REQUEST
-            )
+            if serialized_response.is_valid():
+                return Response(
+                    serialized_response.data, status=status.HTTP_400_BAD_REQUEST
+                )
 
         selected_rd_product: DynamicRD = get_db_record_select_prefetch_or_404(
             DynamicRD,
@@ -201,4 +202,5 @@ class ProductionReportView(APIView):
             }
         }
         serialized_response = ProductionReportSerializer(data=response)
-        return Response(serialized_response.data, status=status.HTTP_200_OK)
+        if serialized_response.is_valid():
+            return Response(serialized_response.data, status=status.HTTP_200_OK)

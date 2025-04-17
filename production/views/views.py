@@ -45,6 +45,11 @@ from production.serializers import (
     set_activity_level=extend_schema(
         tags=["Production"], request=SetActivityLevelSerializer
     ),
+    get_on_sale_factories=extend_schema(
+        tags=["Production"],
+        request=SellFactorySerializer,
+        responses={status.HTTP_200_OK: FactorySerializer},
+    )
 )
 class ProductionView(ViewSet):
     permission_classes = [IsAuthenticated]
@@ -391,3 +396,30 @@ class ProductionView(ViewSet):
             decision.json_body["activity_level"] = json_body["activity_level"]
             decision.save()
         return decision
+
+    @action(["GET"], detail=False)
+    def get_on_sale_factories(self, request: Request) -> Response:
+        user: CustomUser = request.user
+        player = get_db_record_select_prefetch_or_404(Player, user=user)
+        team = player.team
+        current_quarter = team.simulation_class.current_quarter
+
+        decisions = DecisionPool.objects.filter(
+            team=team,
+            endpoint=ProductionView.ENDPOINTS.SELL_FACTORY,
+            made_at_quarter=current_quarter,
+        )
+        if not decisions:
+            response = {"data": []}
+            return Response(response, status=status.HTTP_200_OK)
+
+        factories = [
+            get_db_record_select_prefetch_or_404(
+                Factory, team=team, pk=decision.json_body["factory_id"]
+            )
+            for decision in decisions
+        ]
+        serialized_factories = FactorySerializer(factories, context={"team": team}, many=True)
+
+        response = {"data": serialized_factories.data}
+        return Response(response, status=status.HTTP_200_OK)
