@@ -5,5 +5,5 @@ db
 venv
 *.pyc
 .env
-**/*/000*.py
-run.sh
+bruno-hubro-back
+# **/*/000*.py

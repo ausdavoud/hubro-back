@@ -158,3 +158,26 @@ class ProductionReportSerializer(serializers.Serializer):
     error = serializers.CharField(
         help_text="Error message if applicable", required=False
     )
+
+
+class QuarterlyReportSerializer(serializers.Serializer):
+    revenue = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    gross_profit = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    gross_profit_margin = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    net_income = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    net_profit_margin = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )

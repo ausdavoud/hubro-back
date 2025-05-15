@@ -261,8 +261,9 @@ def select_product(team: Team, decision: DecisionPool):
                 quarter=current_quarter,
                 product=product,
                 activity_level=100,
-                produced_quantity=0,
-                labor_cost=999,
+                produced_quantity=factory.base,
+                labor_cost=factory.labor_cost_per_unit
+                or factory.outsourcing_fee_per_unit,
             )
 
         json_body = {
@@ -297,6 +298,8 @@ def set_activity_level(team: Team, decision: DecisionPool):
     )
 
     production.activity_level = activity_level
+    production.labor_cost = production.labor_cost * activity_level / 100
+    production.produced_quantity = factory.base * activity_level / 100
     production.save()
 
     serialized_production = ProductionSerializer(production)

@@ -95,6 +95,8 @@ class Migration(migrations.Migration):
                         decimal_places=2, default=2, max_digits=5
                     ),
                 ),
+                ("quarter", models.IntegerField(default=1)),
+                ("simulation_duration", models.IntegerField(default=20)),
                 (
                     "max_loan_repayment_duration",
                     models.IntegerField(default=16),

@@ -96,7 +96,7 @@ class ProductionReportView(APIView):
                 activity_level_decision.first().json_body["activity_level"]
             )
 
-        produced_quantity = activity_level * factory.base
+        produced_quantity = activity_level * factory.base / 100
         material_cost_per_unit = selected_rd_product.supplier.price
         material_cost_total = material_cost_per_unit * produced_quantity
         labor_cost_per_unit = 0

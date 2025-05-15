@@ -136,3 +136,15 @@ class Repayment(models.Model):
         # Wrap decimal value into string,
         # otherwise django raises error in admin panel
         return f"{self.repayment_amount}"
+
+
+class BudgetCash(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=15, decimal_places=0)
+    quarter = models.IntegerField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.value}"

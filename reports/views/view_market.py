@@ -148,20 +148,24 @@ class MarketReportView(APIView):
             storage = productions[deliverable_product]
             if storage >= desired:
                 productions[deliverable_product] -= desired
-                fulfillments.append({
-                    "contract_id": contract.pk,
-                    "product": dynamic_rd.pk,
-                    "storage": storage,
-                    "desired": desired,
-                })
+                fulfillments.append(
+                    {
+                        "contract_id": contract.pk,
+                        "product": dynamic_rd.pk,
+                        "storage": storage,
+                        "desired": desired,
+                    }
+                )
                 storage -= desired
             else:
-                fulfillments.append({
-                    "contract_id": contract.pk,
-                    "product": dynamic_rd.pk,
-                    "storage": storage,
-                    "desired": desired,
-                })
+                fulfillments.append(
+                    {
+                        "contract_id": contract.pk,
+                        "product": dynamic_rd.pk,
+                        "storage": storage,
+                        "desired": desired,
+                    }
+                )
                 productions[deliverable_product] = 0
 
         return Response({"data": fulfillments}, status=status.HTTP_200_OK)

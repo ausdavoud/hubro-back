@@ -41,7 +41,7 @@ def generate_contract_data(
         contracts.append(
             {
                 "closure_quarter": date,
-                "payment_quarter": payment_delays[i],
+                "payment_quarter": date + payment_delays[i],
                 "quantity": amounts[i],
                 "unit_price": unit_prices[i],
                 "total_price": amounts[i] * unit_prices[i],
@@ -128,7 +128,7 @@ def generate_payment_delays(quarter: int, contract_count: int):
     delayed_contract_count = 0
     QUARTER_4 = 4
     QUARTER_7 = 7
-    MAX_DELAY_QUARTERS_Q1_Q3 = 0
+    MAX_DELAY_QUARTERS_Q1_Q3 = 1
     MAX_DELAY_QUARTERS_Q4_Q6 = 3
     MAX_DELAY_QUARTERS_Q7_PLUS = 4
     MAX_DELAYED_CONTRACTS_Q1_Q6 = 2
@@ -143,7 +143,7 @@ def generate_payment_delays(quarter: int, contract_count: int):
             else MAX_DELAY_QUARTERS_Q7_PLUS
         )
     )
-    payment_delays = [0] * contract_count
+    payment_delays = [1] * contract_count
 
     if quarter < QUARTER_4:
         return payment_delays
