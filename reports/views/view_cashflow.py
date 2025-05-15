@@ -93,7 +93,7 @@ class CashFlowReportView(APIView):
                 "financing": financing_activities,
             }
         }
-        serialized_response = CashFlowReportSerializer(response)
+        serialized_response = CashFlowReportSerializer(data=response)
         serialized_response.is_valid(raise_exception=True)
         return Response(serialized_response.data, status=status.HTTP_200_OK)
 

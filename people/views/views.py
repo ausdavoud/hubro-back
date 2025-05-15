@@ -108,7 +108,7 @@ class DecoratedTokenRefreshView(TokenRefreshView):
 
 @extend_schema_view(
     get=extend_schema(
-        tags=["Quarter-Wise"],
+        tags=["Auth"],
         responses={status.HTTP_200_OK: UserGeneralInfoSerializer},
     )
 )

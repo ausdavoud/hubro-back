@@ -328,8 +328,10 @@ class JoinSimulationQueue(APIView):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         sim_code = request.data.get("simulation_code", None)
-        simulation_class: SimulationClass = get_db_record_select_prefetch_or_404(
-            SimulationClass, code=sim_code
+        simulation_class: SimulationClass = (
+            get_db_record_select_prefetch_or_404(
+                SimulationClass, code=sim_code
+            )
         )
         if (
             SimulationClassQueue.objects.filter(
@@ -340,12 +342,8 @@ class JoinSimulationQueue(APIView):
             response = {"error": "Simulation is already full"}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        if (
-            simulation_class.state != SimulationClass.SimulationStates.PENDING
-        ):
-            response = {
-                "error": "Simulation is not accepting new players."
-            }
+        if simulation_class.state != SimulationClass.SimulationStates.PENDING:
+            response = {"error": "Simulation is not accepting new players."}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
         delete_player_previous_simulation_data(player=player)
         queue, created = SimulationClassQueue.objects.get_or_create(
@@ -465,7 +463,12 @@ class FinishQuarter(APIView):
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             simulation_class = player_team.simulation_class
             simulation_human_teams = [player_team]
-            simulation_bot_teams = list(Team.objects.filter(simulation_class=simulation_class, team_type=Team.TeamType.BOT))
+            simulation_bot_teams = list(
+                Team.objects.filter(
+                    simulation_class=simulation_class,
+                    team_type=Team.TeamType.BOT,
+                )
+            )
             if (
                 simulation_class.mode
                 == SimulationClass.SimulationModes.MULTI_PLAYER
@@ -480,14 +483,18 @@ class FinishQuarter(APIView):
             simulation_class = get_db_record_select_prefetch_or_404(
                 SimulationClass, code=simulation_code, instructor=instructor
             )
-            simulation_human_teams = list(Team.objects.filter(
-                simulation_class=simulation_class,
-                team_type=Team.TeamType.HUMAN,
-            ))
-            simulation_bot_teams = list(Team.objects.filter(
-                simulation_class=simulation_class,
-                team_type=Team.TeamType.BOT,
-            ))
+            simulation_human_teams = list(
+                Team.objects.filter(
+                    simulation_class=simulation_class,
+                    team_type=Team.TeamType.HUMAN,
+                )
+            )
+            simulation_bot_teams = list(
+                Team.objects.filter(
+                    simulation_class=simulation_class,
+                    team_type=Team.TeamType.BOT,
+                )
+            )
             if not simulation_human_teams:
                 response = {"error": "No teams found in the simulation class."}
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
@@ -520,9 +527,13 @@ class FinishQuarter(APIView):
         )
         for team in teams_with_prefetch:
             BudgetCash.objects.create(
-            team=team,
-            value=get_budgeted_cash_by_quarter(team, quarter=current_quarter),
-            quarter=current_quarter,
+                team=team,
+                value=get_budgeted_cash_by_quarter(
+                    team,
+                    quarter=current_quarter,
+                    current_quarter=current_quarter,
+                ),
+                quarter=current_quarter,
             )
             decision_states = [
                 self._process_decision(team=team, decision=decision)
@@ -544,10 +555,13 @@ class FinishQuarter(APIView):
             self._process_ripple_tasks(
                 team=team, current_quarter=current_quarter
             )
-            self._receive_fulfilled_contracts_money(team=team, current_quarter=current_quarter)
+            self._receive_fulfilled_contracts_money(
+                team=team, current_quarter=current_quarter
+            )
 
         self._contract_assignment_chores(
-            simulation_teams=simulation_human_teams + simulation_bot_teams, current_quarter=current_quarter
+            simulation_teams=simulation_human_teams + simulation_bot_teams,
+            current_quarter=current_quarter,
         )
         self._increment_quarter(team=team)
 

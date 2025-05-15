@@ -33,9 +33,8 @@ class MarketReportSerializer(serializers.Serializer):
         """
         Serializer for individual contract fulfillment data.
         """
-        contract_id = serializers.IntegerField(
-            help_text="ID of the contract"
-        )
+
+        contract_id = serializers.IntegerField(help_text="ID of the contract")
         product = serializers.IntegerField(
             help_text="ID of the deliverable product"
         )

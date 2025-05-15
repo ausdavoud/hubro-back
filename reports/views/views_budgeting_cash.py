@@ -26,7 +26,7 @@ class BudgetCashReport(APIView):
         team: Team = get_db_record_select_prefetch_or_404(
             Team, prefetch_related_tables=["rd"], id=player.team_id
         )
-        current_quarter: int = team.state_variables.quarter
+        current_quarter: int = team.simulation_class.current_quarter
 
         quarter = quarter if quarter else current_quarter
         if quarter > current_quarter:

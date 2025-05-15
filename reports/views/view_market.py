@@ -19,7 +19,9 @@ from rd.models import DynamicRD
 from reports.serializers import MarketReportSerializer
 
 
-@extend_schema_view(get=extend_schema(tags=["Reports"], responses=MarketReportSerializer))
+@extend_schema_view(
+    get=extend_schema(tags=["Reports"], responses=MarketReportSerializer)
+)
 class MarketReportView(APIView):
     permission_classes = [
         IsAuthenticated,

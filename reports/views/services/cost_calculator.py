@@ -1,4 +1,4 @@
-from django.db.models import F, Sum
+from django.db.models import F
 
 from common.models import DecisionPool, RippleTask
 from contracts.views.views import ContractView
@@ -36,16 +36,15 @@ def get_ongoing_rds(team: Team) -> list[DynamicRD]:
 
 
 def get_amortization_cost_by_ripple_task(team: Team, quarter: int) -> float:
-    ripple_task = RippleTask.objects.filter(
+    ripple_tasks = RippleTask.objects.filter(
         team=team,
         type=RippleTask.TaskTypes.AMORTIZATION_OF_PROJECTS,
         run_at_quarter=quarter,
     )
-    if not ripple_task.exists():
+    if not ripple_tasks.exists():
         return 0
-    return float(
-        ripple_task.aggregate(total=Sum("json_body__amount"))["total"]
-    )
+    total = sum(float(task.json_body["amount"]) for task in ripple_tasks)
+    return total
 
 
 def get_factory_start_costs(team: Team, quarter: int) -> float:
@@ -87,16 +86,15 @@ def get_loan_received(team: Team, quarter: int) -> float:
 
 
 def get_loan_interest(team: Team, quarter: int) -> float:
-    ripple_task = RippleTask.objects.filter(
+    ripple_tasks = RippleTask.objects.filter(
         team=team,
         run_at_quarter=quarter,
         type=RippleTask.TaskTypes.LOAN_INTEREST,
     )
-    if not ripple_task.exists():
+    if not ripple_tasks.exists():
         return 0
-    return float(
-        ripple_task.aggregate(total=Sum("json_body__amount"))["total"]
-    )
+    total = sum(float(task.json_body["amount"]) for task in ripple_tasks)
+    return total
 
 
 def get_loan_repayment(team: Team, quarter: int) -> float:
@@ -107,20 +105,20 @@ def get_loan_repayment(team: Team, quarter: int) -> float:
     )
     if not ripple_tasks.exists():
         return 0
-    return float(
-        ripple_tasks.aggregate(total=Sum("json_body__amount"))["total"]
-    )
+
+    total = sum(float(task.json_body["amount"]) for task in ripple_tasks)
+    return total
 
 
 def get_esg_reporting_fee(team: Team, quarter: int) -> float:
-    ripple_task = RippleTask.objects.filter(
+    ripple_tasks = RippleTask.objects.filter(
         team=team,
         run_at_quarter=quarter,
         type=RippleTask.TaskTypes.ESG_REPORTING,
-    ).first()
-    if not ripple_task:
+    )
+    if not ripple_tasks.exists():
         return 0
-    return float(ripple_task.json_body["amount"])
+    return sum(float(task.json_body["amount"]) for task in ripple_tasks)
 
 
 def get_marketing_budget(team: Team, quarter: int) -> float:
@@ -143,11 +141,15 @@ def get_budgeted_cash_by_quarter(
     budgeted_cash = (
         200_000_00
         if quarter == 1
-        else BudgetCash.objects.get(team=team, quarter=quarter - 1).value
+        else float(
+            BudgetCash.objects.get(team=team, quarter=quarter - 1).value
+        )
     )
     if quarter != current_quarter:
-        budgeted_cash = BudgetCash.objects.get(team=team, quarter=quarter)
-        return budgeted_cash.value
+        budgeted_cash = float(
+            BudgetCash.objects.get(team=team, quarter=quarter).value
+        )
+        return budgeted_cash
 
     # else if this is all about the current quarter:
 
