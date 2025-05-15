@@ -5,4 +5,5 @@ db
 venv
 *.pyc
 .env
+bruno-hubro-back
 # **/*/000*.py

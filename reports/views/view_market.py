@@ -97,7 +97,7 @@ class MarketReportView(APIView):
                 factory: Factory = get_db_record_select_prefetch_or_404(
                     Factory, id=factory_id
                 )
-                # find activity level of those facs
+                # find activity level of those facts
                 decision = DecisionPool.objects.filter(
                     team=team,
                     endpoint=ProductionView.ENDPOINTS.SET_ACTIVITY_LEVEL,
@@ -142,7 +142,7 @@ class MarketReportView(APIView):
         )
 
         # fulfill contracts
-        fulfillments = defaultdict(dict)
+        fulfillments = list()
         for assigned_contract in assigned_contracts:
             contract = assigned_contract.contract
             deliverable_product = contract.deliverable_product
@@ -151,19 +151,25 @@ class MarketReportView(APIView):
             if storage >= desired:
                 print(storage)
                 productions[deliverable_product] -= desired
-                fulfillments[contract.pk] = {
-                    "product": deliverable_product,
-                    "storage": storage,
-                    "desired": desired,
-                }
+                fulfillments.append(
+                    {
+                        "contract_id": contract.pk,
+                        "product": dynamic_rd.pk,
+                        "storage": storage,
+                        "desired": desired,
+                    }
+                )
                 storage -= desired
                 print(fulfillments)
             else:
-                fulfillments[contract.pk] = {
-                    "product": deliverable_product,
-                    "storage": storage,
-                    "desired": desired,
-                }
+                fulfillments.append(
+                    {
+                        "contract_id": contract.pk,
+                        "product": dynamic_rd.pk,
+                        "storage": storage,
+                        "desired": desired,
+                    }
+                )
                 productions[deliverable_product] = 0
 
         return Response({"data": fulfillments}, status=status.HTTP_200_OK)

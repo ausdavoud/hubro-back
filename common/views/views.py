@@ -1,3 +1,4 @@
+import random
 from decimal import Decimal
 
 from django.db import DatabaseError, transaction
@@ -29,7 +30,7 @@ from contracts.views.services import (
 from contracts.views.views import ContractView
 from esg_reporting.views.services import enable_esg_reporting
 from esg_reporting.views.views import ESGReportingView
-from finance.models import FinancialAccount, Transaction
+from finance.models import BudgetCash, FinancialAccount, Transaction
 from finance.views.services import create_transaction, new_loan
 from finance.views.views import FinanceView
 from people.models import CustomUser, Player, SimulationClass, Team
@@ -49,6 +50,7 @@ from rd.views.services import (
     start_rd,
 )
 from rd.views.views import RDView
+from reports.views.services.cost_calculator import get_budgeted_cash_by_quarter
 
 
 class IsInstructor(BasePermission):
@@ -214,6 +216,11 @@ class FinishQuarter(APIView):
             prefetch_related_tables=[prefetch_decision_pool],
             id=player.team.id,
         )
+        BudgetCash.objects.create(
+            team=team,
+            value=get_budgeted_cash_by_quarter(team, quarter=current_quarter),
+            quarter=current_quarter,
+        )
 
         # Check if it is the last quarter
         if (
@@ -300,8 +307,9 @@ class FinishQuarter(APIView):
 
         # Do ripple tasks
         self._process_ripple_tasks(team=team, current_quarter=current_quarter)
-
-        # self._receive_fulfilled_contracts_money(team=team, current_quarter=current_quarter)
+        self._receive_fulfilled_contracts_money(
+            team=team, current_quarter=current_quarter
+        )
 
         self._increment_quarter(team=team)
 
@@ -508,6 +516,12 @@ class FinishQuarter(APIView):
                     unit_mat_cost_effect=F("unit_mat_cost_effect")
                     + dynamic_rd_object.unit_mat_cost_reduction,
                 )
+                team.state_variables.esg_index = min(
+                    team.state_variables.esg_index
+                    + random.randint(1, 100) / 10,
+                    100,
+                )
+                team.state_variables.save()
             ripple_tasks_to_delete.append(ripple_task)
 
     def _pay_esg_reporting_fee(
@@ -767,6 +781,30 @@ class FinishQuarter(APIView):
             ripple_task.run_at_quarter += 1
             ripple_task.json_body["quarters_paid"] += 1
             ripple_tasks_to_update.append(ripple_task)
+
+    def _receive_fulfilled_contracts_money(
+        self, team: Team, current_quarter: int
+    ):
+        assigned_contracts = ContractAssignment.objects.filter(
+            team=team,
+            contract__payment_quarter=current_quarter,
+            status=ContractAssignment.Statuses.FULFILLED,
+        ).all()
+        for assigned_cntrct in assigned_contracts:
+            debit_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, code=FinancialAccount.AccountCodes.SALES
+            )
+            credit_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+            )
+            create_transaction(
+                team=team,
+                quarter=current_quarter,
+                amount=Decimal(assigned_cntrct.contract.total_price),
+                category=Transaction.Categories.SALES,
+                debit_account=debit_account,
+                credit_account=credit_account,
+            )
 
     def _generate_response(self, team: Team):
         if (

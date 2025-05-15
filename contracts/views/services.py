@@ -173,8 +173,7 @@ def assign_contracts_to_teams(
                 ).is_completed
             )
             and team.state_variables.marketing_budget >= 5000
-            and team.state_variables.esg_index
-            >= contract_priority.contract.minimum_esg_index
+            and team.state_variables.esg_index >= contract.minimum_esg_index
         ]
 
         if not eligible_teams:

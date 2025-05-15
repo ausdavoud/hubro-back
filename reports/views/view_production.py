@@ -15,6 +15,10 @@ from people.models import CustomUser, Player, Team
 from production.models import Factory, Storage
 from production.views.views import ProductionView
 from rd.models import DynamicRD
+from reports.serializers import (
+    ProductionReportErrorSerializer,
+    ProductionReportSerializer,
+)
 
 
 @extend_schema_view(get=extend_schema(tags=["Reports"]))
@@ -62,7 +66,13 @@ class ProductionReportView(APIView):
                 },
                 "error": "No product was selected for this factory",
             }
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            serialized_response = ProductionReportErrorSerializer(
+                data=response
+            )
+            serialized_response.is_valid()
+            return Response(
+                serialized_response.data, status=status.HTTP_400_BAD_REQUEST
+            )
 
         selected_rd_product: DynamicRD = get_db_record_select_prefetch_or_404(
             DynamicRD,
@@ -84,7 +94,7 @@ class ProductionReportView(APIView):
                 activity_level_decision.first().json_body["activity_level"]
             )
 
-        produced_quantity = activity_level * factory.base
+        produced_quantity = activity_level * factory.base / 100
         material_cost_per_unit = selected_rd_product.supplier.price
         material_cost_total = material_cost_per_unit * produced_quantity
         labor_cost_per_unit = 0
@@ -189,4 +199,6 @@ class ProductionReportView(APIView):
                 "total_demand": total_demand,
             }
         }
-        return Response(response, status=status.HTTP_200_OK)
+        serialized_response = ProductionReportSerializer(data=response)
+        serialized_response.is_valid()
+        return Response(serialized_response.data, status=status.HTTP_200_OK)
