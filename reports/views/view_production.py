@@ -61,7 +61,7 @@ class ProductionReportView(APIView):
             endpoint=ProductionView.ENDPOINTS.SELECT_PRODUCT,
             json_body__factory_id=factory_id,
         )
-        if not selected_product_decision:
+        if not selected_product_decision.exists():
             response = {
                 "data": {
                     "fixed_cost_total": factory.maintenance_cost_per_quarter
@@ -71,10 +71,10 @@ class ProductionReportView(APIView):
             serialized_response = ProductionReportErrorSerializer(
                 data=response
             )
-            if serialized_response.is_valid():
-                return Response(
-                    serialized_response.data, status=status.HTTP_400_BAD_REQUEST
-                )
+            serialized_response.is_valid()
+            return Response(
+                serialized_response.data, status=status.HTTP_400_BAD_REQUEST
+            )
 
         selected_rd_product: DynamicRD = get_db_record_select_prefetch_or_404(
             DynamicRD,
@@ -96,7 +96,7 @@ class ProductionReportView(APIView):
                 activity_level_decision.first().json_body["activity_level"]
             )
 
-        produced_quantity = activity_level * factory.base
+        produced_quantity = activity_level * factory.base / 100
         material_cost_per_unit = selected_rd_product.supplier.price
         material_cost_total = material_cost_per_unit * produced_quantity
         labor_cost_per_unit = 0
@@ -203,4 +203,6 @@ class ProductionReportView(APIView):
         }
         serialized_response = ProductionReportSerializer(data=response)
         if serialized_response.is_valid():
-            return Response(serialized_response.data, status=status.HTTP_200_OK)
+            return Response(
+                serialized_response.data, status=status.HTTP_200_OK
+            )

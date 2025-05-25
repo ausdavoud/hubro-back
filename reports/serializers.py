@@ -34,6 +34,7 @@ class MarketReportSerializer(serializers.Serializer):
         Serializer for individual contract fulfillment data.
         """
 
+        contract_id = serializers.IntegerField(help_text="ID of the contract")
         product = serializers.IntegerField(
             help_text="ID of the deliverable product"
         )
@@ -47,7 +48,7 @@ class MarketReportSerializer(serializers.Serializer):
     """
     Serializer for the market report response data structure.
     """
-    data = serializers.DictField(
+    data = serializers.ListField(
         child=ContractFulfillmentSerializer(),
         help_text="Contract fulfillment data keyed by contract ID",
     )
@@ -155,4 +156,27 @@ class ProductionReportSerializer(serializers.Serializer):
     data = ProductionReportDataSerializer(help_text="Production report data")
     error = serializers.CharField(
         help_text="Error message if applicable", required=False
+    )
+
+
+class QuarterlyReportSerializer(serializers.Serializer):
+    revenue = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    gross_profit = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    gross_profit_margin = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    net_income = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
+    net_profit_margin = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
     )

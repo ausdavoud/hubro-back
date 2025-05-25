@@ -28,3 +28,8 @@ packages = ["hubro_back"]
 
 [tool.ruff]
 line-length = 79
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+]

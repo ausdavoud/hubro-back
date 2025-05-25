@@ -49,7 +49,7 @@ from production.serializers import (
         tags=["Production"],
         request=SellFactorySerializer,
         responses={status.HTTP_200_OK: FactorySerializer},
-    )
+    ),
 )
 class ProductionView(ViewSet):
     permission_classes = [IsAuthenticated]
@@ -419,7 +419,9 @@ class ProductionView(ViewSet):
             )
             for decision in decisions
         ]
-        serialized_factories = FactorySerializer(factories, context={"team": team}, many=True)
+        serialized_factories = FactorySerializer(
+            factories, context={"team": team}, many=True
+        )
 
         response = {"data": serialized_factories.data}
         return Response(response, status=status.HTTP_200_OK)

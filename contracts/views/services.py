@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.db import DatabaseError, transaction
 
 from ahmad.contracts import generate_contract_data
 from common.management.data_fixtures import (
@@ -10,7 +9,6 @@ from common.management.data_fixtures import (
     SPORTY_JETPACK_CONTRACT,
 )
 from common.models import DecisionPool
-from common.views import exceptions as common_exceptions
 from common.views.services import get_db_record_select_prefetch_or_404
 from contracts.models import Contract, ContractAssignment, ContractPriority
 from contracts.serializers import (

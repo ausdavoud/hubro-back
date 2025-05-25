@@ -8,7 +8,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-
 API_V = "api/v1"
 
 urlpatterns = [

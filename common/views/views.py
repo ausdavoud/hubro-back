@@ -1,3 +1,4 @@
+import random
 from decimal import Decimal
 
 from django.db import DatabaseError, transaction
@@ -33,7 +34,7 @@ from contracts.views.services import (
 from contracts.views.views import ContractView
 from esg_reporting.views.services import enable_esg_reporting
 from esg_reporting.views.views import ESGReportingView
-from finance.models import FinancialAccount, Transaction
+from finance.models import BudgetCash, FinancialAccount, Transaction
 from finance.views.services import create_transaction, new_loan
 from finance.views.views import FinanceView
 from people.models import (
@@ -63,6 +64,7 @@ from rd.views.services import (
     start_rd,
 )
 from rd.views.views import RDView
+from reports.views.services.cost_calculator import get_budgeted_cash_by_quarter
 
 
 class IsInstructor(BasePermission):
@@ -326,8 +328,10 @@ class JoinSimulationQueue(APIView):
         user: CustomUser = request.user
         player = get_db_record_select_prefetch_or_404(Player, user=user)
         sim_code = request.data.get("simulation_code", None)
-        simulation_class: SimulationClass = get_db_record_select_prefetch_or_404(
-            SimulationClass, code=sim_code
+        simulation_class: SimulationClass = (
+            get_db_record_select_prefetch_or_404(
+                SimulationClass, code=sim_code
+            )
         )
         if (
             SimulationClassQueue.objects.filter(
@@ -338,12 +342,8 @@ class JoinSimulationQueue(APIView):
             response = {"error": "Simulation is already full"}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-        if (
-            simulation_class.state != SimulationClass.SimulationStates.PENDING
-        ):
-            response = {
-                "error": "Simulation is not accepting new players."
-            }
+        if simulation_class.state != SimulationClass.SimulationStates.PENDING:
+            response = {"error": "Simulation is not accepting new players."}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
         delete_player_previous_simulation_data(player=player)
         queue, created = SimulationClassQueue.objects.get_or_create(
@@ -463,7 +463,12 @@ class FinishQuarter(APIView):
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             simulation_class = player_team.simulation_class
             simulation_human_teams = [player_team]
-            simulation_bot_teams = list(Team.objects.filter(simulation_class=simulation_class, team_type=Team.TeamType.BOT))
+            simulation_bot_teams = list(
+                Team.objects.filter(
+                    simulation_class=simulation_class,
+                    team_type=Team.TeamType.BOT,
+                )
+            )
             if (
                 simulation_class.mode
                 == SimulationClass.SimulationModes.MULTI_PLAYER
@@ -478,14 +483,18 @@ class FinishQuarter(APIView):
             simulation_class = get_db_record_select_prefetch_or_404(
                 SimulationClass, code=simulation_code, instructor=instructor
             )
-            simulation_human_teams = list(Team.objects.filter(
-                simulation_class=simulation_class,
-                team_type=Team.TeamType.HUMAN,
-            ))
-            simulation_bot_teams = list(Team.objects.filter(
-                simulation_class=simulation_class,
-                team_type=Team.TeamType.BOT,
-            ))
+            simulation_human_teams = list(
+                Team.objects.filter(
+                    simulation_class=simulation_class,
+                    team_type=Team.TeamType.HUMAN,
+                )
+            )
+            simulation_bot_teams = list(
+                Team.objects.filter(
+                    simulation_class=simulation_class,
+                    team_type=Team.TeamType.BOT,
+                )
+            )
             if not simulation_human_teams:
                 response = {"error": "No teams found in the simulation class."}
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
@@ -517,6 +526,15 @@ class FinishQuarter(APIView):
             )
         )
         for team in teams_with_prefetch:
+            BudgetCash.objects.create(
+                team=team,
+                value=get_budgeted_cash_by_quarter(
+                    team,
+                    quarter=current_quarter,
+                    current_quarter=current_quarter,
+                ),
+                quarter=current_quarter,
+            )
             decision_states = [
                 self._process_decision(team=team, decision=decision)
                 for decision in team.current_quarter_decisions
@@ -537,10 +555,13 @@ class FinishQuarter(APIView):
             self._process_ripple_tasks(
                 team=team, current_quarter=current_quarter
             )
-            # self._receive_fulfilled_contracts_money(team=team, current_quarter=current_quarter)
+            self._receive_fulfilled_contracts_money(
+                team=team, current_quarter=current_quarter
+            )
 
         self._contract_assignment_chores(
-            simulation_teams=simulation_human_teams + simulation_bot_teams, current_quarter=current_quarter
+            simulation_teams=simulation_human_teams + simulation_bot_teams,
+            current_quarter=current_quarter,
         )
         self._increment_quarter(team=team)
 
@@ -808,6 +829,12 @@ class FinishQuarter(APIView):
                     unit_mat_cost_effect=F("unit_mat_cost_effect")
                     + dynamic_rd_object.unit_mat_cost_reduction,
                 )
+                team.state_variables.esg_index = min(
+                    team.state_variables.esg_index
+                    + random.randint(1, 100) / 10,
+                    100,
+                )
+                team.state_variables.save()
             ripple_tasks_to_delete.append(ripple_task)
 
     def _pay_esg_reporting_fee(
@@ -1067,6 +1094,30 @@ class FinishQuarter(APIView):
             ripple_task.run_at_quarter += 1
             ripple_task.json_body["quarters_paid"] += 1
             ripple_tasks_to_update.append(ripple_task)
+
+    def _receive_fulfilled_contracts_money(
+        self, team: Team, current_quarter: int
+    ):
+        assigned_contracts = ContractAssignment.objects.filter(
+            team=team,
+            contract__payment_quarter=current_quarter,
+            status=ContractAssignment.Statuses.FULFILLED,
+        ).all()
+        for assigned_cntrct in assigned_contracts:
+            debit_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, code=FinancialAccount.AccountCodes.SALES
+            )
+            credit_account = get_db_record_select_prefetch_or_404(
+                FinancialAccount, code=FinancialAccount.AccountCodes.CASH
+            )
+            create_transaction(
+                team=team,
+                quarter=current_quarter,
+                amount=Decimal(assigned_cntrct.contract.total_price),
+                category=Transaction.Categories.SALES,
+                debit_account=debit_account,
+                credit_account=credit_account,
+            )
 
     def _generate_response(self, team: Team):
         if (

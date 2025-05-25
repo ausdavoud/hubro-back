@@ -39,20 +39,20 @@ class MarketReportView(APIView):
             storage of this product
             + storage of this product in production
 
-        Output = {
-            contract 1:
+        Output = [
                 {
+                    contract: 1,
                     product: 1,
                     storage: 500,
                     desired: 500,
                 },
-            contract 2:
                 {
+                    contract: 2,
                     product: 1,
                     storage: 100,
                     desired: 500
                 }
-        }
+        ]
         """
         user: CustomUser = request.user
         player: Player = get_db_record_select_prefetch_or_404(
@@ -99,7 +99,7 @@ class MarketReportView(APIView):
                 factory: Factory = get_db_record_select_prefetch_or_404(
                     Factory, id=factory_id
                 )
-                # find activity level of those facs
+                # find activity level of those facts
                 decision = DecisionPool.objects.filter(
                     team=team,
                     endpoint=ProductionView.ENDPOINTS.SET_ACTIVITY_LEVEL,
@@ -127,7 +127,6 @@ class MarketReportView(APIView):
         # find contracts
         # > assigned_contracts (fetched above)
         # order by priority
-
         priority_qs = ContractPriority.objects.filter(
             team=team,
             contract=OuterRef("contract"),
@@ -143,7 +142,7 @@ class MarketReportView(APIView):
         )
 
         # fulfill contracts
-        fulfillments = defaultdict(dict)
+        fulfillments = list()
         for assigned_contract in assigned_contracts:
             contract = assigned_contract.contract
             deliverable_product = contract.deliverable_product
@@ -151,20 +150,24 @@ class MarketReportView(APIView):
             storage = productions[deliverable_product]
             if storage >= desired:
                 productions[deliverable_product] -= desired
-                fulfillments[contract.pk] = {
-                    "product": deliverable_product,
-                    "storage": storage,
-                    "desired": desired,
-                }
+                fulfillments.append(
+                    {
+                        "contract_id": contract.pk,
+                        "product": dynamic_rd.pk,
+                        "storage": storage,
+                        "desired": desired,
+                    }
+                )
                 storage -= desired
             else:
-                fulfillments[contract.pk] = {
-                    "product": deliverable_product,
-                    "storage": storage,
-                    "desired": desired,
-                }
+                fulfillments.append(
+                    {
+                        "contract_id": contract.pk,
+                        "product": dynamic_rd.pk,
+                        "storage": storage,
+                        "desired": desired,
+                    }
+                )
                 productions[deliverable_product] = 0
-        response = {"data": fulfillments}
-        serialized_response = MarketReportSerializer(data=response)
-        serialized_response.is_valid(raise_exception=True)
-        return Response(serialized_response.data, status=status.HTTP_200_OK)
+
+        return Response({"data": fulfillments}, status=status.HTTP_200_OK)
